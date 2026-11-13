@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ART STUDIO | Discover Exceptional Art</title>
+
+    <meta name="description" content="Discover exceptional original paintings and contemporary artwork at ART STUDIO.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- ANNOUNCEMENT BAR -->
+    <div class="announcement">
+        DISCOVER ART WITHOUT BORDERS — EXPLORE OUR COLLECTION
+    </div>
+
+    <!-- HEADER -->
+    <header class="header">
+
+        <div class="header-top">
+
+            <button class="menu-toggle" id="menuToggle" aria-label="Open navigation">
+                ☰
+            </button>
+
+            <a href="/" class="logo">ART STUDIO<span>.</span></a>
+
+            <div class="header-actions">
+                <button class="icon-button" aria-label="Search" id="searchToggle">
+                    ⌕
+                </button>
+
+                <a href="#" class="icon-button" aria-label="Account">♙</a>
+
+                <a href="#" class="icon-button bag" aria-label="Shopping bag">
+                    ♧ <span class="cart-count">0</span>
+                </a>
+            </div>
+
+        </div>
+
+        <!-- NAVIGATION -->
+        <nav class="navigation" id="navigation">
+
+            <a href="#new-arrivals">NEW ARRIVALS</a>
+            <a href="#collection">PAINTINGS</a>
+            <a href="#artists">ARTISTS</a>
+            <a href="#featured">COLLECTIONS</a>
+            <a href="#about">ABOUT US</a>
+
+        </nav>
+
+        <div class="search-panel" id="searchPanel">
+            <input type="search" id="searchInput" placeholder="Search paintings...">
+        </div>
+
+    </header>
+
+
+    <!-- HERO SECTION -->
+    <main>
+
+        <section class="hero">
+
+            <div class="hero-image"></div>
+
+            <div class="hero-content">
+
+                <p class="eyebrow">THE ART OF EXPRESSION</p>
+
+                <h1>Discover art.<br>Define your space.</h1>
+
+                <p class="hero-description">
+                    Explore exceptional paintings and discover
+                    artwork that speaks beyond borders.
+                </p>
+
+                <a href="#collection" class="primary-button">
+                    EXPLORE THE COLLECTION
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- INTRODUCTION -->
+        <section class="intro" id="about">
+
+            <p class="eyebrow">WELCOME TO ART STUDIO</p>
+
+            <h2>Art is more than what you see.<br>It's what you feel.</h2>
+
+            <p>
+                Discover thoughtfully selected paintings,
+                unique artistic expressions and exceptional
+                pieces created to inspire.
+            </p>
+
+        </section>
+
+
+        <!-- COLLECTION -->
+        <section class="collection section-padding" id="collection">
+
+            <div class="section-heading">
+
+                <div>
+                    <p class="eyebrow">CURATED FOR YOU</p>
+                    <h2>Explore our collection</h2>
+                </div>
+
+                <a href="#new-arrivals" class="text-link">VIEW ALL ARTWORK →</a>
+
+            </div>
+
+
+            <div class="product-grid">
+
+                <article class="product-card">
+
+                    <div class="product-image image-one">
+                        <span class="product-label">FEATURED</span>
+                        <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    </div>
+
+                    <div class="product-info">
+                        <p class="product-category">ABSTRACT ART</p>
+                        <h3>Abstract Composition No. 01</h3>
+                        <p class="product-price">Price on request</p>
+                    </div>
+
+                </article>
+
+
+                <article class="product-card">
+
+                    <div class="product-image image-two">
+                        <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    </div>
+
+                    <div class="product-info">
+                        <p class="product-category">CONTEMPORARY ART</p>
+                        <h3>Expressions of Life</h3>
+                        <p class="product-price">Price on request</p>
+                    </div>
+
+                </article>
+
+
+                <article class="product-card">
+
+                    <div class="product-image image-three">
+                        <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    </div>
+
+                    <div class="product-info">
+                        <p class="product-category">MODERN ART</p>
+                        <h3>Beyond the Horizon</h3>
+                        <p class="product-price">Price on request</p>
+                    </div>
+
+                </article>
+
+
+                <article class="product-card">
+
+                    <div class="product-image image-four">
+                        <button class="wishlist" aria-label="Add to wishlist">♡</button>
+                    </div>
+
+                    <div class="product-info">
+                        <p class="product-category">FIGURATIVE ART</p>
+                        <h3>Untitled Portrait</h3>
+                        <p class="product-price">Price on request</p>
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- FEATURED BANNER -->
+        <section class="featured" id="featured">
+
+            <div class="featured-content">
+
+                <p class="eyebrow">ART STUDIO SELECTION</p>
+
+                <h2>Find a piece<br>that feels like yours.</h2>
+
+                <a href="#collection" class="primary-button light-button">
+                    DISCOVER MORE
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- ARTISTS -->
+        <section class="artists section-padding" id="artists">
+
+            <p class="eyebrow">THE PEOPLE BEHIND THE ART</p>
+
+            <h2>Meet the artists</h2>
+
+            <p>
+                Discover creative minds and the stories
+                behind their exceptional artwork.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer class="footer">
+
+        <div class="footer-brand">
+            <h2>ART STUDIO.</h2>
+            <p>Art without borders.</p>
+        </div>
+
+        <div class="footer-links">
+            <a href="#about">About us</a>
+            <a href="#collection">Shop paintings</a>
+            <a href="#artists">Artists</a>
+            <a href="mailto:hello@artstudio.example">Contact</a>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2026 ART STUDIO. All rights reserved.</p>
+            <p>AN INTERNATIONAL ART DESTINATION</p>
+        </div>
+
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+</html>

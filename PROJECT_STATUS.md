@@ -68,3 +68,51 @@ Stage 2: Website Design
 - Python Flask
 - MySQL
 - GitHub
+
+
+# ART STUDIO — Project Status
+
+## Project
+Luxury minimalist international painting e-commerce website.
+
+## Technology
+- Frontend: HTML, CSS, JavaScript
+- Backend: Python Flask
+- Database: MySQL
+- Version control: Git and GitHub
+
+## Completed
+- Created ART-STORE project folder.
+- Initialized Git repository.
+- Created private GitHub repository.
+- Connected local project to GitHub.
+- Created templates and static folders.
+- Created homepage HTML, CSS and JavaScript.
+- Created Flask application in app.py.
+- Successfully launched the website locally.
+- Verified that the homepage displays in the browser.
+
+## Current Stage
+Stage 2 — Frontend Development.
+
+## Next Tasks
+1. Improve homepage design.
+2. Create individual painting product pages.
+3. Add product details and prices.
+4. Build shopping cart.
+5. Connect MySQL database.
+6. Build checkout and payment integration.
+7. Test and deploy the website.
+
+## How to Run
+```bash
+python app.py
+```
+
+Open: http://127.0.0.1:5000
+
+## Last Checkpoint
+Homepage successfully running locally.
+
+## Exact Next Step
+Create individual product pages for the paintings.
