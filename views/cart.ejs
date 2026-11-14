@@ -165,6 +165,14 @@
             color: #666;
             font-size: 18px;
         }
+        .flash {
+            background: #f3f1ed;
+            border: 1px solid #e6dccd;
+            color: #333;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
         @media (max-width: 820px) {
             .cart-layout { grid-template-columns: 1fr; }
             .cart-item { grid-template-columns: 100px 1fr; }
@@ -177,7 +185,7 @@
     <header class="header">
         <div class="header-inner">
             <div class="brand">SAATCHI <span>ART</span></div>
-            <a href="{{ url_for('home') }}" class="cart-link">Continue Shopping</a>
+            <a href="/" class="cart-link">Continue Shopping</a>
         </div>
     </header>
 
@@ -186,50 +194,56 @@
             <section class="panel">
                 <h1>Your Cart</h1>
 
-                {% if cart_items %}
-                    {% for item in cart_items %}
+                <% if (messages && messages.length) { %>
+                    <% messages.forEach((message) => { %>
+                        <div class="flash" role="status"><%= message %></div>
+                    <% }) %>
+                <% } %>
+
+                <% if (cart_items && cart_items.length) { %>
+                    <% cart_items.forEach((item) => { %>
                     <div class="cart-item">
-                        <img src="{{ item.image }}" alt="{{ item.title }}" />
+                        <img src="<%= item.image %>" alt="<%= item.title %>" />
                         <div>
-                            <div class="item-title">{{ item.title }}</div>
+                            <div class="item-title"><%= item.title %></div>
                             <div class="item-details">
-                                {{ item.artist }}<br>
-                                {{ item.size }}<br>
-                                {{ item.category }}
+                                <%= item.artist %><br>
+                                <%= item.size %><br>
+                                <%= item.category %>
                             </div>
-                            <form method="post" action="{{ url_for('cart') }}">
+                            <form method="post" action="/cart">
                                 <input type="hidden" name="action" value="update" />
-                                <input type="hidden" name="product_id" value="{{ item.id }}" />
+                                <input type="hidden" name="product_id" value="<%= item.id %>" />
                                 <div class="qty-box" style="margin-top: 12px;">
-                                    <label for="qty-{{ item.id }}">Qty</label>
-                                    <input id="qty-{{ item.id }}" type="number" name="quantity" min="0" value="{{ item.quantity }}" />
+                                    <label for="qty-<%= item.id %>">Qty</label>
+                                    <input id="qty-<%= item.id %>" type="number" name="quantity" min="0" value="<%= item.quantity %>" />
                                     <button type="submit" style="padding:8px 12px; border:1px solid #ddd; background:white; cursor:pointer;">Update</button>
                                 </div>
                             </form>
-                            <form method="post" action="{{ url_for('cart') }}" style="margin-top: 8px;">
+                            <form method="post" action="/cart" style="margin-top: 8px;">
                                 <input type="hidden" name="action" value="remove" />
-                                <input type="hidden" name="product_id" value="{{ item.id }}" />
+                                <input type="hidden" name="product_id" value="<%= item.id %>" />
                                 <button type="submit" class="remove" style="background:none; border:none; cursor:pointer;">Remove</button>
                             </form>
                         </div>
                         <div class="price-box">
-                            <strong>${{ "{:,.2f}".format(item.price) }}</strong>
+                            <strong>$<%= formatCurrency(item.price) %></strong>
                         </div>
                     </div>
-                    {% endfor %}
-                {% else %}
+                    <% }) %>
+                <% } else { %>
                     <div class="empty">Your cart is empty.</div>
-                {% endif %}
+                <% } %>
             </section>
 
             <aside class="summary">
                 <h2>Order Summary</h2>
                 <div class="totals">
-                    <div class="row"><span>Subtotal</span><span>${{ "{:,.2f}".format(subtotal) }}</span></div>
-                    <div class="row"><span>Shipping</span><span>${{ "{:,.2f}".format(shipping) }}</span></div>
-                    <div class="row grand"><span>Total</span><span>${{ "{:,.2f}".format(total) }}</span></div>
+                    <div class="row"><span>Subtotal</span><span>$<%= formatCurrency(subtotal) %></span></div>
+                    <div class="row"><span>Shipping</span><span>$<%= formatCurrency(shipping) %></span></div>
+                    <div class="row grand"><span>Total</span><span>$<%= formatCurrency(total) %></span></div>
                 </div>
-                <a href="{{ url_for('checkout') }}" class="checkout-btn">Checkout</a>
+                <a href="/checkout" class="checkout-btn">Checkout</a>
             </aside>
         </div>
     </main>

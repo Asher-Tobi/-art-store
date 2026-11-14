@@ -1,9 +1,11 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Luxury art gallery e-commerce storefront for original paintings and photography.">
+    <meta property="og:title" content="ART STUDIO | Luxury Art Gallery">
+    <meta property="og:description" content="Luxury art gallery e-commerce storefront for original paintings and photography.">
     <title>ART STUDIO | Luxury Art Gallery</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -593,7 +595,7 @@
 <header class="header">
     <div class="header-inner">
 
-        <a href="{{ url_for('home') }}" class="brand-mark">
+        <a href="/" class="brand-mark">
             ART <span>STUDIO</span>
         </a>
 
@@ -606,9 +608,9 @@
         </nav>
 
         <div class="actions">
-            <a href="{{ url_for('cart') }}" class="icon-btn cart-pill" aria-label="Shopping cart">
+            <a href="/cart" class="icon-btn cart-pill" aria-label="Shopping cart">
                 ♡
-                <span class="cart-count">{{ cart_count }}</span>
+                <span class="cart-count"><%= cart_count %></span>
             </a>
 
             <button class="icon-btn mobile-toggle" id="menuToggle" aria-label="Menu">☰</button>
@@ -646,9 +648,9 @@
         </div>
 
         <div class="category-strip">
-            {% for item in categories %}
-                <a href="#gallery" class="chip">{{ item }}</a>
-            {% endfor %}
+            <% categories.forEach((item) => { %>
+                <a href="#gallery" class="chip"><%= item %></a>
+            <% }) %>
         </div>
     </section>
 
@@ -661,32 +663,32 @@
 
         <div class="gallery">
 
-            {% for item in products %}
+            <% products.forEach((item) => { %>
 
-            <a class="art-card" href="{{ url_for('product_detail', product_id=item.id) }}">
+            <a class="art-card" href="/product/<%= item.id %>">
 
                 <div class="thumb">
-                    <img src="{{ item.image }}" alt="{{ item.title }}">
+                    <img src="<%= item.image %>" alt="<%= item.title %>">
                     <span class="badge">Featured</span>
                     <span class="heart">♡</span>
                 </div>
 
                 <div class="art-meta">
-                    <div class="meta-tag">{{ item.category }}</div>
-                    <h3>{{ item.title }}</h3>
-                    <div class="artist-name">{{ item.artist }}</div>
+                    <div class="meta-tag"><%= item.category %></div>
+                    <h3><%= item.title %></h3>
+                    <div class="artist-name"><%= item.artist %></div>
                     <div class="price">
-                        {% if item.price_display %}
-                            {{ item.price_display }}
-                        {% else %}
-                            ${{ "%.2f"|format(item.price|float) }}
-                        {% endif %}
+                        <% if (item.price_display) { %>
+                            <%= item.price_display %>
+                        <% } else { %>
+                            $<%= Number(item.price).toFixed(2) %>
+                        <% } %>
                     </div>
                 </div>
 
             </a>
 
-            {% endfor %}
+            <% }) %>
 
         </div>
     </section>
@@ -737,6 +739,7 @@
         </div>
     </section>
 
+    <% if (featured_collection && featured_collection.length) { %>
     <section class="section">
 
         <div class="section-heading">
@@ -745,35 +748,36 @@
 
         <div class="gallery">
 
-            {% for item in featured_collection %}
+            <% featured_collection.forEach((item) => { %>
 
-            <a class="art-card" href="{{ url_for('product_detail', product_id=item.id) }}">
+            <a class="art-card" href="/product/<%= item.id %>">
 
                 <div class="thumb">
-                    <img src="{{ item.image }}" alt="{{ item.title }}">
+                    <img src="<%= item.image %>" alt="<%= item.title %>">
                     <span class="badge">Original</span>
                     <span class="heart">♡</span>
                 </div>
 
                 <div class="art-meta">
-                    <div class="meta-tag">{{ item.category }}</div>
-                    <h3>{{ item.title }}</h3>
-                    <div class="artist-name">{{ item.artist }}</div>
+                    <div class="meta-tag"><%= item.category %></div>
+                    <h3><%= item.title %></h3>
+                    <div class="artist-name"><%= item.artist %></div>
                     <div class="price">
-                        {% if item.price_display %}
-                            {{ item.price_display }}
-                        {% else %}
-                            ${{ "%.2f"|format(item.price|float) }}
-                        {% endif %}
+                        <% if (item.price_display) { %>
+                            <%= item.price_display %>
+                        <% } else { %>
+                            $<%= Number(item.price).toFixed(2) %>
+                        <% } %>
                     </div>
                 </div>
 
             </a>
 
-            {% endfor %}
+            <% }) %>
 
         </div>
     </section>
+    <% } %>
 
     <section class="curator-panel">
         <div class="curator-inner">
@@ -868,7 +872,7 @@
             <div class="footer-col">
                 <h4>For Collectors</h4>
                 <a href="#gallery">Explore Art</a>
-                <a href="{{ url_for('cart') }}">Shopping Bag</a>
+                <a href="/cart">Shopping Bag</a>
             </div>
 
             <div class="footer-col">
@@ -886,7 +890,7 @@
             <div class="footer-col">
                 <h4>Information</h4>
                 <a href="#gallery">Collections</a>
-                <a href="{{ url_for('cart') }}">Shopping Bag</a>
+                <a href="/cart">Shopping Bag</a>
             </div>
 
         </div>

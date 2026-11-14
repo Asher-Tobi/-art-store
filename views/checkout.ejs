@@ -87,6 +87,9 @@
             align-items: center;
             margin-bottom: 10px;
         }
+        .payment-option input {
+            width: auto;
+        }
         .crypto-box {
             margin-top: 24px;
             background: #f7f4f1;
@@ -175,12 +178,12 @@
         }
     </style>
 </head>
-<body data-usd-total="{{ total }}" data-btc-usd-price="{{ btc_usd_price }}">
+<body data-usd-total="<%= total %>" data-btc-usd-price="<%= btc_usd_price %>">
     <div class="topbar">Secure checkout</div>
     <header class="header">
         <div class="header-inner">
             <div class="brand">SAATCHI <span>ART</span></div>
-            <a href="{{ url_for('cart') }}" style="font-size:12px; text-transform:uppercase; letter-spacing:0.12em;">Back to Cart</a>
+            <a href="/cart" style="font-size:12px; text-transform:uppercase; letter-spacing:0.12em;">Back to Cart</a>
         </div>
     </header>
 
@@ -189,15 +192,13 @@
             <section class="panel">
                 <h1>Checkout</h1>
 
-                {% with messages = get_flashed_messages() %}
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="flash">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+                <% if (messages && messages.length) { %>
+                    <% messages.forEach((message) => { %>
+                        <div class="flash"><%= message %></div>
+                    <% }) %>
+                <% } %>
 
-                <form method="post">
+                <form method="post" action="/checkout">
                     <div class="row">
                         <div>
                             <label for="name">Full name</label>
@@ -223,17 +224,17 @@
 
                     <div id="bitcoinDetails" class="crypto-box">
                         <div class="wallet-label">Bitcoin wallet address</div>
-                        <div class="wallet-address">{{ btc_wallet_address }}</div>
+                        <div class="wallet-address"><%= btc_wallet_address %></div>
                         <div style="font-size:14px; color:#444; line-height:1.6; margin-bottom:10px;">
                             Send the exact amount below to complete your order.
                         </div>
                         <div>
                             <span>Amount to send:</span>
-                            <span class="btc-amount" id="btcAmount">{{ "%.8f"|format(btc_total) }}</span>
+                            <span class="btc-amount" id="btcAmount"><%= Number(btc_total).toFixed(8) %></span>
                             <span>BTC</span>
                         </div>
                         <div style="margin-top: 8px; color:#666;">
-                            Estimated total: ${{ "{:,.2f}".format(total) }} USD
+                            Estimated total: $<%= formatCurrency(total) %> USD
                         </div>
                     </div>
 
@@ -243,20 +244,20 @@
 
             <aside class="summary">
                 <h2>Your Order</h2>
-                {% for item in cart_items %}
+                <% cart_items.forEach((item) => { %>
                 <div class="item">
                     <div>
-                        <strong>{{ item.title }}</strong><br>
-                        <span>{{ item.quantity }} × {{ item.artist }}</span>
+                        <strong><%= item.title %></strong><br>
+                        <span><%= item.quantity %> × <%= item.artist %></span>
                     </div>
-                    <div>${{ "{:,.2f}".format(item.price * item.quantity) }}</div>
+                    <div>$<%= formatCurrency(item.price * item.quantity) %></div>
                 </div>
-                {% endfor %}
+                <% }) %>
 
                 <div class="totals">
-                    <div class="line"><span>Subtotal</span><span>${{ "{:,.2f}".format(subtotal) }}</span></div>
-                    <div class="line"><span>Shipping</span><span>${{ "{:,.2f}".format(shipping) }}</span></div>
-                    <div class="line grand"><span>Total</span><span>${{ "{:,.2f}".format(total) }}</span></div>
+                    <div class="line"><span>Subtotal</span><span>$<%= formatCurrency(subtotal) %></span></div>
+                    <div class="line"><span>Shipping</span><span>$<%= formatCurrency(shipping) %></span></div>
+                    <div class="line grand"><span>Total</span><span>$<%= formatCurrency(total) %></span></div>
                 </div>
             </aside>
         </div>
