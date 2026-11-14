@@ -87,6 +87,32 @@
             align-items: center;
             margin-bottom: 10px;
         }
+        .crypto-box {
+            margin-top: 24px;
+            background: #f7f4f1;
+            border: 1px solid #e6dccd;
+            padding: 20px 18px;
+        }
+        .wallet-label {
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #585858;
+            margin-bottom: 10px;
+        }
+        .wallet-address {
+            font-size: 15px;
+            word-break: break-all;
+            background: white;
+            border: 1px solid #e7ddd2;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            font-family: monospace;
+        }
+        .btc-amount {
+            font-size: 26px;
+            font-weight: 700;
+        }
         .summary {
             background: white;
             border: 1px solid #ece4dc;
@@ -140,13 +166,16 @@
             padding: 12px 14px;
             margin-bottom: 18px;
         }
+        .hidden {
+            display: none;
+        }
         @media (max-width: 820px) {
             .checkout-layout { grid-template-columns: 1fr; }
             .row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-<body>
+<body data-usd-total="{{ total }}" data-btc-usd-price="{{ btc_usd_price }}">
     <div class="topbar">Secure checkout</div>
     <header class="header">
         <div class="header-inner">
@@ -192,9 +221,20 @@
                         </div>
                     </div>
 
-                    <div style="margin-top: 22px;">
-                        <label for="bitcoin_wallet">Bitcoin wallet address</label>
-                        <input id="bitcoin_wallet" name="bitcoin_wallet" type="text" placeholder="bc1q... or 3...">
+                    <div id="bitcoinDetails" class="crypto-box">
+                        <div class="wallet-label">Bitcoin wallet address</div>
+                        <div class="wallet-address">{{ btc_wallet_address }}</div>
+                        <div style="font-size:14px; color:#444; line-height:1.6; margin-bottom:10px;">
+                            Send the exact amount below to complete your order.
+                        </div>
+                        <div>
+                            <span>Amount to send:</span>
+                            <span class="btc-amount" id="btcAmount">{{ "%.8f"|format(btc_total) }}</span>
+                            <span>BTC</span>
+                        </div>
+                        <div style="margin-top: 8px; color:#666;">
+                            Estimated total: ${{ "{:,.2f}".format(total) }} USD
+                        </div>
                     </div>
 
                     <button type="submit" class="submit-btn">Place order</button>
@@ -221,5 +261,33 @@
             </aside>
         </div>
     </main>
+
+    <script>
+        const usdTotal = Number(document.body.dataset.usdTotal || 0);
+        const btcUsdPrice = Number(document.body.dataset.btcUsdPrice || 68000);
+        const btcAmount = document.getElementById('btcAmount');
+        const bitcoinRadio = document.getElementById('bitcoin');
+        const cardRadio = document.getElementById('card');
+        const bitcoinDetails = document.getElementById('bitcoinDetails');
+
+        function updateBtcAmount() {
+            if (!btcAmount) return;
+            const btcValue = usdTotal > 0 ? usdTotal / btcUsdPrice : 0;
+            btcAmount.textContent = btcValue.toFixed(8);
+        }
+
+        function togglePaymentDetails() {
+            if (bitcoinRadio && bitcoinRadio.checked) {
+                bitcoinDetails.classList.remove('hidden');
+            } else {
+                bitcoinDetails.classList.add('hidden');
+            }
+        }
+
+        bitcoinRadio.addEventListener('change', togglePaymentDetails);
+        cardRadio.addEventListener('change', togglePaymentDetails);
+        updateBtcAmount();
+        togglePaymentDetails();
+    </script>
 </body>
 </html>
