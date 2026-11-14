@@ -5,6 +5,23 @@ from flask import Flask, abort, flash, redirect, render_template, request, sessi
 
 app = Flask(__name__)
 
+BTC_WALLET_ADDRESS = os.environ.get(
+    "BTC_WALLET_ADDRESS",
+    "bc1qexamplewalletreplacewithyourwalletaddress1234567890",
+)
+BTC_USD_PRICE = float(os.environ.get("BTC_USD_PRICE", "68000"))
+
+
+def get_btc_wallet_address():
+    return os.environ.get("BTC_WALLET_ADDRESS", BTC_WALLET_ADDRESS)
+
+
+def calculate_btc_amount(usd_total):
+    if usd_total <= 0:
+        return 0.0
+    return round(float(usd_total) / BTC_USD_PRICE, 8)
+
+
 # Set SECRET_KEY in your environment before deployment.
 # The fallback is only for local development and must not be used in production.
 app.secret_key = os.environ.get("SECRET_KEY", "local-development-key-change-before-deploy")
@@ -282,8 +299,17 @@ def checkout():
             session["cart"] = {}
             return redirect(url_for("checkout_success"))
 
-    return render_template("checkout.html", cart_items=cart_items,
-                           subtotal=subtotal, shipping=shipping, total=total)
+    btc_total = calculate_btc_amount(total)
+    return render_template(
+        "checkout.html",
+        cart_items=cart_items,
+        subtotal=subtotal,
+        shipping=shipping,
+        total=total,
+        btc_total=btc_total,
+        btc_wallet_address=get_btc_wallet_address(),
+        btc_usd_price=BTC_USD_PRICE,
+    )
 
 
 @app.route("/checkout-success")
