@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ product.title }} by {{ product.artist }} — available at ART STUDIO.">
+    <title>{{ product.title }} | ART STUDIO</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        .product-detail-page { max-width: 1240px; margin: 54px auto 90px; padding: 0 5%; }
+        .product-breadcrumb { margin-bottom: 28px; color: #777; font-size: 12px; letter-spacing: .08em; }
+        .product-breadcrumb a, .product-back { color: inherit; text-decoration: none; }
+        .product-detail { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); gap: clamp(32px, 6vw, 84px); align-items: start; }
+        .product-image { background: #f4f2ee; }
+        .product-image img { display: block; width: 100%; max-height: 760px; aspect-ratio: 4 / 5; object-fit: cover; }
+        .product-info { padding-top: 18px; }
+        .product-eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #777; }
+        .product-info h1 { margin: 18px 0 10px; font-family: 'Playfair Display', Georgia, serif; font-size: clamp(32px, 4vw, 48px); line-height: 1.15; font-weight: 400; }
+        .product-artist { color: #555; font-size: 14px; }
+        .product-price { margin: 28px 0 22px; font-size: 20px; }
+        .product-description { max-width: 520px; color: #666; line-height: 1.9; font-size: 14px; }
+        .product-meta { margin: 28px 0; padding: 20px 0; border-top: 1px solid #e6e3df; border-bottom: 1px solid #e6e3df; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .product-meta span { display: block; color: #888; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 7px; }
+        .product-meta strong { font-size: 13px; font-weight: 500; }
+        .add-cart-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-top: 28px; }
+        .quantity-field label { display: block; margin-bottom: 8px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+        .quantity-field input { width: 82px; height: 48px; padding: 0 12px; border: 1px solid #ccc; background: white; font: inherit; }
+        .product-button { min-height: 48px; padding: 0 28px; border: 1px solid #111; background: #111; color: white; cursor: pointer; font: inherit; font-size: 11px; letter-spacing: .13em; text-transform: uppercase; }
+        .product-button:hover { background: #333; }
+        .product-back { display: inline-block; margin-top: 28px; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
+        .product-flashes { margin: 0 0 18px; padding: 12px 15px; background: #f3f1ed; font-size: 13px; }
+        @media (max-width: 760px) { .product-detail-page { margin-top: 28px; } .product-detail { grid-template-columns: 1fr; gap: 25px; } .product-info { padding-top: 0; } .product-image img { max-height: 620px; } }
+    </style>
+</head>
+<body>
+    <main class="product-detail-page">
+        <nav class="product-breadcrumb" aria-label="Breadcrumb">
+            <a href="{{ url_for('home') }}">ART STUDIO</a> / {{ product.category }} / {{ product.title }}
+        </nav>
+
+        <div class="product-detail">
+            <div class="product-image">
+                <img src="{{ product.image }}" alt="{{ product.title }} by {{ product.artist }}" loading="eager">
+            </div>
+
+            <section class="product-info" aria-labelledby="product-title">
+                <p class="product-eyebrow">ART STUDIO — Fine Art Collection</p>
+                <h1 id="product-title">{{ product.title }}</h1>
+                <p class="product-artist">By {{ product.artist }}</p>
+                <p class="product-price">${{ '{:,.2f}'.format(product.price) }} USD</p>
+                <p class="product-description">{{ product.description }}</p>
+
+                <div class="product-meta">
+                    <div><span>Category</span><strong>{{ product.category }}</strong></div>
+                    <div><span>Artwork size</span><strong>{{ product.size }}</strong></div>
+                </div>
+
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <p class="product-flashes" role="status">{{ message }}</p>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form class="add-cart-form" action="{{ url_for('add_to_cart') }}" method="POST">
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <div class="quantity-field">
+                        <label for="quantity">Quantity</label>
+                        <input id="quantity" type="number" name="quantity" value="1" min="1" max="20" required>
+                    </div>
+                    <button class="product-button" type="submit">Add to bag</button>
+                </form>
+
+                <a class="product-back" href="{{ url_for('home') }}">← Continue exploring the collection</a>
+            </section>
+        </div>
+    </main>
+</body>
+</html>

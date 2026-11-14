@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Confirmed | ART STUDIO</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f2ee;
+            color: #171717;
+        }
+        .wrap {
+            max-width: 760px;
+            margin: 80px auto;
+            background: white;
+            border: 1px solid #ebdfd5;
+            padding: 40px 28px;
+        }
+        h1 {
+            font-size: 38px;
+            margin-top: 0;
+            font-weight: 500;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #444;
+        }
+        .box {
+            background: #f9f6f2;
+            border: 1px solid #f0e4d8;
+            padding: 20px;
+            margin-top: 22px;
+        }
+        .btn {
+            display: inline-block;
+            background: #111;
+            color: white;
+            padding: 14px 18px;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 12px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <h1>Order Confirmed</h1>
+        <p>Thank you, {{ order.name }}. Your artwork request has been received and will be prepared for delivery.</p>
+
+        <div class="box">
+            <strong>Order summary</strong>
+            <p>
+                Payment method: {{ order.payment_method|upper }}<br>
+                Total: ${{ "{:,.2f}".format(order.total) }}<br>
+                Email: {{ order.email }}
+            </p>
+        </div>
+
+        <p>We will send confirmation and shipping details to your inbox shortly.</p>
+        <a href="{{ url_for('home') }}" class="btn">Continue shopping</a>
+    </main>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Confirmed | ART STUDIO</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f7f4f1;
+            color: #171717;
+        }
+        .wrap {
+            max-width: 900px;
+            margin: 80px auto;
+            padding: 40px 20px;
+        }
+        .card {
+            background: white;
+            border: 1px solid #eadfce;
+            padding: 42px 32px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 38px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        p {
+            font-size: 18px;
+            color: #444;
+            line-height: 1.7;
+        }
+        .button {
+            display: inline-block;
+            background: #111;
+            color: white;
+            padding: 16px 28px;
+            margin-top: 18px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-size: 12px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <div class="card">
+            <h1>Order confirmed.</h1>
+            <p>Thank you, {{ order.name }}. Your purchase request has been received.</p>
+            <p>Payment method: {{ order.payment_method|upper }}{% if order.payment_method == 'bitcoin' %} — {{ order.bitcoin_wallet }}{% endif %}</p>
+            <p>Total: ${{ "{:,.2f}".format(order.total) }}</p>
+            <a href="{{ url_for('home') }}" class="button">Continue shopping</a>
+        </div>
+    </main>
+</body>
+</html>
