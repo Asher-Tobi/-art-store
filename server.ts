@@ -64,8 +64,12 @@ const PORT = Number(process.env.PORT || "3000") || 3000;
 const BTC_WALLET_ADDRESS =
   process.env.BTC_WALLET_ADDRESS ||
   "bc1qktk2z0wjfwfjj0psasspls8suj86ejr87ua9gu";
-const ETH_WALLET_ADDRESS = process.env.ETH_WALLET_ADDRESS || "";
-const SOL_WALLET_ADDRESS = process.env.SOL_WALLET_ADDRESS || "";
+const ETH_WALLET_ADDRESS =
+  process.env.ETH_WALLET_ADDRESS ||
+  "0x120D139dB706614f71e470A97852679F6FaebcB7";
+const SOL_WALLET_ADDRESS =
+  process.env.SOL_WALLET_ADDRESS ||
+  "X2ro74HaRbZ2XKDJ57yMmsKFD3CS4y9XFKtzSeQkCQ1";
 const BTC_USD_PRICE = Number(process.env.BTC_USD_PRICE || "63389") || 63389;
 const ETH_USD_PRICE = Number(process.env.ETH_USD_PRICE || "1740") || 1740;
 const SOL_USD_PRICE = Number(process.env.SOL_USD_PRICE || "69") || 69;
