@@ -158,6 +158,12 @@
             align-items: start;
         }
 
+        .artwork-gallery {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
         .artwork-frame {
             position: relative;
             aspect-ratio: 4 / 5;
@@ -175,6 +181,50 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+        }
+
+        .view-counter {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            background: rgba(10, 10, 10, 0.72);
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 2px;
+        }
+
+        .thumb-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .thumb-btn {
+            position: relative;
+            aspect-ratio: 4 / 5;
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 2px;
+            padding: 4px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: border-color 0.15s ease;
+        }
+
+        .thumb-btn:hover {
+            border-color: #737373;
+        }
+
+        .thumb-btn.active {
+            border: 2px solid #0a0a0a;
+        }
+
+        .thumb-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .artwork-tag {
@@ -423,9 +473,32 @@
         </nav>
 
         <article class="pdp-grid">
-            <div class="artwork-frame">
-                <span class="artwork-tag">Original Work</span>
-                <img src="<%= product.image %>" alt="<%= product.title %> by <%= product.artist %>" loading="eager" referrerPolicy="no-referrer">
+            <% const galleryImages = (product.images && product.images.length) ? product.images : [product.image]; %>
+            <div class="artwork-gallery">
+                <div class="artwork-frame">
+                    <span class="artwork-tag">Original Work</span>
+                    <img id="mainProductImg" src="<%= galleryImages[0] %>" alt="<%= product.title %> by <%= product.artist %>" loading="eager" referrerPolicy="no-referrer">
+                    <% if (galleryImages.length > 1) { %>
+                        <span class="view-counter" id="viewCounter">View 1 of <%= galleryImages.length %></span>
+                    <% } %>
+                </div>
+
+                <% if (galleryImages.length > 1) { %>
+                <div class="thumb-grid" role="list" aria-label="Additional views">
+                    <% galleryImages.forEach((imgSrc, idx) => { %>
+                    <button
+                        type="button"
+                        class="thumb-btn <%= idx === 0 ? 'active' : '' %>"
+                        data-src="<%= imgSrc %>"
+                        data-index="<%= idx + 1 %>"
+                        data-total="<%= galleryImages.length %>"
+                        aria-label="View angle <%= idx + 1 %>"
+                    >
+                        <img src="<%= imgSrc %>" alt="<%= product.title %> view <%= idx + 1 %>" loading="lazy" referrerPolicy="no-referrer" />
+                    </button>
+                    <% }) %>
+                </div>
+                <% } %>
             </div>
 
             <section class="purchase-panel" aria-labelledby="product-title">
@@ -483,6 +556,22 @@
         </div>
     </footer>
 
+    <script>
+        const mainImg = document.getElementById('mainProductImg');
+        const viewCounter = document.getElementById('viewCounter');
+        const thumbBtns = document.querySelectorAll('.thumb-btn');
+        thumbBtns.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                if (mainImg && btn.dataset.src) {
+                    mainImg.src = btn.dataset.src;
+                }
+                if (viewCounter && btn.dataset.index && btn.dataset.total) {
+                    viewCounter.textContent = `View ${btn.dataset.index} of ${btn.dataset.total}`;
+                }
+                thumbBtns.forEach((b) => b.classList.toggle('active', b === btn));
+            });
+        });
+    </script>
     <script src="/static/js/cart-sync.js"></script>
 </body>
 </html>

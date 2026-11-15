@@ -15,6 +15,7 @@ interface Product {
   price_display: string;
   size: string;
   image: string;
+  images?: string[];
   description: string;
 }
 
@@ -191,6 +192,37 @@ const products: Product[] = [
     image: "/static/images/mary-ogochukwu-memories-sand.jpg",
     description:
       "A unique 2025 contemporary figurative acrylic painting on canvas by Nigerian artist Mary Ogochukwu, capturing expressive warmth, movement, and sunlit memory. Accompanied by a Certificate of Authenticity.",
+  },
+  {
+    id: 15,
+    title: "Chestnut & Bay Horses in Landscape",
+    artist: "Albert Clark",
+    category: "Painting",
+    price: 3313.67,
+    price_display: "$3,313.67",
+    size: "32 x 28 in",
+    image: "/static/images/albert-clark-horses.jpg",
+    description:
+      "Signed and dated 1887 oil on canvas by British Victorian sporting artist Albert Clark (1843–1928), depicting a chestnut and a bay horse standing face to face in an open English field, presented in an ornate antique gilt frame.",
+  },
+  {
+    id: 16,
+    title: "White Marble Italian Torso Sculpture",
+    artist: "Italian School",
+    category: "Sculpture",
+    price: 2485.85,
+    price_display: "$2,485.85",
+    size: "5.9 x 13 x 3.2 in",
+    image: "/static/images/white-marble-torso.jpg",
+    images: [
+      "/static/images/white-marble-torso.jpg",
+      "/assets/aistudio/Unknown_1_d2a06c55.webp",
+      "/assets/aistudio/Unknown_2_8c7f2d21.webp",
+      "/assets/aistudio/Unknown_3_1958b1a2.webp",
+      "/assets/aistudio/Unknown_4_c1695a32.webp",
+    ],
+    description:
+      "Hand-carved 20th-century Italian Grand Tour classical torso in warm white marble with subtle natural veining and weathered patina, mounted upright on a minimalist black steel display stand.",
   },
 ];
 
