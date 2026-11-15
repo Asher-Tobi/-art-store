@@ -4,67 +4,263 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Order Confirmed | ART STUDIO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f2ee;
-            color: #171717;
+            font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #fafafa;
+            color: #0f0f0f;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { color: inherit; text-decoration: none; }
+        .topbar {
+            background: #0f0f0f;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px 16px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #dcdcdc;
+        }
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand {
+            font-family: "Playfair Display", Georgia, serif;
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #0f0f0f;
         }
         .wrap {
-            max-width: 760px;
-            margin: 80px auto;
-            background: white;
-            border: 1px solid #ebdfd5;
-            padding: 40px 28px;
+            max-width: 780px;
+            margin: 48px auto 80px;
+            padding: 0 20px;
+        }
+        .card {
+            background: #ffffff;
+            border: 1px solid #dcdcdc;
+            padding: 36px 32px;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(16, 185, 129, 0.12);
+            color: #047857;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
         }
         h1 {
-            font-size: 38px;
-            margin-top: 0;
-            font-weight: 500;
+            font-family: "Playfair Display", Georgia, serif;
+            margin: 0 0 10px;
+            font-size: 32px;
+            font-weight: 400;
         }
-        p {
-            font-size: 16px;
-            line-height: 1.8;
-            color: #444;
+        .lead {
+            margin: 0 0 24px;
+            font-size: 14px;
+            color: #525252;
+            line-height: 1.6;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 22px;
         }
         .box {
-            background: #f9f6f2;
-            border: 1px solid #f0e4d8;
+            background: #fafafa;
+            border: 1px solid #e5e5e5;
+            padding: 18px;
+        }
+        .box h3 {
+            margin: 0 0 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #525252;
+        }
+        .box p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #262626;
+        }
+        .settlement-box {
+            background: #fafafa;
+            border: 1px solid #d4d4d4;
             padding: 20px;
-            margin-top: 22px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .qr-frame {
+            width: 120px;
+            height: 120px;
+            background: #ffffff;
+            border: 1px solid #dcdcdc;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        .qr-frame svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        .items-box {
+            border-top: 1px solid #e5e5e5;
+            padding-top: 18px;
+            margin-top: 18px;
+        }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0eee9;
+            font-size: 13px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 14px;
+            margin-top: 8px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .actions {
+            margin-top: 28px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
         .btn {
             display: inline-block;
-            background: #111;
-            color: white;
-            padding: 14px 18px;
-            margin-top: 20px;
+            background: #0f0f0f;
+            color: #ffffff;
+            padding: 15px 26px;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
-            font-size: 12px;
-            text-decoration: none;
+            letter-spacing: 0.14em;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .btn:hover { background: #262626; }
+        @media (max-width: 680px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .settlement-box { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
-<body>
-    <main class="wrap">
-        <h1>Order Confirmed</h1>
-        <p>Thank you, <%= order.name %>. Your artwork request has been received and will be prepared for delivery.</p>
-
-        <div class="box">
-            <strong>Order summary</strong>
-            <p>
-                Reference: <%= order.reference %><br>
-                Payment method: <%= order.payment_method.toUpperCase() %><br>
-                Total: $<%= formatCurrency(order.total) %><br>
-                Email: <%= order.email %>
-            </p>
+<body data-cid="<%= cid %>">
+    <div class="topbar">Order Confirmation · Reference #<%= order.reference %></div>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="brand">ART STUDIO</a>
         </div>
+    </header>
 
-        <p>We will send confirmation and shipping details to your inbox shortly.</p>
-        <a href="/" class="btn">Continue shopping</a>
+    <main class="wrap">
+        <section class="card">
+            <div class="status-badge">✓ Order Confirmed · Awaiting On-Chain Settlement</div>
+            <h1>Thank you, <%= order.name %>.</h1>
+            <p class="lead">
+                Your order <strong>#<%= order.reference %></strong> has been registered. Please complete your <strong><%= order.payment_symbol %></strong> transfer below so our fine art courier team can prepare your shipment.
+            </p>
+
+            <div class="settlement-box">
+                <% if (order.qr_svg) { %>
+                <div class="qr-frame">
+                    <%- order.qr_svg %>
+                </div>
+                <% } %>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #525252; margin-bottom: 6px;">
+                        <%= order.payment_method.toUpperCase() %> (<%= order.payment_symbol %>) · <%= order.payment_network %>
+                    </div>
+                    <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px;" class="mono">
+                        <%= order.crypto_amount %> <%= order.payment_symbol %>
+                        <span style="font-size: 13px; color: #6b6b6b; font-weight: 500;">(≈ $<%= formatCurrency(order.total) %> USD)</span>
+                    </div>
+                    <div style="font-size: 12px; color: #404040; word-break: break-all;" class="mono">
+                        Deposit Address: <%= order.wallet_address %>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="box">
+                    <h3>Contact Details</h3>
+                    <p>
+                        <strong><%= order.name %></strong><br>
+                        <%= order.email %><br>
+                        <%= order.phone %>
+                    </p>
+                </div>
+                <div class="box">
+                    <h3>Shipping Destination</h3>
+                    <p>
+                        <%= order.address %><% if (order.apartment) { %>, <%= order.apartment %><% } %><br>
+                        <%= order.city %>, <%= order.state %> <%= order.zip_code %><br>
+                        <%= order.country %>
+                    </p>
+                </div>
+            </div>
+
+            <div class="items-box">
+                <h3 style="margin: 0 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #525252;">Artworks Ordered</h3>
+                <% order.items.forEach((item) => { %>
+                <div class="item-row">
+                    <div>
+                        <strong><%= item.title %></strong>
+                        <span style="display: block; color: #6b6b6b; font-size: 12px;">Quantity: <%= item.quantity %> · <%= item.artist %></span>
+                    </div>
+                    <span class="mono">$<%= formatCurrency(item.price * item.quantity) %></span>
+                </div>
+                <% }) %>
+                <% if (order.discount > 0) { %>
+                <div class="item-row" style="color: #047857;">
+                    <span>Collector Promotion (10% off)</span>
+                    <span class="mono">-$<%= formatCurrency(order.discount) %></span>
+                </div>
+                <% } %>
+                <div class="total-row">
+                    <span>Total</span>
+                    <span class="mono">$<%= formatCurrency(order.total) %> USD</span>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="/" class="btn">Continue Shopping</a>
+            </div>
+        </section>
     </main>
+    <script src="/static/js/cart-sync.js"></script>
 </body>
 </html>

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import session from "express-session";
+import QRCode from "qrcode";
 
 interface Product {
   id: number;
@@ -25,8 +26,23 @@ interface Order {
   reference: string;
   name: string;
   email: string;
+  phone: string;
+  country: string;
+  address: string;
+  apartment: string;
+  city: string;
+  state: string;
+  zip_code: string;
   payment_method: string;
+  payment_symbol: string;
+  payment_network: string;
+  crypto_amount: string;
+  wallet_address: string;
+  qr_svg: string;
   payment_status: string;
+  subtotal: number;
+  discount: number;
+  shipping: number;
   total: number;
   items: CartItem[];
 }
@@ -34,6 +50,7 @@ interface Order {
 declare module "express-session" {
   interface SessionData {
     cart?: Record<string, number>;
+    cartId?: string;
     order?: Order;
     flashes?: string[];
   }
@@ -45,8 +62,12 @@ const __dirname = path.dirname(__filename);
 const PORT = Number(process.env.PORT || "3000") || 3000;
 const BTC_WALLET_ADDRESS =
   process.env.BTC_WALLET_ADDRESS ||
-  "bc1qexamplewalletreplacewithyourwalletaddress1234567890";
-const BTC_USD_PRICE = Number(process.env.BTC_USD_PRICE || "68000") || 68000;
+  "bc1qktk2z0wjfwfjj0psasspls8suj86ejr87ua9gu";
+const ETH_WALLET_ADDRESS = process.env.ETH_WALLET_ADDRESS || "";
+const SOL_WALLET_ADDRESS = process.env.SOL_WALLET_ADDRESS || "";
+const BTC_USD_PRICE = Number(process.env.BTC_USD_PRICE || "63389") || 63389;
+const ETH_USD_PRICE = Number(process.env.ETH_USD_PRICE || "1740") || 1740;
+const SOL_USD_PRICE = Number(process.env.SOL_USD_PRICE || "69") || 69;
 const SECRET_KEY =
   process.env.SECRET_KEY || "local-development-key-change-before-deploy";
 
@@ -99,6 +120,78 @@ const products: Product[] = [
     description:
       "An atmospheric painting that reads like a twilight memory, balancing earthy pigment with layered, reflective motion.",
   },
+  {
+    id: 9,
+    title: "Grapes in a Teal Bowl",
+    artist: "Juan Alvarez",
+    category: "Painting",
+    price: 1280.0,
+    price_display: "$1,280",
+    size: "24 x 24 in",
+    image: "/assets/aistudio/12654265-ZLCJTDIX-7_95a7c268.jpg",
+    description:
+      "An expressive still-life painting pairing deep red grapes on the stem with a luminous teal ceramic bowl against muted slate and stone tones.",
+  },
+  {
+    id: 10,
+    title: "Figures in Stride",
+    artist: "Luc Moreau",
+    category: "Sculpture",
+    price: 2450.0,
+    price_display: "$2,450",
+    size: "18 x 16 x 4 in",
+    image: "/assets/aistudio/product_10_0fec4e65.jpg",
+    description:
+      "A dark patinated bronze figurative sculpture capturing four elongated silhouettes in synchronized motion, mounted on a minimalist plinth for contemporary interiors.",
+  },
+  {
+    id: 11,
+    title: "Atlantic Drift",
+    artist: "Gregory Christeas",
+    category: "Painting",
+    price: 20000.0,
+    price_display: "$20,000",
+    size: "48 x 60 in",
+    image: "/static/images/atlantic-drift.jpg",
+    description:
+      "An original abstract painting from the Parallels Series created with specialty metallic and fluorescent acrylics on stretched canvas, inspired by the shifting reflections and enduring rhythm of the Atlantic Ocean.",
+  },
+  {
+    id: 12,
+    title: "Mushroom Lamp No. 4",
+    artist: "Cozy Art Land",
+    category: "Sculpture",
+    price: 161.0,
+    price_display: "$161",
+    size: "5.1 x 5.9 x 5.1 in",
+    image: "/static/images/12649329-PYQGAIGQ-7.jpg",
+    description:
+      "Handcrafted sculptural table lamp combining frosted blue-rimmed glass, natural wood base, and warm LED illumination in an organic study of light and form.",
+  },
+  {
+    id: 13,
+    title: "Flag Halyard Lounge Chair (GE225)",
+    artist: "Hans J. Wegner",
+    category: "Furniture",
+    price: 39700.0,
+    price_display: "$39,700",
+    size: "41.3 x 46.1 x 29.9 in",
+    image: "/static/images/hans-wegner-ge225.jpg",
+    description:
+      "Early 1958 edition of Hans J. Wegner's iconic Flag Halyard lounge chair (Model GE225), woven from 250 meters of flag halyard rope over a dark green lacquered and chromed steel frame with original wooden feet, leather headrest, and sheepskin throw.",
+  },
+  {
+    id: 14,
+    title: "Memories in the Sand",
+    artist: "Mary Ogochukwu",
+    category: "Painting",
+    price: 1450.0,
+    price_display: "$1,450",
+    size: "40 x 30 x 1 in",
+    image: "/static/images/mary-ogochukwu-memories-sand.jpg",
+    description:
+      "A unique 2025 contemporary figurative acrylic painting on canvas by Nigerian artist Mary Ogochukwu, capturing expressive warmth, movement, and sunlit memory. Accompanied by a Certificate of Authenticity.",
+  },
 ];
 
 const featuredCollection: Product[] = [];
@@ -111,28 +204,215 @@ const categories: string[] = [
   "Paintings",
   "Photography",
   "Sculpture",
+  "Furniture",
   "Drawings",
   "Mixed Media",
-  "Fine Art Prints",
 ];
 
-function getBtcWalletAddress(): string {
-  return process.env.BTC_WALLET_ADDRESS || BTC_WALLET_ADDRESS;
+type CryptoMethodKey = "bitcoin" | "ethereum" | "solana";
+
+interface CryptoOptionPayload {
+  key: CryptoMethodKey;
+  label: string;
+  symbol: string;
+  icon: string;
+  accentColor: string;
+  network: string;
+  walletAddress: string;
+  usdPrice: number;
+  amount: string;
+  decimals: number;
+  qrSvg: string;
 }
 
-function calculateBtcAmount(usdTotal: number): number {
-  if (usdTotal <= 0) {
-    return 0.0;
+let cachedCryptoPrices: {
+  bitcoin: number;
+  ethereum: number;
+  solana: number;
+  fetchedAt: number;
+} | null = null;
+
+async function getCryptoPrices(): Promise<{
+  bitcoin: number;
+  ethereum: number;
+  solana: number;
+}> {
+  const now = Date.now();
+  if (cachedCryptoPrices && now - cachedCryptoPrices.fetchedAt < 60_000) {
+    return {
+      bitcoin: cachedCryptoPrices.bitcoin,
+      ethereum: cachedCryptoPrices.ethereum,
+      solana: cachedCryptoPrices.solana,
+    };
   }
-  return Number((Number(usdTotal) / BTC_USD_PRICE).toFixed(8));
+
+  const fallback = {
+    bitcoin: BTC_USD_PRICE,
+    ethereum: ETH_USD_PRICE,
+    solana: SOL_USD_PRICE,
+  };
+
+  try {
+    const response = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd",
+      { signal: AbortSignal.timeout(3000) }
+    );
+    if (!response.ok) {
+      return fallback;
+    }
+    const data = (await response.json()) as {
+      bitcoin?: { usd?: number };
+      ethereum?: { usd?: number };
+      solana?: { usd?: number };
+    };
+    const prices = {
+      bitcoin: Number(data?.bitcoin?.usd) || fallback.bitcoin,
+      ethereum: Number(data?.ethereum?.usd) || fallback.ethereum,
+      solana: Number(data?.solana?.usd) || fallback.solana,
+    };
+    cachedCryptoPrices = { ...prices, fetchedAt: now };
+    return prices;
+  } catch {
+    return fallback;
+  }
+}
+
+function getCryptoWallets(): Record<CryptoMethodKey, string> {
+  return {
+    bitcoin: (process.env.BTC_WALLET_ADDRESS || BTC_WALLET_ADDRESS).trim(),
+    ethereum: (process.env.ETH_WALLET_ADDRESS || ETH_WALLET_ADDRESS).trim(),
+    solana: (process.env.SOL_WALLET_ADDRESS || SOL_WALLET_ADDRESS).trim(),
+  };
+}
+
+function calculateCryptoAmount(
+  usdTotal: number,
+  usdPrice: number,
+  decimals: number
+): string {
+  if (usdTotal <= 0 || usdPrice <= 0) {
+    return (0).toFixed(decimals);
+  }
+  return (Number(usdTotal) / usdPrice).toFixed(decimals);
+}
+
+async function generateWalletQrSvg(
+  scheme: string,
+  address: string,
+  amount: string
+): Promise<string> {
+  if (!address) {
+    return "";
+  }
+  const uri =
+    scheme === "ethereum"
+      ? `ethereum:${address}`
+      : `${scheme}:${address}?amount=${amount}`;
+  try {
+    return await QRCode.toString(uri, {
+      type: "svg",
+      margin: 1,
+      width: 140,
+      color: { dark: "#0f0f0f", light: "#ffffff" },
+    });
+  } catch {
+    return "";
+  }
+}
+
+async function buildCryptoOptions(
+  usdTotal: number,
+  prices: { bitcoin: number; ethereum: number; solana: number }
+): Promise<Record<CryptoMethodKey, CryptoOptionPayload>> {
+  const wallets = getCryptoWallets();
+  const btcAmount = calculateCryptoAmount(usdTotal, prices.bitcoin, 8);
+  const ethAmount = calculateCryptoAmount(usdTotal, prices.ethereum, 6);
+  const solAmount = calculateCryptoAmount(usdTotal, prices.solana, 4);
+
+  const [btcQr, ethQr, solQr] = await Promise.all([
+    generateWalletQrSvg("bitcoin", wallets.bitcoin, btcAmount),
+    generateWalletQrSvg("ethereum", wallets.ethereum, ethAmount),
+    generateWalletQrSvg("solana", wallets.solana, solAmount),
+  ]);
+
+  return {
+    bitcoin: {
+      key: "bitcoin",
+      label: "Bitcoin",
+      symbol: "BTC",
+      icon: "₿",
+      accentColor: "#F7931A",
+      network: "Bitcoin Network",
+      walletAddress: wallets.bitcoin,
+      usdPrice: prices.bitcoin,
+      decimals: 8,
+      amount: btcAmount,
+      qrSvg: btcQr,
+    },
+    ethereum: {
+      key: "ethereum",
+      label: "Ethereum",
+      symbol: "ETH",
+      icon: "Ξ",
+      accentColor: "#627EEA",
+      network: "Ethereum Mainnet (ERC-20)",
+      walletAddress: wallets.ethereum,
+      usdPrice: prices.ethereum,
+      decimals: 6,
+      amount: ethAmount,
+      qrSvg: ethQr,
+    },
+    solana: {
+      key: "solana",
+      label: "Solana",
+      symbol: "SOL",
+      icon: "◎",
+      accentColor: "#9945FF",
+      network: "Solana Mainnet",
+      walletAddress: wallets.solana,
+      usdPrice: prices.solana,
+      decimals: 4,
+      amount: solAmount,
+      qrSvg: solQr,
+    },
+  };
 }
 
 function getProductById(productId: string | number): Product | undefined {
   return productLookup.get(String(productId));
 }
 
-function getCart(req: Request): Record<string, number> {
-  const rawCart = req.session.cart;
+const cartStore = new Map<string, Record<string, number>>();
+const orderStore = new Map<string, Order>();
+const flashStore = new Map<string, string[]>();
+
+function isValidCartId(value: unknown): value is string {
+  return typeof value === "string" && /^[a-zA-Z0-9_-]{8,64}$/.test(value);
+}
+
+function getRequestCartId(req: Request): string | undefined {
+  const fromBody = req.body && typeof req.body === "object" ? (req.body as Record<string, unknown>).cid : undefined;
+  if (isValidCartId(fromBody)) return fromBody;
+  const fromQuery = req.query?.cid;
+  if (isValidCartId(fromQuery)) return fromQuery;
+  const fromHeader = req.headers["x-cart-id"];
+  if (isValidCartId(fromHeader)) return fromHeader;
+  if (isValidCartId(req.session?.cartId)) return req.session.cartId;
+  return undefined;
+}
+
+function ensureCartId(req: Request): string {
+  const existing = getRequestCartId(req);
+  if (existing) {
+    req.session.cartId = existing;
+    return existing;
+  }
+  const fresh = crypto.randomUUID().replace(/-/g, "");
+  req.session.cartId = fresh;
+  return fresh;
+}
+
+function sanitizeCart(rawCart: unknown): Record<string, number> {
   if (!rawCart || typeof rawCart !== "object" || Array.isArray(rawCart)) {
     return {};
   }
@@ -148,6 +428,25 @@ function getCart(req: Request): Record<string, number> {
     }
   }
   return cleanCart;
+}
+
+function getCart(req: Request): Record<string, number> {
+  if (req.session.cart !== undefined) {
+    return sanitizeCart(req.session.cart);
+  }
+  const cid = getRequestCartId(req);
+  if (cid && cartStore.has(cid)) {
+    return sanitizeCart(cartStore.get(cid));
+  }
+  return {};
+}
+
+function saveCart(req: Request, cart: Record<string, number>): string {
+  const cid = ensureCartId(req);
+  const clean = sanitizeCart(cart);
+  req.session.cart = clean;
+  cartStore.set(cid, clean);
+  return cid;
 }
 
 function getCartCount(req: Request): number {
@@ -190,22 +489,94 @@ function pushFlash(req: Request, message: string): void {
     req.session.flashes = [];
   }
   req.session.flashes.push(message);
+  const cid = getRequestCartId(req);
+  if (cid) {
+    const existing = flashStore.get(cid) ?? [];
+    existing.push(message);
+    flashStore.set(cid, existing);
+  }
 }
 
 function consumeFlashes(req: Request): string[] {
-  const messages = req.session.flashes ?? [];
+  const sessionFlashes = req.session.flashes ?? [];
   req.session.flashes = [];
-  return messages;
+  const cid = getRequestCartId(req);
+  const storeFlashes = cid ? flashStore.get(cid) ?? [] : [];
+  if (cid) {
+    flashStore.delete(cid);
+  }
+  return sessionFlashes.length > 0 ? sessionFlashes : storeFlashes;
+}
+
+function redirectWithSession(
+  req: Request,
+  res: Response,
+  targetPath: string,
+  cid?: string
+): void {
+  const hasSessionCookie = Boolean(
+    req.headers.cookie && req.headers.cookie.includes("connect.sid=")
+  );
+  const activeCid = cid || getRequestCartId(req);
+  const url =
+    !hasSessionCookie && activeCid
+      ? `${targetPath}${targetPath.includes("?") ? "&" : "?"}cid=${encodeURIComponent(activeCid)}`
+      : targetPath;
+
+  req.session.save(() => {
+    res.redirect(url);
+  });
 }
 
 const app = express();
-app.set("trust proxy", 1);
+app.set("trust proxy", true);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 app.use("/static", express.static(path.join(__dirname, "static")));
+app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const forwardedProto = String(req.headers["x-forwarded-proto"] || "")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  const isHttps = req.secure || forwardedProto === "https";
+
+  if (isHttps) {
+    const origSetHeader = res.setHeader.bind(res);
+    res.setHeader = ((
+      name: string,
+      value: number | string | readonly string[]
+    ) => {
+      if (name.toLowerCase() === "set-cookie") {
+        const list = Array.isArray(value) ? value : [String(value)];
+        const updated = list.map((cookieStr) => {
+          if (!cookieStr.startsWith("connect.sid=")) return cookieStr;
+          let nextCookie = cookieStr.replace(
+            /;\s*SameSite=Lax/gi,
+            "; SameSite=None"
+          );
+          if (!/;\s*SameSite=/i.test(nextCookie)) {
+            nextCookie += "; SameSite=None";
+          }
+          if (!/;\s*Secure/i.test(nextCookie)) {
+            nextCookie += "; Secure";
+          }
+          if (!/;\s*Partitioned/i.test(nextCookie)) {
+            nextCookie += "; Partitioned";
+          }
+          return nextCookie;
+        });
+        return origSetHeader(name, updated);
+      }
+      return origSetHeader(name, value);
+    }) as typeof res.setHeader;
+  }
+  next();
+});
 
 app.use(
   session({
@@ -222,21 +593,53 @@ app.use(
 );
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.secure && req.session?.cookie) {
-    req.session.cookie.sameSite = "none";
-    req.session.cookie.secure = true;
+  const cid = getRequestCartId(req);
+  if (cid && !req.session.cartId) {
+    req.session.cartId = cid;
+  }
+  if (req.session.cart === undefined && cid && cartStore.has(cid)) {
+    req.session.cart = sanitizeCart(cartStore.get(cid));
   }
   res.locals.cart_count = getCartCount(req);
   res.locals.brand_name = "ART STUDIO";
   res.locals.formatCurrency = formatCurrency;
+  res.locals.cid = cid ?? "";
   next();
 });
 
-app.get("/", (_req: Request, res: Response) => {
+app.get(["/", "/shop"], (req: Request, res: Response) => {
+  const categoryFilter = String(req.query.category ?? "").trim();
+  const artistFilter = String(req.query.artist ?? "").trim();
+  let filtered = products;
+  if (categoryFilter && categoryFilter.toLowerCase() !== "all") {
+    filtered = filtered.filter(
+      (p) => p.category.toLowerCase() === categoryFilter.toLowerCase()
+    );
+  }
+  if (artistFilter && artistFilter.toLowerCase() !== "all") {
+    filtered = filtered.filter(
+      (p) => p.artist.toLowerCase() === artistFilter.toLowerCase()
+    );
+  }
   res.render("index", {
     categories,
-    products,
+    products: filtered,
+    all_products: products,
     featured_collection: featuredCollection,
+    active_category: categoryFilter || "All",
+    active_artist: artistFilter || "All",
+  });
+});
+
+app.get("/api/cart", (req: Request, res: Response) => {
+  const cartItems = getCartItems(req);
+  const { subtotal, shipping, total } = calculateTotals(cartItems);
+  res.json({
+    cart_count: getCartCount(req),
+    items: cartItems,
+    subtotal,
+    shipping,
+    total,
   });
 });
 
@@ -273,8 +676,11 @@ app.get("/search", (req: Request, res: Response) => {
   res.render("index", {
     categories,
     products: results,
+    all_products: products,
     featured_collection: [],
     search_query: query,
+    active_category: "All",
+    active_artist: "All",
   });
 });
 
@@ -294,6 +700,7 @@ app.post("/cart", (req: Request, res: Response) => {
   const action = String(req.body.action ?? "");
   const productId = String(req.body.product_id ?? "");
   const currentCart = getCart(req);
+  const cid = ensureCartId(req);
 
   if (action === "remove") {
     delete currentCart[productId];
@@ -309,8 +716,8 @@ app.post("/cart", (req: Request, res: Response) => {
     }
   }
 
-  req.session.cart = currentCart;
-  res.redirect("/cart");
+  saveCart(req, currentCart);
+  redirectWithSession(req, res, "/cart", cid);
 });
 
 app.post("/add-to-cart", (req: Request, res: Response) => {
@@ -321,12 +728,13 @@ app.post("/add-to-cart", (req: Request, res: Response) => {
     return;
   }
 
+  const cid = ensureCartId(req);
   const parsed = Number.parseInt(String(req.body.quantity ?? "1"), 10);
   const quantity = Number.isNaN(parsed) ? 1 : parsed;
 
   if (quantity < 1 || quantity > 20) {
     pushFlash(req, "Please choose a quantity between 1 and 20.");
-    res.redirect(`/product/${product.id}`);
+    redirectWithSession(req, res, `/product/${product.id}`, cid);
     return;
   }
 
@@ -337,93 +745,178 @@ app.post("/add-to-cart", (req: Request, res: Response) => {
     newQuantity = 20;
   }
   currentCart[String(product.id)] = newQuantity;
-  req.session.cart = currentCart;
+  saveCart(req, currentCart);
   pushFlash(req, `${product.title} was added to your cart.`);
-  res.redirect("/cart");
+  redirectWithSession(req, res, "/cart", cid);
 });
 
-app.get("/checkout", (req: Request, res: Response) => {
+app.get("/checkout", async (req: Request, res: Response) => {
   const cartItems = getCartItems(req);
   if (cartItems.length === 0) {
     pushFlash(req, "Your cart is empty.");
-    res.redirect("/cart");
+    redirectWithSession(req, res, "/cart");
     return;
   }
 
   const { subtotal, shipping, total } = calculateTotals(cartItems);
-  const btcTotal = calculateBtcAmount(total);
+  const prices = await getCryptoPrices();
+  const cryptoOptions = await buildCryptoOptions(total, prices);
   res.render("checkout", {
     cart_items: cartItems,
     subtotal,
+    discount: 0,
+    promo_code: "",
     shipping,
     total,
-    btc_total: btcTotal,
-    btc_wallet_address: getBtcWalletAddress(),
-    btc_usd_price: BTC_USD_PRICE,
+    selected_method: "bitcoin",
+    crypto_options: cryptoOptions,
+    form_values: {
+      name: "",
+      email: "",
+      phone: "",
+      country: "",
+      address: "",
+      apartment: "",
+      city: "",
+      state: "",
+      zip_code: "",
+    },
     messages: consumeFlashes(req),
   });
 });
 
-app.post("/checkout", (req: Request, res: Response) => {
+app.post("/checkout", async (req: Request, res: Response) => {
   const cartItems = getCartItems(req);
+  const cid = ensureCartId(req);
   if (cartItems.length === 0) {
     pushFlash(req, "Your cart is empty.");
-    res.redirect("/cart");
+    redirectWithSession(req, res, "/cart", cid);
     return;
   }
 
-  const { subtotal, shipping, total } = calculateTotals(cartItems);
+  const baseTotals = calculateTotals(cartItems);
+  const rawPromo = String(req.body.promo_code ?? "").trim().toUpperCase();
+  const promoApplied = rawPromo === "ART10" || rawPromo === "COLLECTOR10";
+  const discount = promoApplied ? Number((baseTotals.subtotal * 0.1).toFixed(2)) : 0;
+  const discountedSubtotal = Math.max(0, baseTotals.subtotal - discount);
+  const shipping = discountedSubtotal >= 1500 ? 0.0 : discountedSubtotal > 0 ? 65.0 : 0.0;
+  const total = Number((discountedSubtotal + shipping).toFixed(2));
+
+  const prices = await getCryptoPrices();
+  const cryptoOptions = await buildCryptoOptions(total, prices);
+
   const name = String(req.body.name ?? "").trim();
   const email = String(req.body.email ?? "").trim();
-  const paymentMethod = String(req.body.payment_method ?? "");
+  const phone = String(req.body.phone ?? "").trim();
+  const country = String(req.body.country ?? "").trim();
+  const address = String(req.body.address ?? "").trim();
+  const apartment = String(req.body.apartment ?? "").trim();
+  const city = String(req.body.city ?? "").trim();
+  const state = String(req.body.state ?? "").trim();
+  const zipCode = String(req.body.zip_code ?? "").trim();
+  const rawMethod = String(req.body.payment_method ?? "bitcoin");
+  const isSupportedMethod =
+    rawMethod === "bitcoin" ||
+    rawMethod === "ethereum" ||
+    rawMethod === "solana";
 
+  const formValues = {
+    name,
+    email,
+    phone,
+    country,
+    address,
+    apartment,
+    city,
+    state,
+    zip_code: zipCode,
+  };
+
+  const phoneDigits = phone.replace(/\D/g, "");
   const emailDomain = email.includes("@") ? email.split("@").pop() ?? "" : "";
   if (name.length < 2 || !email.includes("@") || !emailDomain.includes(".")) {
-    pushFlash(req, "Please enter a valid name and email address.");
-  } else if (paymentMethod !== "bitcoin" && paymentMethod !== "card") {
-    pushFlash(req, "Please select a payment method.");
+    pushFlash(req, "Please enter your full legal name and a valid email address.");
+  } else if (phoneDigits.length < 6) {
+    pushFlash(req, "Please enter a valid phone number.");
+  } else if (
+    country.length < 2 ||
+    address.length < 3 ||
+    city.length < 2 ||
+    state.length < 2 ||
+    zipCode.length < 2
+  ) {
+    pushFlash(
+      req,
+      "Please complete your country/region, street address, city, state, and ZIP/postal code."
+    );
+  } else if (!isSupportedMethod) {
+    pushFlash(req, "Please select a cryptocurrency payment method (BTC, ETH, or SOL).");
+  } else if (!cryptoOptions[rawMethod].walletAddress) {
+    pushFlash(
+      req,
+      `${cryptoOptions[rawMethod].label} (${cryptoOptions[rawMethod].symbol}) wallet address is not configured yet.`
+    );
   } else {
+    const selected = cryptoOptions[rawMethod];
     const order: Order = {
       reference: crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase(),
       name,
       email,
-      payment_method: paymentMethod,
+      phone,
+      country,
+      address,
+      apartment,
+      city,
+      state,
+      zip_code: zipCode,
+      payment_method: selected.key,
+      payment_symbol: selected.symbol,
+      payment_network: selected.network,
+      crypto_amount: selected.amount,
+      wallet_address: selected.walletAddress,
+      qr_svg: selected.qrSvg,
       payment_status: "pending",
+      subtotal: baseTotals.subtotal,
+      discount,
+      shipping,
       total,
       items: cartItems,
     };
     req.session.order = order;
-    req.session.cart = {};
-    res.redirect("/checkout-success");
+    orderStore.set(cid, order);
+    saveCart(req, {});
+    redirectWithSession(req, res, "/checkout-success", cid);
     return;
   }
 
-  const btcTotal = calculateBtcAmount(total);
   res.render("checkout", {
     cart_items: cartItems,
-    subtotal,
+    subtotal: baseTotals.subtotal,
+    discount,
+    promo_code: promoApplied ? rawPromo : "",
     shipping,
     total,
-    btc_total: btcTotal,
-    btc_wallet_address: getBtcWalletAddress(),
-    btc_usd_price: BTC_USD_PRICE,
+    selected_method: isSupportedMethod ? rawMethod : "bitcoin",
+    crypto_options: cryptoOptions,
+    form_values: formValues,
     messages: consumeFlashes(req),
   });
 });
 
 app.get("/checkout-success", (req: Request, res: Response) => {
-  const order = req.session.order;
+  const cid = getRequestCartId(req);
+  const order = req.session.order || (cid ? orderStore.get(cid) : undefined);
   if (!order) {
-    res.redirect("/");
+    redirectWithSession(req, res, "/");
     return;
   }
   res.render("checkout_success", { order });
 });
 
 app.post("/clear-cart", (req: Request, res: Response) => {
-  req.session.cart = {};
+  const cid = saveCart(req, {});
   pushFlash(req, "Your cart has been cleared.");
-  res.redirect("/cart");
+  redirectWithSession(req, res, "/cart", cid);
 });
 
 app.listen(PORT, "0.0.0.0", () => {

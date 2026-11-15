@@ -6,78 +6,483 @@
     <meta name="description" content="<%= product.title %> by <%= product.artist %> — available at ART STUDIO.">
     <title><%= product.title %> | ART STUDIO</title>
 
-    <link rel="stylesheet" href="/static/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        .product-detail-page { max-width: 1240px; margin: 54px auto 90px; padding: 0 5%; }
-        .product-breadcrumb { margin-bottom: 28px; color: #777; font-size: 12px; letter-spacing: .08em; }
-        .product-breadcrumb a, .product-back { color: inherit; text-decoration: none; }
-        .product-detail { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); gap: clamp(32px, 6vw, 84px); align-items: start; }
-        .product-image { background: #f4f2ee; display: flex; align-items: center; justify-content: center; }
-        .product-image img { display: block; width: 100%; height: auto; max-height: 760px; object-fit: contain; }
-        .product-info { padding-top: 18px; }
-        .product-eyebrow { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: #777; }
-        .product-info h1 { margin: 18px 0 10px; font-family: 'Playfair Display', Georgia, serif; font-size: clamp(32px, 4vw, 48px); line-height: 1.15; font-weight: 400; }
-        .product-artist { color: #555; font-size: 14px; }
-        .product-price { margin: 28px 0 22px; font-size: 20px; }
-        .product-description { max-width: 520px; color: #666; line-height: 1.9; font-size: 14px; }
-        .product-meta { margin: 28px 0; padding: 20px 0; border-top: 1px solid #e6e3df; border-bottom: 1px solid #e6e3df; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .product-meta span { display: block; color: #888; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 7px; }
-        .product-meta strong { font-size: 13px; font-weight: 500; }
-        .add-cart-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-top: 28px; }
-        .quantity-field label { display: block; margin-bottom: 8px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
-        .quantity-field input { width: 82px; height: 48px; padding: 0 12px; border: 1px solid #ccc; background: white; font: inherit; }
-        .product-button { min-height: 48px; padding: 0 28px; border: 1px solid #111; background: #111; color: white; cursor: pointer; font: inherit; font-size: 11px; letter-spacing: .13em; text-transform: uppercase; }
-        .product-button:hover { background: #333; }
-        .product-back { display: inline-block; margin-top: 28px; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
-        .product-flashes { margin: 0 0 18px; padding: 12px 15px; background: #f3f1ed; font-size: 13px; }
-        @media (max-width: 760px) { .product-detail-page { margin-top: 28px; } .product-detail { grid-template-columns: 1fr; gap: 25px; } .product-info { padding-top: 0; } .product-image img { max-height: 620px; } }
+        :root {
+            --ink: #0a0a0a;
+            --ink-soft: #404040;
+            --muted: #666666;
+            --border: #dcdcdc;
+            --card-border: #e5e5e5;
+            --surface: #ffffff;
+            --canvas: #fafafa;
+            --gold: #a3702b;
+            --green: #047857;
+            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-serif: "Playfair Display", Georgia, serif;
+            --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: var(--font-sans);
+            background: var(--surface);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        button { font: inherit; }
+        img { max-width: 100%; display: block; }
+
+        .topbar {
+            background: #111111;
+            color: #ffffff;
+            text-align: center;
+            padding: 9px 16px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 32px;
+        }
+
+        .brand-mark {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink);
+            white-space: nowrap;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+
+        .nav a:hover {
+            color: var(--ink);
+            text-decoration: underline;
+            text-underline-offset: 6px;
+        }
+
+        .bag-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-radius: 2px;
+        }
+
+        .bag-trigger:hover { background: #f5f5f5; }
+
+        .bag-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 9999px;
+            background: #171717;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .main-wrap {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 36px 24px 80px;
+            flex: 1;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #737373;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 28px;
+        }
+
+        .breadcrumb a:hover { color: var(--ink); }
+        .breadcrumb .current { color: var(--ink); font-weight: 500; }
+
+        .pdp-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+            gap: 48px;
+            align-items: start;
+        }
+
+        .artwork-frame {
+            position: relative;
+            aspect-ratio: 4 / 5;
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 2px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .artwork-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .artwork-tag {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #d4d4d4;
+            padding: 4px 10px;
+            border-radius: 2px;
+        }
+
+        .purchase-panel {
+            border: 1px solid var(--card-border);
+            background: #ffffff;
+            padding: 32px;
+            border-radius: 2px;
+            position: sticky;
+            top: 88px;
+        }
+
+        .pdp-artist {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--gold);
+            margin: 0 0 8px;
+        }
+
+        .pdp-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.9rem, 3vw, 2.5rem);
+            font-weight: 400;
+            line-height: 1.15;
+            margin: 0 0 14px;
+            color: var(--ink);
+            text-wrap: balance;
+        }
+
+        .pdp-price-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .pdp-price {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .pdp-avail {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--green);
+        }
+
+        .pdp-desc {
+            font-size: 14px;
+            line-height: 1.75;
+            color: #525252;
+            margin: 0 0 24px;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding: 18px 0;
+            margin-bottom: 24px;
+            border-top: 1px solid var(--card-border);
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .spec-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #737373;
+            margin-bottom: 4px;
+        }
+
+        .spec-val {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .add-cart-form {
+            display: flex;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .qty-field label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #404040;
+            margin-bottom: 6px;
+        }
+
+        .qty-field input {
+            width: 80px;
+            height: 48px;
+            padding: 0 12px;
+            border: 1px solid #cccccc;
+            background: #fafafa;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            border-radius: 2px;
+        }
+
+        .add-btn {
+            flex: 1;
+            height: 48px;
+            background: #0a0a0a;
+            color: #ffffff;
+            border: none;
+            border-radius: 2px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .add-btn:hover { background: #262626; }
+
+        .flash {
+            margin: 0 0 18px;
+            padding: 12px 14px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            font-size: 13px;
+        }
+
+        .guarantees {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 12px;
+            color: #525252;
+        }
+
+        .guarantee-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .guarantee-line span:first-child {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #525252;
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .back-link:hover { color: var(--ink); }
+
+        .footer {
+            background: #111111;
+            color: #999999;
+            border-top: 1px solid #262626;
+            padding: 36px 24px;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 960px) {
+            .nav { display: none; }
+            .pdp-grid { grid-template-columns: 1fr; gap: 28px; }
+            .purchase-panel { position: static; }
+        }
     </style>
 </head>
-<body>
-    <main class="product-detail-page">
-        <nav class="product-breadcrumb" aria-label="Breadcrumb">
-            <a href="/">ART STUDIO</a> / <%= product.category %> / <%= product.title %>
+<body data-cid="<%= cid %>">
+    <div class="topbar">Insured Fine Art Courier Delivery · Pay Direct with BTC, ETH, or SOL</div>
+
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="brand-mark">ART STUDIO</a>
+            <nav class="nav">
+                <a href="/">Shop All</a>
+                <a href="/?category=Painting">Paintings</a>
+                <a href="/?category=Photography">Photography</a>
+                <a href="/?category=Sculpture">Sculpture</a>
+                <a href="/?category=Furniture">Furniture</a>
+            </nav>
+            <a href="/cart" class="bag-trigger" aria-label="Shopping Bag">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+                <span>Bag</span>
+                <span class="bag-badge cart-count"><%= cart_count %></span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main-wrap">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Archive</a>
+            <span>/</span>
+            <a href="/?category=<%= encodeURIComponent(product.category) %>"><%= product.category %></a>
+            <span>/</span>
+            <span class="current"><%= product.title %></span>
         </nav>
 
-        <div class="product-detail">
-            <div class="product-image">
-                <img src="<%= product.image %>" alt="<%= product.title %> by <%= product.artist %>" loading="eager">
+        <article class="pdp-grid">
+            <div class="artwork-frame">
+                <span class="artwork-tag">Original Work</span>
+                <img src="<%= product.image %>" alt="<%= product.title %> by <%= product.artist %>" loading="eager" referrerPolicy="no-referrer">
             </div>
 
-            <section class="product-info" aria-labelledby="product-title">
-                <p class="product-eyebrow">ART STUDIO — Fine Art Collection</p>
-                <h1 id="product-title"><%= product.title %></h1>
-                <p class="product-artist">By <%= product.artist %></p>
-                <p class="product-price">$<%= formatCurrency(product.price) %> USD</p>
-                <p class="product-description"><%= product.description %></p>
+            <section class="purchase-panel" aria-labelledby="product-title">
+                <p class="pdp-artist"><%= product.artist %></p>
+                <h1 class="pdp-title" id="product-title"><%= product.title %></h1>
 
-                <div class="product-meta">
-                    <div><span>Category</span><strong><%= product.category %></strong></div>
-                    <div><span>Artwork size</span><strong><%= product.size %></strong></div>
+                <div class="pdp-price-row">
+                    <span class="pdp-price">$<%= formatCurrency(product.price) %></span>
+                    <span class="pdp-avail">In Stock · Ready to Ship</span>
+                </div>
+
+                <p class="pdp-desc"><%= product.description %></p>
+
+                <div class="specs-grid">
+                    <div>
+                        <span class="spec-label">Discipline</span>
+                        <span class="spec-val"><%= product.category %></span>
+                    </div>
+                    <div>
+                        <span class="spec-label">Dimensions</span>
+                        <span class="spec-val"><%= product.size %></span>
+                    </div>
                 </div>
 
                 <% if (messages && messages.length) { %>
                     <% messages.forEach((message) => { %>
-                        <p class="product-flashes" role="status"><%= message %></p>
+                        <div class="flash" role="status"><%= message %></div>
                     <% }) %>
                 <% } %>
 
                 <form class="add-cart-form" action="/add-to-cart" method="POST">
                     <input type="hidden" name="product_id" value="<%= product.id %>">
-                    <div class="quantity-field">
-                        <label for="quantity">Quantity</label>
+                    <div class="qty-field">
+                        <label for="quantity">Qty</label>
                         <input id="quantity" type="number" name="quantity" value="1" min="1" max="20" required>
                     </div>
-                    <button class="product-button" type="submit">Add to bag</button>
+                    <button class="add-btn" type="submit">Add to Bag</button>
                 </form>
 
-                <a class="product-back" href="/">← Continue exploring the collection</a>
+                <div class="guarantees">
+                    <div class="guarantee-line"><span>✓</span><span>Direct on-chain settlement via BTC, ETH, or SOL</span></div>
+                    <div class="guarantee-line"><span>✓</span><span>Custom-crated insured fine art courier delivery</span></div>
+                    <div class="guarantee-line"><span>✓</span><span>Includes signed certificate of authenticity</span></div>
+                </div>
+
+                <a class="back-link" href="/">← Return to Complete Archive</a>
             </section>
-        </div>
+        </article>
     </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <span>© 2026 ART STUDIO. All rights reserved.</span>
+            <span>BTC · ETH · SOL Accepted at Checkout</span>
+        </div>
+    </footer>
+
+    <script src="/static/js/cart-sync.js"></script>
 </body>
 </html>

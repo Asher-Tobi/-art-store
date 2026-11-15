@@ -3,197 +3,399 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your Cart | ART STUDIO</title>
+    <title>Shopping Bag | ART STUDIO</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --ink: #0a0a0a;
+            --muted: #666666;
+            --border: #dcdcdc;
+            --card-border: #e5e5e5;
+            --canvas: #fafafa;
+            --surface: #ffffff;
+            --gold: #a3702b;
+            --green: #047857;
+            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-serif: "Playfair Display", Georgia, serif;
+            --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
         * { box-sizing: border-box; }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f6f3ef;
-            color: #171717;
-        }
-        a { color: inherit; text-decoration: none; }
-        img { max-width: 100%; display: block; }
-        .wrap {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px 80px;
-        }
-        .topbar {
-            background: #111;
-            color: white;
-            text-align: center;
-            padding: 12px;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            font-size: 10px;
-        }
-        .header {
-            background: white;
-            border-bottom: 1px solid #eae4dd;
-            padding: 20px 0;
-        }
-        .header-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
+            font-family: var(--font-sans);
+            background: var(--canvas);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
         }
-        .brand {
-            font-size: 28px;
-            letter-spacing: 0.12em;
-            font-weight: 800;
-        }
-        .brand span { color: #a07f60; }
-        .cart-link {
-            background: #111;
-            color: white;
-            padding: 10px 18px;
-            font-size: 12px;
-            letter-spacing: 0.12em;
+
+        a { color: inherit; text-decoration: none; }
+        button { font: inherit; }
+        img { max-width: 100%; display: block; }
+
+        .topbar {
+            background: #111111;
+            color: #ffffff;
+            text-align: center;
+            padding: 9px 16px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
         }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .brand-mark {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink);
+            white-space: nowrap;
+        }
+
+        .back-link {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: #404040;
+        }
+
+        .back-link:hover { color: var(--ink); }
+
+        .wrap {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+            flex: 1;
+        }
+
+        .page-heading {
+            margin: 0 0 28px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .page-heading h1 {
+            font-family: var(--font-serif);
+            font-size: clamp(2rem, 3.5vw, 2.5rem);
+            font-weight: 400;
+            margin: 0;
+        }
+
+        .page-heading span {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--muted);
+        }
+
         .cart-layout {
             display: grid;
-            grid-template-columns: 1.5fr 0.8fr;
-            gap: 28px;
-            margin-top: 32px;
+            grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+            gap: 36px;
+            align-items: start;
         }
+
         .panel {
-            background: white;
-            border: 1px solid #ece5de;
-            padding: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 28px;
         }
-        .panel h1 {
-            margin-top: 0;
-            font-size: 32px;
-            font-weight: 500;
+
+        .flash {
+            padding: 12px 16px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            font-size: 13px;
+            margin-bottom: 20px;
         }
+
         .cart-item {
             display: grid;
-            grid-template-columns: 130px 1fr auto;
-            gap: 18px;
-            padding: 18px 0;
-            border-bottom: 1px solid #eee;
+            grid-template-columns: 110px 1fr auto;
+            gap: 20px;
+            padding: 20px 0;
+            border-bottom: 1px solid #ececec;
             align-items: center;
         }
-        .cart-item img {
-            width: 130px;
-            height: 130px;
+
+        .cart-item:first-child { padding-top: 0; }
+        .cart-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+        .cart-thumb {
+            width: 110px;
+            aspect-ratio: 4 / 5;
+            border: 1px solid var(--card-border);
+            background: #fafafa;
+            overflow: hidden;
+        }
+
+        .cart-thumb img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
         }
+
+        .item-artist {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--gold);
+            margin-bottom: 4px;
+        }
+
         .item-title {
-            font-size: 18px;
-            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 6px;
         }
+
         .item-details {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.7;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
         }
-        .qty-box {
+
+        .qty-controls {
             display: flex;
             align-items: center;
             gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
         }
-        .qty-box input {
-            width: 60px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            font-size: 14px;
+
+        .qty-controls input {
+            width: 64px;
+            padding: 7px 10px;
+            border: 1px solid #cccccc;
+            background: #fafafa;
+            font-family: var(--font-mono);
+            font-size: 13px;
         }
-        .price-box {
-            text-align: right;
+
+        .update-btn {
+            padding: 8px 14px;
+            background: #f5f5f5;
+            border: 1px solid #cccccc;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
         }
-        .price-box strong {
-            font-size: 18px;
-        }
-        .remove {
-            color: #777;
-            font-size: 12px;
+
+        .update-btn:hover { background: #e5e5e5; }
+
+        .remove-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #737373;
+            font-size: 11px;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            margin-top: 8px;
-            display: inline-block;
+            cursor: pointer;
+            margin-left: 8px;
         }
-        .summary {
-            background: white;
-            border: 1px solid #ece5de;
-            padding: 24px;
-            height: fit-content;
+
+        .remove-btn:hover { color: #b91c1c; }
+
+        .price-col {
+            text-align: right;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 15px;
+            font-weight: 600;
         }
-        .summary h2 {
-            margin-top: 0;
-            font-size: 24px;
-            font-weight: 500;
+
+        .summary-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 28px;
+            position: sticky;
+            top: 88px;
         }
-        .totals {
-            margin-top: 18px;
-            border-top: 1px solid #eee;
-            padding-top: 18px;
+
+        .summary-title {
+            margin: 0 0 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
-        .row {
+
+        .totals-line {
             display: flex;
             justify-content: space-between;
-            margin: 10px 0;
-            color: #444;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #525252;
         }
-        .grand {
-            font-size: 22px;
+
+        .totals-line .mono {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .totals-grand {
+            padding-top: 16px;
+            margin-top: 12px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 16px;
             font-weight: 700;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
         }
+
+        .totals-grand .mono {
+            font-family: var(--font-mono);
+            font-size: 20px;
+        }
+
         .checkout-btn {
             width: 100%;
             display: block;
-            background: #111;
-            color: white;
+            margin-top: 22px;
+            padding: 16px 20px;
+            background: #0a0a0a;
+            color: #ffffff;
             text-align: center;
-            padding: 18px 20px;
-            margin-top: 20px;
-            letter-spacing: 0.14em;
+            font-size: 12px;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.14em;
+            transition: background-color 0.15s ease;
+        }
+
+        .checkout-btn:hover { background: #262626; }
+
+        .checkout-note {
+            margin: 12px 0 0;
+            font-size: 11px;
+            color: var(--muted);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 48px 20px;
+        }
+
+        .empty h2 {
+            font-family: var(--font-serif);
+            font-weight: 400;
+            font-size: 24px;
+            margin: 0 0 10px;
+        }
+
+        .empty p {
+            color: var(--muted);
+            font-size: 14px;
+            margin: 0 0 22px;
+        }
+
+        .empty-btn {
+            display: inline-block;
+            padding: 14px 24px;
+            background: #0a0a0a;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .footer {
+            background: #111111;
+            color: #999999;
+            border-top: 1px solid #262626;
+            padding: 36px 24px;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
             font-size: 12px;
         }
-        .empty {
-            padding: 40px 0;
-            text-align: center;
-            color: #666;
-            font-size: 18px;
-        }
-        .flash {
-            background: #f3f1ed;
-            border: 1px solid #e6dccd;
-            color: #333;
-            padding: 12px 14px;
-            margin-bottom: 18px;
-            font-size: 14px;
-        }
-        @media (max-width: 820px) {
+
+        @media (max-width: 900px) {
             .cart-layout { grid-template-columns: 1fr; }
-            .cart-item { grid-template-columns: 100px 1fr; }
-            .price-box { grid-column: 2; text-align: left; }
+            .summary-card { position: static; }
+        }
+
+        @media (max-width: 600px) {
+            .cart-item { grid-template-columns: 88px 1fr; }
+            .cart-thumb { width: 88px; }
+            .price-col { grid-column: 2; text-align: left; }
         }
     </style>
 </head>
-<body>
-    <div class="topbar">Free worldwide shipping</div>
+<body data-cid="<%= cid %>">
+    <div class="topbar">Insured Fine Art Courier Delivery · Pay Direct with BTC, ETH, or SOL</div>
+
     <header class="header">
         <div class="header-inner">
-            <div class="brand">SAATCHI <span>ART</span></div>
-            <a href="/" class="cart-link">Continue Shopping</a>
+            <a href="/" class="brand-mark">ART STUDIO</a>
+            <a href="/" class="back-link">← Continue Exploring Archive</a>
         </div>
     </header>
 
     <main class="wrap">
+        <div class="page-heading">
+            <h1>Shopping Bag</h1>
+            <span><%= cart_items ? cart_items.reduce((s, i) => s + i.quantity, 0) : 0 %> Selected Works</span>
+        </div>
+
         <div class="cart-layout">
             <section class="panel">
-                <h1>Your Cart</h1>
-
                 <% if (messages && messages.length) { %>
                     <% messages.forEach((message) => { %>
                         <div class="flash" role="status"><%= message %></div>
@@ -203,49 +405,81 @@
                 <% if (cart_items && cart_items.length) { %>
                     <% cart_items.forEach((item) => { %>
                     <div class="cart-item">
-                        <img src="<%= item.image %>" alt="<%= item.title %>" />
+                        <a href="/product/<%= item.id %>" class="cart-thumb">
+                            <img src="<%= item.image %>" alt="<%= item.title %>" referrerPolicy="no-referrer" />
+                        </a>
                         <div>
-                            <div class="item-title"><%= item.title %></div>
+                            <div class="item-artist"><%= item.artist %></div>
+                            <h2 class="item-title"><a href="/product/<%= item.id %>"><%= item.title %></a></h2>
                             <div class="item-details">
-                                <%= item.artist %><br>
-                                <%= item.size %><br>
-                                <%= item.category %>
+                                <%= item.category %> · <%= item.size %>
                             </div>
-                            <form method="post" action="/cart">
-                                <input type="hidden" name="action" value="update" />
-                                <input type="hidden" name="product_id" value="<%= item.id %>" />
-                                <div class="qty-box" style="margin-top: 12px;">
-                                    <label for="qty-<%= item.id %>">Qty</label>
+                            <div class="qty-controls">
+                                <form method="post" action="/cart" style="display:flex; align-items:center; gap:8px;">
+                                    <input type="hidden" name="action" value="update" />
+                                    <input type="hidden" name="product_id" value="<%= item.id %>" />
+                                    <label for="qty-<%= item.id %>" style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:#525252;">Qty</label>
                                     <input id="qty-<%= item.id %>" type="number" name="quantity" min="0" value="<%= item.quantity %>" />
-                                    <button type="submit" style="padding:8px 12px; border:1px solid #ddd; background:white; cursor:pointer;">Update</button>
-                                </div>
-                            </form>
-                            <form method="post" action="/cart" style="margin-top: 8px;">
-                                <input type="hidden" name="action" value="remove" />
-                                <input type="hidden" name="product_id" value="<%= item.id %>" />
-                                <button type="submit" class="remove" style="background:none; border:none; cursor:pointer;">Remove</button>
-                            </form>
+                                    <button type="submit" class="update-btn">Update</button>
+                                </form>
+                                <form method="post" action="/cart">
+                                    <input type="hidden" name="action" value="remove" />
+                                    <input type="hidden" name="product_id" value="<%= item.id %>" />
+                                    <button type="submit" class="remove-btn">Remove</button>
+                                </form>
+                            </div>
                         </div>
-                        <div class="price-box">
-                            <strong>$<%= formatCurrency(item.price) %></strong>
+                        <div class="price-col">
+                            $<%= formatCurrency(item.price * item.quantity) %>
                         </div>
                     </div>
                     <% }) %>
                 <% } else { %>
-                    <div class="empty">Your cart is empty.</div>
+                    <div class="empty">
+                        <h2>Your bag is currently empty</h2>
+                        <p>Browse our complete archive of paintings, photography, and studio sculptures.</p>
+                        <a href="/" class="empty-btn">Browse Archive</a>
+                    </div>
                 <% } %>
             </section>
 
-            <aside class="summary">
-                <h2>Order Summary</h2>
-                <div class="totals">
-                    <div class="row"><span>Subtotal</span><span>$<%= formatCurrency(subtotal) %></span></div>
-                    <div class="row"><span>Shipping</span><span>$<%= formatCurrency(shipping) %></span></div>
-                    <div class="row grand"><span>Total</span><span>$<%= formatCurrency(total) %></span></div>
+            <aside class="summary-card">
+                <h2 class="summary-title">Order Summary</h2>
+                <div class="totals-line">
+                    <span>Subtotal</span>
+                    <span class="mono">$<%= formatCurrency(subtotal) %></span>
                 </div>
-                <a href="/checkout" class="checkout-btn">Checkout</a>
+                <div class="totals-line">
+                    <span>Insured Fine Art Delivery</span>
+                    <span class="mono" style="<%= shipping === 0 && subtotal > 0 ? 'color: var(--green);' : '' %>">
+                        <%= subtotal > 0 && shipping === 0 ? 'FREE' : '$' + formatCurrency(shipping) %>
+                    </span>
+                </div>
+                <div class="totals-grand">
+                    <span>Total</span>
+                    <span class="mono">$<%= formatCurrency(total) %> USD</span>
+                </div>
+
+                <% if (cart_items && cart_items.length) { %>
+                    <a href="/checkout" class="checkout-btn">Proceed to Checkout</a>
+                <% } else { %>
+                    <a href="/" class="checkout-btn">Explore Collection</a>
+                <% } %>
+
+                <p class="checkout-note">
+                    Complimentary courier delivery on orders over $1,500. Pay seamlessly via BTC, ETH, or SOL.
+                </p>
             </aside>
         </div>
     </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <span>© 2026 ART STUDIO. All rights reserved.</span>
+            <span>BTC · ETH · SOL Accepted at Checkout</span>
+        </div>
+    </footer>
+
+    <script src="/static/js/cart-sync.js"></script>
 </body>
 </html>

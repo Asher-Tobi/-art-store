@@ -4,291 +4,1219 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Checkout | ART STUDIO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --ink: #0f0f0f;
+            --muted: #6b6b6b;
+            --border: #dcdcdc;
+            --input-border: #cccccc;
+            --input-bg: #f7f7f7;
+            --panel-bg: #ffffff;
+            --page-bg: #fafafa;
+            --gold: #a3702b;
+            --green: #047857;
+            --green-dot: #10b981;
+            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-serif: "Playfair Display", Georgia, serif;
+            --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
         * { box-sizing: border-box; }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f1ed;
-            color: #171717;
+            font-family: var(--font-sans);
+            background: var(--page-bg);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
         }
+
         a { color: inherit; text-decoration: none; }
+
         .topbar {
-            background: #111;
-            color: white;
+            background: var(--ink);
+            color: #ffffff;
             text-align: center;
-            padding: 12px;
-            letter-spacing: 0.15em;
+            padding: 10px 16px;
+            letter-spacing: 0.16em;
             text-transform: uppercase;
             font-size: 10px;
+            font-weight: 600;
         }
+
         .header {
-            background: white;
-            border-bottom: 1px solid #e9e1d8;
-            padding: 20px 0;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 20;
         }
+
         .header-inner {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 16px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 16px;
         }
-        .brand { font-size: 30px; font-weight: 800; letter-spacing: 0.12em; }
-        .brand span { color: #a07f60; }
+
+        .brand {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink);
+        }
+
+        .header-back {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #444;
+        }
+
+        .header-back:hover { color: var(--ink); }
+
         .wrap {
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 36px 20px 80px;
+            padding: 32px 24px 80px;
         }
-        .checkout-layout {
+
+        .breadcrumb-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-bottom: 20px;
+            margin-bottom: 28px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .breadcrumb a:hover { color: var(--ink); }
+        .breadcrumb .current { color: var(--ink); font-weight: 600; }
+
+        .delivery-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--green);
+        }
+
+        .delivery-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green-dot);
+            display: inline-block;
+        }
+
+        .checkout-grid {
             display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 28px;
+            grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+            gap: 40px;
+            align-items: start;
         }
-        .panel {
-            background: white;
-            border: 1px solid #ece4dc;
+
+        .form-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
             padding: 28px;
         }
-        .panel h1 {
-            margin-top: 0;
-            font-size: 32px;
-            font-weight: 500;
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
         }
-        .row {
+
+        .card-title {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--ink);
+        }
+
+        .card-tag {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .card-tag.mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 11px;
+        }
+
+        .field-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .row-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            margin-bottom: 18px;
         }
-        label {
+
+        .row-6 {
+            display: grid;
+            grid-template-columns: 3fr 1fr 2fr;
+            gap: 16px;
+        }
+
+        label.field-label {
             display: block;
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: #4c4c4c;
-            margin-bottom: 8px;
+            letter-spacing: 0.08em;
+            color: #404040;
+            margin-bottom: 6px;
         }
-        input, select {
+
+        .req { color: #dc2626; }
+        .opt { color: #888; font-weight: 400; text-transform: lowercase; }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        select {
             width: 100%;
             padding: 12px 14px;
-            border: 1px solid #d8d0c8;
-            font-size: 15px;
-            background: white;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            font-size: 14px;
+            color: var(--ink);
+            border-radius: 0;
+            transition: border-color 0.15s ease, background-color 0.15s ease;
         }
-        .payment-options {
-            margin-top: 18px;
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--ink);
+            background: #ffffff;
         }
-        .payment-option {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .payment-option input {
-            width: auto;
-        }
-        .crypto-box {
-            margin-top: 24px;
-            background: #f7f4f1;
-            border: 1px solid #e6dccd;
-            padding: 20px 18px;
-        }
-        .wallet-label {
+
+        .helper-text {
+            margin: 6px 0 0;
             font-size: 11px;
-            letter-spacing: 0.14em;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding-top: 4px;
+        }
+
+        .checkbox-row input[type="checkbox"] {
+            margin-top: 2px;
+            width: 14px;
+            height: 14px;
+            accent-color: var(--ink);
+            cursor: pointer;
+        }
+
+        .checkbox-row label {
+            font-size: 12px;
+            color: #525252;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+
+        .shipping-method-box {
+            padding: 16px;
+            border: 2px solid var(--ink);
+            background: #fafafa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .shipping-method-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .shipping-method-title strong {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .pill-included {
+            font-size: 10px;
+            font-weight: 700;
             text-transform: uppercase;
-            color: #585858;
-            margin-bottom: 10px;
+            letter-spacing: 0.08em;
+            background: rgba(16, 185, 129, 0.14);
+            color: var(--green);
+            padding: 2px 8px;
         }
-        .wallet-address {
-            font-size: 15px;
+
+        .shipping-method-desc {
+            margin: 6px 0 0;
+            font-size: 12px;
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .shipping-price {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .crypto-intro {
+            font-size: 12px;
+            color: #525252;
+            margin: 0 0 18px;
+            line-height: 1.6;
+        }
+
+        .crypto-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .crypto-btn {
+            padding: 16px 12px;
+            border: 1px solid var(--input-border);
+            background: #ffffff;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .crypto-btn:hover {
+            border-color: #777;
+        }
+
+        .crypto-btn.active {
+            border-color: var(--ink);
+            background: #fafafa;
+            box-shadow: 0 0 0 1px var(--ink);
+        }
+
+        .crypto-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        .crypto-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .crypto-sym {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            margin-top: 2px;
+        }
+
+        .crypto-amt {
+            font-size: 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-weight: 700;
+            color: var(--ink);
+            margin-top: 6px;
+        }
+
+        .deposit-panel {
+            border: 1px solid #d4d4d4;
+            background: #fafafa;
+            padding: 20px;
+        }
+
+        .deposit-flex {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+
+        .qr-frame {
+            width: 144px;
+            height: 144px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .qr-frame svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .deposit-fields {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .deposit-field-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .deposit-field-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .copy-link {
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gold);
+            cursor: pointer;
+        }
+
+        .copy-link:hover { text-decoration: underline; }
+
+        .deposit-value-box {
+            padding: 10px 12px;
+            background: #ffffff;
+            border: 1px solid var(--input-border);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            color: var(--ink);
             word-break: break-all;
-            background: white;
-            border: 1px solid #e7ddd2;
-            padding: 12px 14px;
-            margin-bottom: 12px;
-            font-family: monospace;
+            user-select: all;
         }
-        .btc-amount {
-            font-size: 26px;
+
+        .amount-box {
+            padding: 10px 12px;
+            background: #ffffff;
+            border: 1px solid var(--input-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .amount-box strong {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 14px;
+        }
+
+        .amount-box span {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .wallet-pending {
+            padding: 14px;
+            background: #fffbeb;
+            border: 1px dashed #d97706;
+            color: #92400e;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .deposit-footer {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px 24px;
+            background: var(--ink);
+            color: #ffffff;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .submit-btn:hover { background: #262626; }
+        .submit-btn:disabled { background: #737373; cursor: not-allowed; }
+
+        .submit-footnote {
+            margin: 10px 0 0;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .flash {
+            padding: 14px 16px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            font-size: 13px;
+        }
+
+        /* Summary Column */
+        .summary-sticky {
+            position: sticky;
+            top: 88px;
+        }
+
+        .summary-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .summary-title {
+            margin: 0;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .summary-items {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-height: 360px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .thumb-wrap {
+            position: relative;
+            width: 64px;
+            height: 76px;
+            border: 1px solid #e5e5e5;
+            background: #f5f5f5;
+            flex-shrink: 0;
+        }
+
+        .thumb-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .thumb-qty {
+            position: absolute;
+            top: -7px;
+            right: -7px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--ink);
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .summary-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .summary-item-name {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .summary-item-meta {
+            display: block;
+            margin-top: 3px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .summary-item-price {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .promo-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .promo-row input {
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 12px;
+        }
+
+        .promo-apply-btn {
+            padding: 0 16px;
+            background: #e5e5e5;
+            border: 1px solid var(--input-border);
+            color: #262626;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+        }
+
+        .promo-apply-btn:hover { background: #d4d4d4; }
+
+        .promo-status {
+            margin-top: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            display: block;
+        }
+
+        .promo-status.ok { color: var(--green); }
+        .promo-status.err { color: #b91c1c; }
+
+        .totals-list {
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        .totals-line {
+            display: flex;
+            justify-content: space-between;
+            color: #525252;
+        }
+
+        .totals-line .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        .totals-line.free .free-val {
+            color: var(--green);
             font-weight: 700;
         }
-        .summary {
-            background: white;
-            border: 1px solid #ece4dc;
-            padding: 28px;
-            height: fit-content;
-        }
-        .summary h2 {
-            margin-top: 0;
-            font-size: 22px;
-            font-weight: 500;
-        }
-        .item {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            margin: 18px 0;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #efe9e2;
-        }
-        .totals { margin-top: 18px; }
-        .totals .line {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            color: #444;
-        }
-        .totals .grand {
-            margin-top: 14px;
+
+        .totals-line.discount { color: var(--green); }
+
+        .totals-grand {
             padding-top: 14px;
-            border-top: 1px solid #eee;
+            margin-top: 4px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .totals-grand-label {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .totals-grand-values {
+            text-align: right;
+        }
+
+        .totals-grand-usd {
+            display: block;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 20px;
             font-weight: 700;
         }
-        .submit-btn {
-            width: 100%;
+
+        .totals-grand-crypto {
             display: block;
-            background: #111;
-            color: white;
-            padding: 18px;
-            border: none;
-            margin-top: 20px;
-            cursor: pointer;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
+            margin-top: 2px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 12px;
+            font-weight: 600;
+            color: var(--gold);
         }
-        .flash {
-            background: #f9f1ee;
-            border: 1px solid #e2b3a5;
-            color: #7d3d2d;
-            padding: 12px 14px;
-            margin-bottom: 18px;
+
+        .trust-list {
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 11px;
+            color: #525252;
         }
-        .hidden {
-            display: none;
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        @media (max-width: 820px) {
-            .checkout-layout { grid-template-columns: 1fr; }
-            .row { grid-template-columns: 1fr; }
+
+        .trust-check {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 960px) {
+            .checkout-grid { grid-template-columns: 1fr; }
+            .summary-sticky { position: static; }
+        }
+
+        @media (max-width: 640px) {
+            .wrap { padding: 20px 16px 60px; }
+            .card, .summary-card { padding: 20px; }
+            .row-2, .row-6, .crypto-grid { grid-template-columns: 1fr; }
+            .deposit-flex { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
-<body data-usd-total="<%= total %>" data-btc-usd-price="<%= btc_usd_price %>">
-    <div class="topbar">Secure checkout</div>
+<body data-subtotal="<%= subtotal %>" data-cid="<%= cid %>">
+    <div class="topbar">Insured Fine Art Courier Delivery · Pay with BTC, ETH, or SOL</div>
     <header class="header">
         <div class="header-inner">
-            <div class="brand">SAATCHI <span>ART</span></div>
-            <a href="/cart" style="font-size:12px; text-transform:uppercase; letter-spacing:0.12em;">Back to Cart</a>
+            <a href="/" class="brand">ART STUDIO</a>
+            <a href="/cart" class="header-back">← Back to Bag</a>
         </div>
     </header>
 
     <main class="wrap">
-        <div class="checkout-layout">
-            <section class="panel">
-                <h1>Checkout</h1>
+        <div class="breadcrumb-bar">
+            <nav class="breadcrumb" aria-label="Checkout steps">
+                <a href="/cart">Bag</a>
+                <span>/</span>
+                <span class="current">Information &amp; Shipping</span>
+                <span>/</span>
+                <span>Payment</span>
+            </nav>
+            <span class="delivery-badge">
+                <span class="delivery-dot"></span>
+                Insured Worldwide Fine Art Delivery
+            </span>
+        </div>
 
-                <% if (messages && messages.length) { %>
-                    <% messages.forEach((message) => { %>
-                        <div class="flash"><%= message %></div>
-                    <% }) %>
-                <% } %>
+        <div class="checkout-grid">
+            <div>
+                <form method="post" action="/checkout" id="checkoutForm" class="form-stack">
+                    <% if (messages && messages.length) { %>
+                        <% messages.forEach((message) => { %>
+                            <div class="flash" role="alert"><%= message %></div>
+                        <% }) %>
+                    <% } %>
 
-                <form method="post" action="/checkout">
-                    <div class="row">
-                        <div>
-                            <label for="name">Full name</label>
-                            <input id="name" name="name" type="text" required>
+                    <!-- 1. Contact Information -->
+                    <section class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Contact Information</h2>
+                            <span class="card-tag">Guest Checkout</span>
                         </div>
-                        <div>
-                            <label for="email">Email</label>
-                            <input id="email" name="email" type="email" required>
+                        <div class="field-stack">
+                            <div>
+                                <label class="field-label" for="email">Email Address <span class="req">*</span></label>
+                                <input id="email" name="email" type="email" autocomplete="email" placeholder="name@example.com" value="<%= (form_values && form_values.email) || '' %>" required>
+                                <p class="helper-text">Your order invoice and fine art courier tracking coordinates will be sent here.</p>
+                            </div>
+                            <div class="checkbox-row">
+                                <input type="checkbox" id="marketingConsent" checked>
+                                <label for="marketingConsent">Email me about new gallery releases and private collector acquisitions.</label>
+                            </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="payment-options">
-                        <label>Payment method</label>
-                        <div class="payment-option">
-                            <input type="radio" id="bitcoin" name="payment_method" value="bitcoin" checked>
-                            <label for="bitcoin" style="margin:0; text-transform:none; letter-spacing:0; font-size:15px;">Bitcoin (BTC)</label>
+                    <!-- 2. Shipping Address -->
+                    <section class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Shipping Address</h2>
                         </div>
-                        <div class="payment-option">
-                            <input type="radio" id="card" name="payment_method" value="card">
-                            <label for="card" style="margin:0; text-transform:none; letter-spacing:0; font-size:15px;">Credit card</label>
-                        </div>
-                    </div>
+                        <div class="field-stack">
+                            <div>
+                                <label class="field-label" for="country">Country / Region <span class="req">*</span></label>
+                                <input id="country" name="country" type="text" list="countryOptions" autocomplete="country-name" placeholder="Select or enter country / region" value="<%= (form_values && form_values.country) || '' %>" required>
+                                <datalist id="countryOptions">
+                                    <option value="United States"></option>
+                                    <option value="United Kingdom"></option>
+                                    <option value="Canada"></option>
+                                    <option value="Australia"></option>
+                                    <option value="Germany"></option>
+                                    <option value="France"></option>
+                                    <option value="Italy"></option>
+                                    <option value="Spain"></option>
+                                    <option value="Netherlands"></option>
+                                    <option value="Switzerland"></option>
+                                    <option value="Sweden"></option>
+                                    <option value="Norway"></option>
+                                    <option value="Japan"></option>
+                                    <option value="Singapore"></option>
+                                    <option value="United Arab Emirates"></option>
+                                    <option value="Nigeria"></option>
+                                    <option value="South Africa"></option>
+                                    <option value="Brazil"></option>
+                                    <option value="Mexico"></option>
+                                </datalist>
+                            </div>
 
-                    <div id="bitcoinDetails" class="crypto-box">
-                        <div class="wallet-label">Bitcoin wallet address</div>
-                        <div class="wallet-address"><%= btc_wallet_address %></div>
-                        <div style="font-size:14px; color:#444; line-height:1.6; margin-bottom:10px;">
-                            Send the exact amount below to complete your order.
-                        </div>
-                        <div>
-                            <span>Amount to send:</span>
-                            <span class="btc-amount" id="btcAmount"><%= Number(btc_total).toFixed(8) %></span>
-                            <span>BTC</span>
-                        </div>
-                        <div style="margin-top: 8px; color:#666;">
-                            Estimated total: $<%= formatCurrency(total) %> USD
-                        </div>
-                    </div>
+                            <div class="row-2">
+                                <div>
+                                    <label class="field-label" for="name">Full Legal Name <span class="req">*</span></label>
+                                    <input id="name" name="name" type="text" autocomplete="name" placeholder="e.g. Alexander Wright" value="<%= (form_values && form_values.name) || '' %>" required>
+                                </div>
+                                <div>
+                                    <label class="field-label" for="phone">Phone Number <span class="req">*</span></label>
+                                    <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="e.g. +1 (555) 019-2834" value="<%= (form_values && form_values.phone) || '' %>" required>
+                                </div>
+                            </div>
 
-                    <button type="submit" class="submit-btn">Place order</button>
-                </form>
-            </section>
+                            <div>
+                                <label class="field-label" for="address">Street Address <span class="req">*</span></label>
+                                <input id="address" name="address" type="text" autocomplete="shipping street-address" placeholder="House number and street name" value="<%= (form_values && form_values.address) || '' %>" required>
+                            </div>
 
-            <aside class="summary">
-                <h2>Your Order</h2>
-                <% cart_items.forEach((item) => { %>
-                <div class="item">
+                            <div>
+                                <label class="field-label" for="apartment">Apartment, Suite, Unit <span class="opt">(optional)</span></label>
+                                <input id="apartment" name="apartment" type="text" autocomplete="shipping address-line2" placeholder="Apartment, suite, unit, etc." value="<%= (form_values && form_values.apartment) || '' %>">
+                            </div>
+
+                            <div class="row-6">
+                                <div>
+                                    <label class="field-label" for="city">City <span class="req">*</span></label>
+                                    <input id="city" name="city" type="text" autocomplete="shipping address-level2" placeholder="e.g. New York" value="<%= (form_values && form_values.city) || '' %>" required>
+                                </div>
+                                <div>
+                                    <label class="field-label" for="state">State <span class="req">*</span></label>
+                                    <input id="state" name="state" type="text" autocomplete="shipping address-level1" placeholder="NY" value="<%= (form_values && form_values.state) || '' %>" required>
+                                </div>
+                                <div>
+                                    <label class="field-label" for="zip_code">ZIP Code <span class="req">*</span></label>
+                                    <input id="zip_code" name="zip_code" type="text" autocomplete="shipping postal-code" placeholder="10021" value="<%= (form_values && form_values.zip_code) || '' %>" required>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 3. Shipping Method -->
+                    <section class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Shipping Method</h2>
+                        </div>
+                        <div class="shipping-method-box">
+                            <div>
+                                <div class="shipping-method-title">
+                                    <strong>Insured Fine Art Courier Delivery</strong>
+                                    <span class="pill-included">Included</span>
+                                </div>
+                                <p class="shipping-method-desc">
+                                    Custom-crated artwork handling via dedicated art courier. Fully insured declared value with signature verification upon arrival.
+                                </p>
+                            </div>
+                            <span class="shipping-price" id="shippingMethodPrice">
+                                <% if (shipping === 0) { %>
+                                    <span style="color: var(--green);">FREE</span>
+                                <% } else { %>
+                                    $<%= formatCurrency(shipping) %>
+                                <% } %>
+                            </span>
+                        </div>
+                    </section>
+
+                    <!-- 4. Payment Method -->
+                    <section class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Payment Method</h2>
+                            <span class="card-tag mono">Instant Crypto Settlement</span>
+                        </div>
+                        <p class="crypto-intro">
+                            All transactions are settled securely on-chain. Select your preferred cryptocurrency to generate a direct deposit address:
+                        </p>
+
+                        <input type="hidden" id="paymentMethodInput" name="payment_method" value="<%= selected_method || 'bitcoin' %>" />
+                        <input type="hidden" id="promoCodeHidden" name="promo_code" value="<%= promo_code || '' %>" />
+
+                        <div class="crypto-grid" role="radiogroup" aria-label="Cryptocurrency payment method">
+                            <% ['bitcoin', 'ethereum', 'solana'].forEach((key) => { const opt = crypto_options[key]; %>
+                            <button
+                                type="button"
+                                class="crypto-btn <%= (selected_method || 'bitcoin') === key ? 'active' : '' %>"
+                                data-method="<%= key %>"
+                                data-symbol="<%= opt.symbol %>"
+                                data-rate="<%= opt.usdPrice %>"
+                                data-decimals="<%= opt.decimals %>"
+                                aria-pressed="<%= (selected_method || 'bitcoin') === key ? 'true' : 'false' %>"
+                            >
+                                <span class="crypto-icon" style="background-color: <%= opt.accentColor %>;"><%= opt.icon %></span>
+                                <span class="crypto-name"><%= opt.label %></span>
+                                <span class="crypto-sym"><%= opt.symbol %></span>
+                                <span class="crypto-amt" id="btn-amt-<%= key %>"><%= opt.amount %> <%= opt.symbol %></span>
+                            </button>
+                            <% }) %>
+                        </div>
+
+                        <% ['bitcoin', 'ethereum', 'solana'].forEach((key) => { const opt = crypto_options[key]; %>
+                        <div
+                            id="details-<%= key %>"
+                            class="deposit-panel <%= (selected_method || 'bitcoin') === key ? '' : 'hidden' %>"
+                            data-has-wallet="<%= opt.walletAddress ? 'true' : 'false' %>"
+                        >
+                            <% if (opt.walletAddress) { %>
+                            <div class="deposit-flex">
+                                <% if (opt.qrSvg) { %>
+                                <div class="qr-frame" aria-label="<%= opt.label %> deposit QR code">
+                                    <%- opt.qrSvg %>
+                                </div>
+                                <% } %>
+                                <div class="deposit-fields">
+                                    <div>
+                                        <div class="deposit-field-top">
+                                            <span class="deposit-field-label"><%= opt.label %> Deposit Address</span>
+                                            <button type="button" class="copy-link" data-copy-target="wallet-<%= key %>">Copy</button>
+                                        </div>
+                                        <div class="deposit-value-box" id="wallet-<%= key %>"><%= opt.walletAddress %></div>
+                                    </div>
+                                    <div>
+                                        <div class="deposit-field-top">
+                                            <span class="deposit-field-label">Amount to Send</span>
+                                            <button type="button" class="copy-link" data-copy-target="send-amt-<%= key %>">Copy</button>
+                                        </div>
+                                        <div class="amount-box">
+                                            <strong><span id="send-amt-<%= key %>"><%= opt.amount %></span> <%= opt.symbol %></strong>
+                                            <span class="usd-equiv">≈ $<%= formatCurrency(total) %></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <% } else { %>
+                            <div class="wallet-pending">
+                                <%= opt.label %> (<%= opt.symbol %>) wallet address has not been added yet. Please provide your <%= opt.symbol %> address or choose Bitcoin (BTC) above to complete payment.
+                            </div>
+                            <div class="amount-box">
+                                <strong><span id="send-amt-<%= key %>"><%= opt.amount %></span> <%= opt.symbol %></strong>
+                                <span class="usd-equiv">≈ $<%= formatCurrency(total) %> (Rate: 1 <%= opt.symbol %> ≈ $<%= formatCurrency(opt.usdPrice) %>)</span>
+                            </div>
+                            <% } %>
+
+                            <div class="deposit-footer">
+                                Send only <%= opt.label %> to this address via the <%= opt.network %>. Transfer the exact converted amount shown above to settle your order.
+                            </div>
+                        </div>
+                        <% }) %>
+                    </section>
+
                     <div>
-                        <strong><%= item.title %></strong><br>
-                        <span><%= item.quantity %> × <%= item.artist %></span>
+                        <button type="submit" class="submit-btn" id="submitOrderBtn">
+                            Complete Order · <span id="submitAmtLabel"><%= crypto_options[selected_method || 'bitcoin'].amount %> <%= crypto_options[selected_method || 'bitcoin'].symbol %></span>
+                        </button>
+                        <p class="submit-footnote">Insured fine art courier delivery worldwide. 100% authenticity guarantee with certificate.</p>
                     </div>
-                    <div>$<%= formatCurrency(item.price * item.quantity) %></div>
-                </div>
-                <% }) %>
+                </form>
+            </div>
 
-                <div class="totals">
-                    <div class="line"><span>Subtotal</span><span>$<%= formatCurrency(subtotal) %></span></div>
-                    <div class="line"><span>Shipping</span><span>$<%= formatCurrency(shipping) %></span></div>
-                    <div class="line grand"><span>Total</span><span>$<%= formatCurrency(total) %></span></div>
+            <!-- Right Column: Sticky Order Summary -->
+            <aside class="summary-sticky">
+                <div class="summary-card">
+                    <h2 class="summary-title">Order Summary (<%= cart_items.reduce((sum, i) => sum + i.quantity, 0) %>)</h2>
+
+                    <div class="summary-items">
+                        <% cart_items.forEach((item) => { %>
+                        <div class="summary-item">
+                            <div class="thumb-wrap">
+                                <img src="<%= item.image %>" alt="<%= item.title %>" />
+                                <span class="thumb-qty"><%= item.quantity %></span>
+                            </div>
+                            <div class="summary-item-info">
+                                <h3 class="summary-item-name"><%= item.title %></h3>
+                                <span class="summary-item-meta"><%= item.artist %> · <%= item.size %></span>
+                                <span class="summary-item-meta">$<%= formatCurrency(item.price) %> each</span>
+                            </div>
+                            <span class="summary-item-price">$<%= formatCurrency(item.price * item.quantity) %></span>
+                        </div>
+                        <% }) %>
+                    </div>
+
+                    <div>
+                        <div class="promo-row">
+                            <input type="text" id="promoInput" placeholder="Discount code or promo (try ART10)" value="<%= promo_code || '' %>" />
+                            <button type="button" id="applyPromoBtn" class="promo-apply-btn">Apply</button>
+                        </div>
+                        <span id="promoStatus" class="promo-status <%= discount > 0 ? 'ok' : 'hidden' %>">
+                            <% if (discount > 0) { %>10% collector privilege applied (<%= promo_code %>)<% } %>
+                        </span>
+                    </div>
+
+                    <div class="totals-list">
+                        <div class="totals-line">
+                            <span>Subtotal</span>
+                            <span class="mono">$<%= formatCurrency(subtotal) %></span>
+                        </div>
+                        <div class="totals-line discount <%= discount > 0 ? '' : 'hidden' %>" id="discountLine">
+                            <span>Promotion (10% off)</span>
+                            <span class="mono" id="discountAmount">-$<%= formatCurrency(discount) %></span>
+                        </div>
+                        <div class="totals-line free">
+                            <span>Insured Fine Art Delivery</span>
+                            <span class="free-val" id="summaryShipping">
+                                <% if (shipping === 0) { %>FREE<% } else { %>$<%= formatCurrency(shipping) %><% } %>
+                            </span>
+                        </div>
+                        <div class="totals-grand">
+                            <span class="totals-grand-label">Total</span>
+                            <div class="totals-grand-values">
+                                <span class="totals-grand-usd" id="summaryTotalUsd">$<%= formatCurrency(total) %></span>
+                                <span class="totals-grand-crypto" id="summaryTotalCrypto">
+                                    ≈ <%= crypto_options[selected_method || 'bitcoin'].amount %> <%= crypto_options[selected_method || 'bitcoin'].symbol %>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="trust-list">
+                        <div class="trust-item"><span class="trust-check">✓</span><span>Insured fine art courier delivery with tracking</span></div>
+                        <div class="trust-item"><span class="trust-check">✓</span><span>100% authenticity guarantee with signed certificate</span></div>
+                        <div class="trust-item"><span class="trust-check">✓</span><span>Zero fees or intermediary bank holds on crypto transfers</span></div>
+                    </div>
                 </div>
             </aside>
         </div>
     </main>
 
     <script>
-        const usdTotal = Number(document.body.dataset.usdTotal || 0);
-        const btcUsdPrice = Number(document.body.dataset.btcUsdPrice || 68000);
-        const btcAmount = document.getElementById('btcAmount');
-        const bitcoinRadio = document.getElementById('bitcoin');
-        const cardRadio = document.getElementById('card');
-        const bitcoinDetails = document.getElementById('bitcoinDetails');
+        const baseSubtotal = Number(document.body.dataset.subtotal || 0);
+        const methodInput = document.getElementById('paymentMethodInput');
+        const promoHidden = document.getElementById('promoCodeHidden');
+        const promoInput = document.getElementById('promoInput');
+        const applyPromoBtn = document.getElementById('applyPromoBtn');
+        const promoStatus = document.getElementById('promoStatus');
+        const discountLine = document.getElementById('discountLine');
+        const discountAmountEl = document.getElementById('discountAmount');
+        const summaryShippingEl = document.getElementById('summaryShipping');
+        const shippingMethodPriceEl = document.getElementById('shippingMethodPrice');
+        const summaryTotalUsdEl = document.getElementById('summaryTotalUsd');
+        const summaryTotalCryptoEl = document.getElementById('summaryTotalCrypto');
+        const submitAmtLabel = document.getElementById('submitAmtLabel');
+        const submitBtn = document.getElementById('submitOrderBtn');
+        const cryptoBtns = document.querySelectorAll('.crypto-btn');
+        const methods = ['bitcoin', 'ethereum', 'solana'];
 
-        function updateBtcAmount() {
-            if (!btcAmount) return;
-            const btcValue = usdTotal > 0 ? usdTotal / btcUsdPrice : 0;
-            btcAmount.textContent = btcValue.toFixed(8);
+        let currentPromo = (promoHidden.value || '').trim().toUpperCase();
+
+        function formatUsd(val) {
+            return Number(val).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
         }
 
-        function togglePaymentDetails() {
-            if (bitcoinRadio && bitcoinRadio.checked) {
-                bitcoinDetails.classList.remove('hidden');
-            } else {
-                bitcoinDetails.classList.add('hidden');
+        function computeTotals() {
+            const validPromo = currentPromo === 'ART10' || currentPromo === 'COLLECTOR10';
+            const discount = validPromo ? Number((baseSubtotal * 0.1).toFixed(2)) : 0;
+            const discountedSub = Math.max(0, baseSubtotal - discount);
+            const shipping = discountedSub >= 1500 ? 0 : (discountedSub > 0 ? 65 : 0);
+            const total = Number((discountedSub + shipping).toFixed(2));
+            return { validPromo, discount, shipping, total };
+        }
+
+        function refreshAmountsAndSelection(selectedMethod) {
+            const { validPromo, discount, shipping, total } = computeTotals();
+
+            if (discountLine && discountAmountEl) {
+                discountLine.classList.toggle('hidden', discount <= 0);
+                discountAmountEl.textContent = '-$' + formatUsd(discount);
             }
+            if (summaryShippingEl) {
+                summaryShippingEl.textContent = shipping === 0 ? 'FREE' : '$' + formatUsd(shipping);
+            }
+            if (shippingMethodPriceEl) {
+                shippingMethodPriceEl.innerHTML = shipping === 0
+                    ? '<span style="color: var(--green);">FREE</span>'
+                    : '$' + formatUsd(shipping);
+            }
+            if (summaryTotalUsdEl) {
+                summaryTotalUsdEl.textContent = '$' + formatUsd(total);
+            }
+
+            document.querySelectorAll('.usd-equiv').forEach((el) => {
+                el.textContent = '≈ $' + formatUsd(total);
+            });
+
+            cryptoBtns.forEach((btn) => {
+                const method = btn.dataset.method || 'bitcoin';
+                const symbol = btn.dataset.symbol || 'BTC';
+                const rate = Number(btn.dataset.rate || 1);
+                const decimals = Number(btn.dataset.decimals || 8);
+                const amount = total > 0 && rate > 0 ? (total / rate).toFixed(decimals) : (0).toFixed(decimals);
+
+                const btnAmt = document.getElementById('btn-amt-' + method);
+                if (btnAmt) btnAmt.textContent = amount + ' ' + symbol;
+
+                const sendAmt = document.getElementById('send-amt-' + method);
+                if (sendAmt) sendAmt.textContent = amount;
+
+                const isSelected = method === selectedMethod;
+                btn.classList.toggle('active', isSelected);
+                btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+
+                if (isSelected) {
+                    if (summaryTotalCryptoEl) summaryTotalCryptoEl.textContent = '≈ ' + amount + ' ' + symbol;
+                    if (submitAmtLabel) submitAmtLabel.textContent = amount + ' ' + symbol;
+                }
+            });
+
+            methods.forEach((key) => {
+                const box = document.getElementById('details-' + key);
+                if (!box) return;
+                const isSelected = key === selectedMethod;
+                box.classList.toggle('hidden', !isSelected);
+                if (isSelected && submitBtn) {
+                    const hasWallet = box.dataset.hasWallet === 'true';
+                    submitBtn.disabled = !hasWallet;
+                }
+            });
         }
 
-        bitcoinRadio.addEventListener('change', togglePaymentDetails);
-        cardRadio.addEventListener('change', togglePaymentDetails);
-        updateBtcAmount();
-        togglePaymentDetails();
+        function selectPaymentMethod(method) {
+            if (!methods.includes(method)) return;
+            methodInput.value = method;
+            refreshAmountsAndSelection(method);
+        }
+
+        cryptoBtns.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                selectPaymentMethod(btn.dataset.method || 'bitcoin');
+            });
+        });
+
+        if (applyPromoBtn && promoInput) {
+            applyPromoBtn.addEventListener('click', () => {
+                const code = promoInput.value.trim().toUpperCase();
+                if (code === 'ART10' || code === 'COLLECTOR10') {
+                    currentPromo = code;
+                    promoHidden.value = code;
+                    promoStatus.textContent = '10% collector privilege applied (' + code + ')';
+                    promoStatus.className = 'promo-status ok';
+                } else {
+                    currentPromo = '';
+                    promoHidden.value = '';
+                    promoStatus.textContent = code ? 'Invalid promo code. Try ART10 or COLLECTOR10.' : '';
+                    promoStatus.className = code ? 'promo-status err' : 'promo-status hidden';
+                }
+                refreshAmountsAndSelection(methodInput.value || 'bitcoin');
+            });
+        }
+
+        document.querySelectorAll('.copy-link').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const targetId = btn.dataset.copyTarget;
+                const el = targetId ? document.getElementById(targetId) : null;
+                const text = el ? el.textContent.trim() : '';
+                if (!text) return;
+                try {
+                    await navigator.clipboard.writeText(text);
+                    const original = btn.textContent;
+                    btn.textContent = 'Copied';
+                    setTimeout(() => { btn.textContent = original; }, 1600);
+                } catch {
+                    // Clipboard fallback
+                }
+            });
+        });
+
+        selectPaymentMethod(methodInput.value || 'bitcoin');
     </script>
+    <script src="/static/js/cart-sync.js"></script>
 </body>
 </html>
