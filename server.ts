@@ -195,6 +195,12 @@ const products: Product[] = [
     price_display: "$1,450",
     size: "40 x 30 x 1 in",
     image: "/static/images/mary-ogochukwu-memories-sand.jpg",
+    images: [
+      "/static/images/mary-ogochukwu-memories-sand.jpg",
+      "/assets/aistudio/mary_ogochuku_1_0984b425.webp",
+      "/assets/aistudio/mary_ogochuku_2_0fbb5297.webp",
+      "/assets/aistudio/mary_ogochuku_3_a44055b4.webp",
+    ],
     description:
       "A unique 2025 contemporary figurative acrylic painting on canvas by Nigerian artist Mary Ogochukwu, capturing expressive warmth, movement, and sunlit memory. Accompanied by a Certificate of Authenticity.",
   },
@@ -207,6 +213,13 @@ const products: Product[] = [
     price_display: "$3,313.67",
     size: "32 x 28 in",
     image: "/static/images/albert-clark-horses.jpg",
+    images: [
+      "/static/images/albert-clark-horses.jpg",
+      "/assets/aistudio/Albert_Clark_1_ca56a519.webp",
+      "/assets/aistudio/Albert_Clark_2_ccb70610.webp",
+      "/assets/aistudio/Albert_Clark_3_99475c82.webp",
+      "/assets/aistudio/Albert_Clark_4_b64061e7.webp",
+    ],
     description:
       "Signed and dated 1887 oil on canvas by British Victorian sporting artist Albert Clark (1843–1928), depicting a chestnut and a bay horse standing face to face in an open English field, presented in an ornate antique gilt frame.",
   },
