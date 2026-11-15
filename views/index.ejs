@@ -509,6 +509,7 @@
             bottom: 12px;
             z-index: 3;
             opacity: 0;
+            pointer-events: none;
             transform: translateY(8px);
             transition: opacity 0.2s ease, transform 0.2s ease;
         }
@@ -516,7 +517,16 @@
         .art-card:hover .quick-add-wrap,
         .art-card:focus-within .quick-add-wrap {
             opacity: 1;
+            pointer-events: auto;
             transform: translateY(0);
+        }
+
+        @media (hover: none), (max-width: 1024px) {
+            .quick-add-wrap {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
         }
 
         .quick-add-btn {

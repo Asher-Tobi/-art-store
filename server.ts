@@ -51,6 +51,7 @@ interface Order {
 declare module "express-session" {
   interface SessionData {
     cart?: Record<string, number>;
+    cartUpdatedAt?: number;
     cartId?: string;
     order?: Order;
     flashes?: string[];
@@ -418,7 +419,13 @@ function getProductById(productId: string | number): Product | undefined {
   return productLookup.get(String(productId));
 }
 
-const cartStore = new Map<string, Record<string, number>>();
+interface StoredCartEntry {
+  items: Record<string, number>;
+  updatedAt: number;
+}
+
+const CART_COOKIE_NAME = "art_studio_cart";
+const cartStore = new Map<string, StoredCartEntry>();
 const orderStore = new Map<string, Order>();
 const flashStore = new Map<string, string[]>();
 
@@ -426,13 +433,122 @@ function isValidCartId(value: unknown): value is string {
   return typeof value === "string" && /^[a-zA-Z0-9_-]{8,64}$/.test(value);
 }
 
+function isHttpsRequest(req: Request): boolean {
+  const forwardedProto = String(req.headers["x-forwarded-proto"] || "")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  return Boolean(req.secure || forwardedProto === "https");
+}
+
+function parseCookies(req: Request): Record<string, string> {
+  const header = req.headers.cookie;
+  const result: Record<string, string> = {};
+  if (!header) return result;
+  for (const part of header.split(";")) {
+    const eqIdx = part.indexOf("=");
+    if (eqIdx <= 0) continue;
+    const key = part.slice(0, eqIdx).trim();
+    const rawVal = part.slice(eqIdx + 1).trim();
+    if (!key) continue;
+    try {
+      result[key] = decodeURIComponent(rawVal);
+    } catch {
+      result[key] = rawVal;
+    }
+  }
+  return result;
+}
+
+function signCartPayload(
+  items: Record<string, number>,
+  cid: string,
+  updatedAt: number
+): string {
+  const json = JSON.stringify({ i: items, c: cid, t: updatedAt });
+  const data = Buffer.from(json, "utf8").toString("base64url");
+  const sig = crypto
+    .createHmac("sha256", SECRET_KEY)
+    .update(data)
+    .digest("base64url");
+  return `${data}.${sig}`;
+}
+
+function readSignedCartCookie(req: Request): {
+  items: Record<string, number>;
+  cid?: string;
+  updatedAt: number;
+} | null {
+  const cookies = parseCookies(req);
+  const raw = cookies[CART_COOKIE_NAME];
+  if (!raw || typeof raw !== "string") return null;
+  const dotIdx = raw.indexOf(".");
+  if (dotIdx <= 0) return null;
+  const data = raw.slice(0, dotIdx);
+  const sig = raw.slice(dotIdx + 1);
+  if (!data || !sig) return null;
+
+  const expectedSig = crypto
+    .createHmac("sha256", SECRET_KEY)
+    .update(data)
+    .digest("base64url");
+  const sigBuf = Buffer.from(sig, "utf8");
+  const expectedBuf = Buffer.from(expectedSig, "utf8");
+  if (
+    sigBuf.length !== expectedBuf.length ||
+    !crypto.timingSafeEqual(sigBuf, expectedBuf)
+  ) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(data, "base64url").toString("utf8")
+    ) as { i?: unknown; c?: unknown; t?: unknown };
+    const items = sanitizeCart(parsed?.i);
+    const cid = isValidCartId(parsed?.c) ? parsed.c : undefined;
+    const updatedAt =
+      typeof parsed?.t === "number" && Number.isFinite(parsed.t) ? parsed.t : 0;
+    return { items, cid, updatedAt };
+  } catch {
+    return null;
+  }
+}
+
+function writeSignedCartCookie(
+  req: Request,
+  res: Response,
+  items: Record<string, number>,
+  cid: string,
+  updatedAt: number
+): void {
+  const token = signCartPayload(items, cid, updatedAt);
+  const parts = [
+    `${CART_COOKIE_NAME}=${encodeURIComponent(token)}`,
+    "Path=/",
+    "Max-Age=604800",
+    "HttpOnly",
+  ];
+  if (isHttpsRequest(req)) {
+    parts.push("SameSite=None", "Secure", "Partitioned");
+  } else {
+    parts.push("SameSite=Lax");
+  }
+  res.append("Set-Cookie", parts.join("; "));
+}
+
 function getRequestCartId(req: Request): string | undefined {
-  const fromBody = req.body && typeof req.body === "object" ? (req.body as Record<string, unknown>).cid : undefined;
+  const fromBody =
+    req.body && typeof req.body === "object"
+      ? (req.body as Record<string, unknown>).cid
+      : undefined;
   if (isValidCartId(fromBody)) return fromBody;
   const fromQuery = req.query?.cid;
   if (isValidCartId(fromQuery)) return fromQuery;
   const fromHeader = req.headers["x-cart-id"];
   if (isValidCartId(fromHeader)) return fromHeader;
+  const fromCookie = readSignedCartCookie(req)?.cid;
+  if (isValidCartId(fromCookie)) return fromCookie;
   if (isValidCartId(req.session?.cartId)) return req.session.cartId;
   return undefined;
 }
@@ -467,21 +583,69 @@ function sanitizeCart(rawCart: unknown): Record<string, number> {
 }
 
 function getCart(req: Request): Record<string, number> {
+  const candidates: Array<{
+    items: Record<string, number>;
+    updatedAt: number;
+    hasItems: boolean;
+  }> = [];
+
   if (req.session.cart !== undefined) {
-    return sanitizeCart(req.session.cart);
+    const items = sanitizeCart(req.session.cart);
+    candidates.push({
+      items,
+      updatedAt: req.session.cartUpdatedAt ?? 0,
+      hasItems: Object.keys(items).length > 0,
+    });
   }
+
   const cid = getRequestCartId(req);
   if (cid && cartStore.has(cid)) {
-    return sanitizeCart(cartStore.get(cid));
+    const entry = cartStore.get(cid)!;
+    const items = sanitizeCart(entry.items);
+    candidates.push({
+      items,
+      updatedAt: entry.updatedAt ?? 0,
+      hasItems: Object.keys(items).length > 0,
+    });
   }
-  return {};
+
+  const cookieCart = readSignedCartCookie(req);
+  if (cookieCart) {
+    const items = sanitizeCart(cookieCart.items);
+    candidates.push({
+      items,
+      updatedAt: cookieCart.updatedAt ?? 0,
+      hasItems: Object.keys(items).length > 0,
+    });
+  }
+
+  if (candidates.length === 0) {
+    return {};
+  }
+
+  candidates.sort((a, b) => {
+    if (b.updatedAt !== a.updatedAt) {
+      return b.updatedAt - a.updatedAt;
+    }
+    return Number(b.hasItems) - Number(a.hasItems);
+  });
+
+  return candidates[0].items;
 }
 
-function saveCart(req: Request, cart: Record<string, number>): string {
+function saveCart(
+  req: Request,
+  res: Response,
+  cart: Record<string, number>
+): string {
   const cid = ensureCartId(req);
   const clean = sanitizeCart(cart);
+  const updatedAt = Date.now();
   req.session.cart = clean;
-  cartStore.set(cid, clean);
+  req.session.cartUpdatedAt = updatedAt;
+  req.session.cartId = cid;
+  cartStore.set(cid, { items: clean, updatedAt });
+  writeSignedCartCookie(req, res, clean, cid, updatedAt);
   return cid;
 }
 
@@ -535,10 +699,12 @@ function pushFlash(req: Request, message: string): void {
 
 function consumeFlashes(req: Request): string[] {
   const sessionFlashes = req.session.flashes ?? [];
-  req.session.flashes = [];
+  if (sessionFlashes.length > 0) {
+    req.session.flashes = [];
+  }
   const cid = getRequestCartId(req);
   const storeFlashes = cid ? flashStore.get(cid) ?? [] : [];
-  if (cid) {
+  if (cid && storeFlashes.length > 0) {
     flashStore.delete(cid);
   }
   return sessionFlashes.length > 0 ? sessionFlashes : storeFlashes;
@@ -550,12 +716,10 @@ function redirectWithSession(
   targetPath: string,
   cid?: string
 ): void {
-  const hasSessionCookie = Boolean(
-    req.headers.cookie && req.headers.cookie.includes("connect.sid=")
-  );
   const activeCid = cid || getRequestCartId(req);
+  const hasCartQuery = targetPath.includes("cid=");
   const url =
-    !hasSessionCookie && activeCid
+    activeCid && !hasCartQuery
       ? `${targetPath}${targetPath.includes("?") ? "&" : "?"}cid=${encodeURIComponent(activeCid)}`
       : targetPath;
 
@@ -630,13 +794,14 @@ app.use(
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const cid = getRequestCartId(req);
+  const resolvedCart = getCart(req);
   if (cid && !req.session.cartId) {
     req.session.cartId = cid;
   }
-  if (req.session.cart === undefined && cid && cartStore.has(cid)) {
-    req.session.cart = sanitizeCart(cartStore.get(cid));
-  }
-  res.locals.cart_count = getCartCount(req);
+  res.locals.cart_count = Object.values(resolvedCart).reduce(
+    (sum, qty) => sum + qty,
+    0
+  );
   res.locals.brand_name = "ART STUDIO";
   res.locals.formatCurrency = formatCurrency;
   res.locals.cid = cid ?? "";
@@ -668,9 +833,12 @@ app.get(["/", "/shop"], (req: Request, res: Response) => {
 });
 
 app.get("/api/cart", (req: Request, res: Response) => {
+  const cid = getRequestCartId(req) ?? "";
   const cartItems = getCartItems(req);
   const { subtotal, shipping, total } = calculateTotals(cartItems);
+  res.setHeader("Cache-Control", "no-store");
   res.json({
+    cid,
     cart_count: getCartCount(req),
     items: cartItems,
     subtotal,
@@ -752,7 +920,7 @@ app.post("/cart", (req: Request, res: Response) => {
     }
   }
 
-  saveCart(req, currentCart);
+  saveCart(req, res, currentCart);
   redirectWithSession(req, res, "/cart", cid);
 });
 
@@ -781,7 +949,7 @@ app.post("/add-to-cart", (req: Request, res: Response) => {
     newQuantity = 20;
   }
   currentCart[String(product.id)] = newQuantity;
-  saveCart(req, currentCart);
+  saveCart(req, res, currentCart);
   pushFlash(req, `${product.title} was added to your cart.`);
   redirectWithSession(req, res, "/cart", cid);
 });
@@ -920,7 +1088,7 @@ app.post("/checkout", async (req: Request, res: Response) => {
     };
     req.session.order = order;
     orderStore.set(cid, order);
-    saveCart(req, {});
+    saveCart(req, res, {});
     redirectWithSession(req, res, "/checkout-success", cid);
     return;
   }
@@ -950,7 +1118,7 @@ app.get("/checkout-success", (req: Request, res: Response) => {
 });
 
 app.post("/clear-cart", (req: Request, res: Response) => {
-  const cid = saveCart(req, {});
+  const cid = saveCart(req, res, {});
   pushFlash(req, "Your cart has been cleared.");
   redirectWithSession(req, res, "/cart", cid);
 });
