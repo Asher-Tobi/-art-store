@@ -242,6 +242,43 @@ const products: Product[] = [
     description:
       "Hand-carved 20th-century Italian Grand Tour classical torso in warm white marble with subtle natural veining and weathered patina, mounted upright on a minimalist black steel display stand.",
   },
+  {
+    id: 17,
+    title: "Sina — Figurative Bronze Sculpture",
+    artist: "Nando Kallweit",
+    category: "Sculpture",
+    price: 2516.0,
+    price_display: "$2,516",
+    size: "12.6 x 10.2 x 12.6 in",
+    image: "/assets/aistudio/nano_3_5ed1d424.webp",
+    images: [
+      "/assets/aistudio/nano_3_5ed1d424.webp",
+      "/assets/aistudio/nano_5_f49dbef6.webp",
+      "/assets/aistudio/nano_4_5ec1329b.webp",
+      "/assets/aistudio/nano_1_ce534eeb.webp",
+    ],
+    description:
+      "Limited edition of 25 bronze sculpture by German sculptor Nando Kallweit. Cast using the traditional lost-wax method from an original hand-carved oak wood body, preserving subtle organic grain and tactile tool marks with poised, elongated figurative lines.",
+  },
+  {
+    id: 18,
+    title: "Madonna of Sorrows (After Sassoferrato)",
+    artist: "Italian Old Master",
+    category: "Painting",
+    price: 2880.0,
+    price_display: "$2,880",
+    size: "29.5 x 25 in",
+    image: "/assets/aistudio/master_1_7710b430.webp",
+    images: [
+      "/assets/aistudio/master_1_7710b430.webp",
+      "/assets/aistudio/master_2_8106e766.webp",
+      "/assets/aistudio/master_3_60695d30.webp",
+      "/assets/aistudio/master_4_be88bc8f.webp",
+      "/assets/aistudio/master_5_8a26db49.webp",
+    ],
+    description:
+      "Fine antique 19th-century Italian Old Master oil painting on linen canvas after Giovanni Battista Salvi da Sassoferrato's renowned composition, depicting the Virgin Mary in serene devotional prayer draped in a deep ultramarine mantle with rich craquelure and original period stretcher.",
+  },
 ];
 
 const featuredCollection: Product[] = [];
