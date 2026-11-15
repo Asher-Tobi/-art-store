@@ -341,6 +341,78 @@ const products: Product[] = [
     description:
       "Fine antique 19th-century Italian Old Master oil painting on linen canvas after Giovanni Battista Salvi da Sassoferrato's renowned composition, depicting the Virgin Mary in serene devotional prayer draped in a deep ultramarine mantle with rich craquelure and original period stretcher.",
   },
+  {
+    id: 19,
+    title: "Mexico in Reflection",
+    artist: "Beth Barry",
+    category: "Painting",
+    price: 450.0,
+    price_display: "$450",
+    size: "14 x 11 in",
+    image: "/static/images/beth-barry-mexico-reflection.jpg",
+    images: [
+      "/static/images/beth-barry-mexico-reflection.jpg",
+      "/static/images/p19-detail-1.jpg",
+      "/static/images/p19-detail-2.jpg",
+      "/static/images/p19-detail-3.jpg",
+    ],
+    description:
+      "Original 2026 acrylic painting on canvas by contemporary American artist Beth Barry, sourced with Gallery Sitka provenance. Gestural cerulean, emerald, and warm ochre brushwork captures shoreline light and water reflections across expressive canvas texture.",
+  },
+  {
+    id: 20,
+    title: "Swan Maiden",
+    artist: "Alex Garant",
+    category: "Painting",
+    price: 1800.0,
+    price_display: "$1,800",
+    size: "28 x 28 in (Framed 29 x 29 in)",
+    image: "/static/images/alex-garant-swan-maiden-1.jpg",
+    images: [
+      "/static/images/alex-garant-swan-maiden-1.jpg",
+      "/static/images/alex-garant-swan-maiden-2.jpg",
+      "/static/images/alex-garant-swan-maiden-3.jpg",
+      "/static/images/p20-detail-sig.jpg",
+    ],
+    description:
+      "Original 2026 oil on canvas by Canadian figurative artist Alex Garant, created for the Imaginary Menagerie exhibition at Arch Enemy Arts. Presented in a commanding diamond hardwood floater frame with signature layered double eyes and delicate white wing motifs against a cool slate-blue ground.",
+  },
+  {
+    id: 21,
+    title: "Structure",
+    artist: "Shiri Phillips",
+    category: "Painting",
+    price: 245.0,
+    price_display: "$245",
+    size: "11 x 9 x 1 in (Framed)",
+    image: "/static/images/shiri-phillips-structure-1.jpg",
+    images: [
+      "/static/images/shiri-phillips-structure-1.jpg",
+      "/static/images/shiri-phillips-structure-2.jpg",
+      "/static/images/shiri-phillips-structure-3.jpg",
+      "/static/images/p21-detail-impasto.jpg",
+    ],
+    description:
+      "Original 2026 framed acrylic painting on canvas by Shiri Phillips, sourced with PxP Contemporary provenance and signed along the custom mauve frame edge. Sculptural impasto strokes of sunlit yellow, emerald, plum, cerulean, and rose create a tactile geometric relief.",
+  },
+  {
+    id: 22,
+    title: "Red Sky",
+    artist: "Will Klemm",
+    category: "Painting",
+    price: 1800.0,
+    price_display: "$1,800",
+    size: "12 x 12 x 1 in (Framed 16 x 16 x 2 in)",
+    image: "/static/images/will-klemm-red-sky.jpg",
+    images: [
+      "/static/images/will-klemm-red-sky.jpg",
+      "/static/images/p22-detail-1.jpg",
+      "/static/images/p22-detail-2.jpg",
+      "/static/images/p22-detail-3.jpg",
+    ],
+    description:
+      "Original 2026 oil on canvas landscape by contemporary American painter Will Klemm, sourced with Wally Workman Gallery provenance and signed at lower left. Luminous crimson and amber sky glazes sweep above a sunlit golden horizon and quiet meadow treeline.",
+  },
 ];
 
 const featuredCollection: Product[] = [];
