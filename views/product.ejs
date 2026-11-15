@@ -146,6 +146,7 @@
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-bottom: 28px;
+            flex-wrap: wrap;
         }
 
         .breadcrumb a:hover { color: var(--ink); }
@@ -161,56 +162,182 @@
         .artwork-gallery {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
 
         .artwork-frame {
             position: relative;
             aspect-ratio: 4 / 5;
-            background: #ffffff;
+            background: #f9f9f8;
             border: 1px solid var(--card-border);
             border-radius: 2px;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 16px;
+            padding: 18px;
+            cursor: zoom-in;
+            user-select: none;
+        }
+
+        .artwork-frame.inline-zoomed {
+            cursor: zoom-out;
         }
 
         .artwork-frame img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            transition: transform 0.2s ease-out;
+            transform-origin: center center;
+            will-change: transform;
+        }
+
+        .artwork-frame.inline-zoomed img {
+            transform: scale(2.25);
+        }
+
+        .artwork-tag {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            z-index: 3;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #d4d4d4;
+            padding: 4px 10px;
+            border-radius: 2px;
+            pointer-events: none;
+        }
+
+        .gallery-tools {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 4;
+            display: flex;
+            gap: 8px;
+        }
+
+        .gallery-tool-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--ink);
+            border: 1px solid #d4d4d4;
+            border-radius: 2px;
+            padding: 6px 10px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .gallery-tool-btn:hover,
+        .gallery-tool-btn.active {
+            background: #0a0a0a;
+            color: #ffffff;
+            border-color: #0a0a0a;
+        }
+
+        .gallery-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 4;
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--ink);
+            border: 1px solid #d4d4d4;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+        }
+
+        .gallery-nav-btn:hover {
+            background: #0a0a0a;
+            color: #ffffff;
+            border-color: #0a0a0a;
+        }
+
+        .gallery-nav-btn.prev { left: 14px; }
+        .gallery-nav-btn.next { right: 14px; }
+
+        .artwork-frame.inline-zoomed .gallery-nav-btn {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .view-counter {
             position: absolute;
             bottom: 14px;
             right: 14px;
-            background: rgba(10, 10, 10, 0.72);
+            z-index: 3;
+            background: rgba(10, 10, 10, 0.78);
             color: #ffffff;
             font-family: var(--font-mono);
             font-size: 11px;
-            padding: 4px 10px;
+            padding: 5px 10px;
             border-radius: 2px;
+            pointer-events: none;
         }
 
-        .thumb-grid {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
+        .zoom-hint {
+            position: absolute;
+            bottom: 14px;
+            left: 14px;
+            z-index: 3;
+            background: rgba(255, 255, 255, 0.92);
+            color: #404040;
+            border: 1px solid #e5e5e5;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding: 5px 9px;
+            border-radius: 2px;
+            pointer-events: none;
+        }
+
+        .thumb-strip {
+            display: flex;
             gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scroll-snap-type: x proximity;
+        }
+
+        .thumb-strip::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .thumb-strip::-webkit-scrollbar-thumb {
+            background: #d4d4d4;
+            border-radius: 2px;
         }
 
         .thumb-btn {
             position: relative;
+            flex: 0 0 88px;
             aspect-ratio: 4 / 5;
-            background: #ffffff;
+            background: #f9f9f8;
             border: 1px solid var(--card-border);
             border-radius: 2px;
             padding: 4px;
             cursor: pointer;
             overflow: hidden;
-            transition: border-color 0.15s ease;
+            scroll-snap-align: start;
+            transition: border-color 0.15s ease, transform 0.15s ease;
         }
 
         .thumb-btn:hover {
@@ -227,19 +354,172 @@
             object-fit: cover;
         }
 
-        .artwork-tag {
-            position: absolute;
-            top: 16px;
-            left: 16px;
+        /* Lightbox Full-Screen Zoom Modal */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.96);
+            color: #ffffff;
+            display: none;
+            flex-direction: column;
+        }
+
+        .lightbox.open {
+            display: flex;
+        }
+
+        .lightbox-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 24px;
+            border-bottom: 1px solid #262626;
+        }
+
+        .lightbox-meta {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .lightbox-title {
+            font-family: var(--font-serif);
+            font-size: 18px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lightbox-counter {
             font-family: var(--font-mono);
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid #d4d4d4;
-            padding: 4px 10px;
+            font-size: 11px;
+            color: #a3a3a3;
+            flex-shrink: 0;
+        }
+
+        .lightbox-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .lb-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 36px;
+            padding: 0 12px;
+            background: #1a1a1a;
+            color: #ffffff;
+            border: 1px solid #333333;
             border-radius: 2px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .lb-btn:hover {
+            background: #2e2e2e;
+            border-color: #525252;
+        }
+
+        .lightbox-stage {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 72px;
+            cursor: zoom-in;
+        }
+
+        .lightbox-stage.is-zoomed {
+            cursor: grab;
+        }
+
+        .lightbox-stage.is-dragging {
+            cursor: grabbing;
+        }
+
+        .lightbox-stage img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            user-select: none;
+            -webkit-user-drag: none;
+            transform-origin: center center;
+            transition: transform 0.16s ease-out;
+        }
+
+        .lightbox-stage.is-dragging img {
+            transition: none;
+        }
+
+        .lb-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 4;
+            width: 44px;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(23, 23, 23, 0.85);
+            color: #ffffff;
+            border: 1px solid #404040;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .lb-arrow:hover {
+            background: #ffffff;
+            color: #0a0a0a;
+            border-color: #ffffff;
+        }
+
+        .lb-arrow.prev { left: 18px; }
+        .lb-arrow.next { right: 18px; }
+
+        .lightbox-thumbs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 24px 18px;
+            border-top: 1px solid #262626;
+            overflow-x: auto;
+        }
+
+        .lb-thumb {
+            flex: 0 0 60px;
+            aspect-ratio: 4 / 5;
+            padding: 2px;
+            background: #171717;
+            border: 1px solid #333333;
+            border-radius: 2px;
+            cursor: pointer;
+            opacity: 0.65;
+            overflow: hidden;
+        }
+
+        .lb-thumb:hover,
+        .lb-thumb.active {
+            opacity: 1;
+            border: 2px solid #ffffff;
+        }
+
+        .lb-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .purchase-panel {
@@ -433,10 +713,20 @@
             font-size: 12px;
         }
 
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-links a:hover { color: #ffffff; }
+
         @media (max-width: 960px) {
             .nav { display: none; }
             .pdp-grid { grid-template-columns: 1fr; gap: 28px; }
             .purchase-panel { position: static; }
+            .thumb-btn { flex: 0 0 74px; }
+            .lightbox-stage { padding: 16px 12px; }
         }
     </style>
 </head>
@@ -475,24 +765,52 @@
         <article class="pdp-grid">
             <% const galleryImages = (product.images && product.images.length) ? product.images : [product.image]; %>
             <div class="artwork-gallery">
-                <div class="artwork-frame">
+                <div class="artwork-frame" id="artworkFrame">
                     <span class="artwork-tag">Original Work</span>
-                    <img id="mainProductImg" src="<%= galleryImages[0] %>" alt="<%= product.title %> by <%= product.artist %>" loading="eager" referrerPolicy="no-referrer">
+
+                    <div class="gallery-tools">
+                        <button type="button" class="gallery-tool-btn" id="inlineZoomBtn" aria-pressed="false" title="Toggle 2.2x surface zoom">
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 8v6M8 11h6M19 11a8 8 0 11-16 0 8 8 0 0116 0z"/>
+                            </svg>
+                            <span id="inlineZoomLabel">Zoom 2.2×</span>
+                        </button>
+                        <button type="button" class="gallery-tool-btn" id="openLightboxBtn" title="Open full-screen zoom gallery">
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/>
+                            </svg>
+                            <span>Expand</span>
+                        </button>
+                    </div>
+
                     <% if (galleryImages.length > 1) { %>
-                        <span class="view-counter" id="viewCounter">View 1 of <%= galleryImages.length %></span>
+                    <button type="button" class="gallery-nav-btn prev" id="prevImgBtn" aria-label="Previous image">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="gallery-nav-btn next" id="nextImgBtn" aria-label="Next image">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
                     <% } %>
+
+                    <img id="mainProductImg" src="<%= galleryImages[0] %>" alt="<%= product.title %> by <%= product.artist %>" loading="eager" referrerPolicy="no-referrer">
+
+                    <span class="zoom-hint" id="zoomHint">Click artwork to expand &amp; zoom</span>
+                    <span class="view-counter" id="viewCounter">View 1 of <%= galleryImages.length %></span>
                 </div>
 
                 <% if (galleryImages.length > 1) { %>
-                <div class="thumb-grid" role="list" aria-label="Additional views">
+                <div class="thumb-strip" id="thumbStrip" role="list" aria-label="Artwork gallery views">
                     <% galleryImages.forEach((imgSrc, idx) => { %>
                     <button
                         type="button"
                         class="thumb-btn <%= idx === 0 ? 'active' : '' %>"
                         data-src="<%= imgSrc %>"
-                        data-index="<%= idx + 1 %>"
-                        data-total="<%= galleryImages.length %>"
-                        aria-label="View angle <%= idx + 1 %>"
+                        data-index="<%= idx %>"
+                        aria-label="View <%= idx + 1 %> of <%= galleryImages.length %>"
                     >
                         <img src="<%= imgSrc %>" alt="<%= product.title %> view <%= idx + 1 %>" loading="lazy" referrerPolicy="no-referrer" />
                     </button>
@@ -540,8 +858,8 @@
 
                 <div class="guarantees">
                     <div class="guarantee-line"><span>✓</span><span>Direct on-chain settlement via BTC, ETH, or SOL</span></div>
-                    <div class="guarantee-line"><span>✓</span><span>Custom-crated insured fine art courier delivery</span></div>
-                    <div class="guarantee-line"><span>✓</span><span>Includes signed certificate of authenticity</span></div>
+                    <div class="guarantee-line"><span>✓</span><a href="/shipping" style="text-decoration: underline; text-underline-offset: 3px;">Custom-crated insured fine art courier delivery</a></div>
+                    <div class="guarantee-line"><span>✓</span><a href="/authenticity" style="text-decoration: underline; text-underline-offset: 3px;">Includes signed certificate of authenticity</a></div>
                 </div>
 
                 <a class="back-link" href="/">← Return to Complete Archive</a>
@@ -549,28 +867,320 @@
         </article>
     </main>
 
+    <!-- Full-Screen Zoom Lightbox -->
+    <div class="lightbox" id="galleryLightbox" role="dialog" aria-modal="true" aria-label="Full-screen artwork inspection">
+        <div class="lightbox-bar">
+            <div class="lightbox-meta">
+                <span class="lightbox-title"><%= product.title %></span>
+                <span class="lightbox-counter" id="lbCounter">View 1 of <%= galleryImages.length %></span>
+            </div>
+            <div class="lightbox-controls">
+                <button type="button" class="lb-btn" id="lbZoomOut" aria-label="Zoom out">−</button>
+                <button type="button" class="lb-btn" id="lbZoomLevel" aria-label="Reset zoom">100%</button>
+                <button type="button" class="lb-btn" id="lbZoomIn" aria-label="Zoom in">+</button>
+                <button type="button" class="lb-btn" id="lbClose" aria-label="Close gallery">Close</button>
+            </div>
+        </div>
+
+        <div class="lightbox-stage" id="lbStage">
+            <% if (galleryImages.length > 1) { %>
+            <button type="button" class="lb-arrow prev" id="lbPrev" aria-label="Previous image">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <button type="button" class="lb-arrow next" id="lbNext" aria-label="Next image">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+            <% } %>
+            <img id="lbImg" src="<%= galleryImages[0] %>" alt="<%= product.title %> high-resolution view" referrerPolicy="no-referrer">
+        </div>
+
+        <% if (galleryImages.length > 1) { %>
+        <div class="lightbox-thumbs" id="lbThumbs">
+            <% galleryImages.forEach((imgSrc, idx) => { %>
+            <button type="button" class="lb-thumb <%= idx === 0 ? 'active' : '' %>" data-index="<%= idx %>" aria-label="Inspect view <%= idx + 1 %>">
+                <img src="<%= imgSrc %>" alt="Thumbnail <%= idx + 1 %>" referrerPolicy="no-referrer" />
+            </button>
+            <% }) %>
+        </div>
+        <% } %>
+    </div>
+
     <footer class="footer">
         <div class="footer-inner">
             <span>© 2026 ART STUDIO. All rights reserved.</span>
-            <span>BTC · ETH · SOL Accepted at Checkout</span>
+            <nav class="footer-links" aria-label="Footer policies">
+                <a href="/shipping">Shipping &amp; Delivery</a>
+                <a href="/authenticity">Authenticity</a>
+                <a href="/terms">Terms</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/contact">Contact &amp; Support</a>
+            </nav>
         </div>
     </footer>
 
     <script>
-        const mainImg = document.getElementById('mainProductImg');
-        const viewCounter = document.getElementById('viewCounter');
-        const thumbBtns = document.querySelectorAll('.thumb-btn');
-        thumbBtns.forEach((btn) => {
-            btn.addEventListener('click', () => {
-                if (mainImg && btn.dataset.src) {
-                    mainImg.src = btn.dataset.src;
+        (() => {
+            const images = <%- JSON.stringify(galleryImages) %>;
+            const total = images.length;
+            let activeIndex = 0;
+
+            const artworkFrame = document.getElementById('artworkFrame');
+            const mainImg = document.getElementById('mainProductImg');
+            const viewCounter = document.getElementById('viewCounter');
+            const zoomHint = document.getElementById('zoomHint');
+            const inlineZoomBtn = document.getElementById('inlineZoomBtn');
+            const inlineZoomLabel = document.getElementById('inlineZoomLabel');
+            const openLightboxBtn = document.getElementById('openLightboxBtn');
+            const prevImgBtn = document.getElementById('prevImgBtn');
+            const nextImgBtn = document.getElementById('nextImgBtn');
+            const thumbBtns = Array.from(document.querySelectorAll('.thumb-btn'));
+
+            const lightbox = document.getElementById('galleryLightbox');
+            const lbImg = document.getElementById('lbImg');
+            const lbStage = document.getElementById('lbStage');
+            const lbCounter = document.getElementById('lbCounter');
+            const lbZoomIn = document.getElementById('lbZoomIn');
+            const lbZoomOut = document.getElementById('lbZoomOut');
+            const lbZoomLevel = document.getElementById('lbZoomLevel');
+            const lbClose = document.getElementById('lbClose');
+            const lbPrev = document.getElementById('lbPrev');
+            const lbNext = document.getElementById('lbNext');
+            const lbThumbs = Array.from(document.querySelectorAll('.lb-thumb'));
+
+            let inlineZoomed = false;
+            let lbScale = 1;
+            let lbPanX = 0;
+            let lbPanY = 0;
+            let dragging = false;
+            let dragMoved = false;
+            let dragStartX = 0;
+            let dragStartY = 0;
+            let panStartX = 0;
+            let panStartY = 0;
+
+            function setInlineZoom(enabled) {
+                inlineZoomed = enabled;
+                if (!artworkFrame || !mainImg) return;
+                artworkFrame.classList.toggle('inline-zoomed', enabled);
+                if (inlineZoomBtn) {
+                    inlineZoomBtn.classList.toggle('active', enabled);
+                    inlineZoomBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
                 }
-                if (viewCounter && btn.dataset.index && btn.dataset.total) {
-                    viewCounter.textContent = `View ${btn.dataset.index} of ${btn.dataset.total}`;
+                if (inlineZoomLabel) {
+                    inlineZoomLabel.textContent = enabled ? 'Reset Zoom' : 'Zoom 2.2×';
                 }
-                thumbBtns.forEach((b) => b.classList.toggle('active', b === btn));
+                if (zoomHint) {
+                    zoomHint.textContent = enabled
+                        ? 'Move cursor to inspect · Click to reset'
+                        : 'Click artwork to expand & zoom';
+                }
+                if (!enabled) {
+                    mainImg.style.transformOrigin = 'center center';
+                }
+            }
+
+            function selectImage(index) {
+                if (total <= 0) return;
+                activeIndex = ((index % total) + total) % total;
+                const src = images[activeIndex];
+                if (mainImg) mainImg.src = src;
+                if (lbImg) lbImg.src = src;
+                if (viewCounter) viewCounter.textContent = `View ${activeIndex + 1} of ${total}`;
+                if (lbCounter) lbCounter.textContent = `View ${activeIndex + 1} of ${total}`;
+
+                thumbBtns.forEach((btn, idx) => {
+                    const isAct = idx === activeIndex;
+                    btn.classList.toggle('active', isAct);
+                    if (isAct) {
+                        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                    }
+                });
+                lbThumbs.forEach((btn, idx) => btn.classList.toggle('active', idx === activeIndex));
+                resetLightboxZoom();
+            }
+
+            function applyLightboxTransform() {
+                if (!lbImg || !lbStage) return;
+                if (lbScale <= 1) {
+                    lbScale = 1;
+                    lbPanX = 0;
+                    lbPanY = 0;
+                }
+                lbImg.style.transform = `translate(${lbPanX}px, ${lbPanY}px) scale(${lbScale})`;
+                lbStage.classList.toggle('is-zoomed', lbScale > 1);
+                if (lbZoomLevel) {
+                    lbZoomLevel.textContent = `${Math.round(lbScale * 100)}%`;
+                }
+            }
+
+            function resetLightboxZoom() {
+                lbScale = 1;
+                lbPanX = 0;
+                lbPanY = 0;
+                applyLightboxTransform();
+            }
+
+            function setLightboxZoom(nextScale) {
+                lbScale = Math.min(3.5, Math.max(1, Number(nextScale.toFixed(2))));
+                if (lbScale === 1) {
+                    lbPanX = 0;
+                    lbPanY = 0;
+                }
+                applyLightboxTransform();
+            }
+
+            function openLightbox() {
+                if (!lightbox) return;
+                setInlineZoom(false);
+                lightbox.classList.add('open');
+                document.body.style.overflow = 'hidden';
+                resetLightboxZoom();
+            }
+
+            function closeLightbox() {
+                if (!lightbox) return;
+                lightbox.classList.remove('open');
+                document.body.style.overflow = '';
+                resetLightboxZoom();
+            }
+
+            thumbBtns.forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectImage(Number(btn.dataset.index || 0));
+                });
             });
-        });
+
+            lbThumbs.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    selectImage(Number(btn.dataset.index || 0));
+                });
+            });
+
+            if (prevImgBtn) {
+                prevImgBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectImage(activeIndex - 1);
+                });
+            }
+            if (nextImgBtn) {
+                nextImgBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectImage(activeIndex + 1);
+                });
+            }
+
+            if (inlineZoomBtn) {
+                inlineZoomBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    setInlineZoom(!inlineZoomed);
+                });
+            }
+
+            if (openLightboxBtn) {
+                openLightboxBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openLightbox();
+                });
+            }
+
+            if (artworkFrame) {
+                artworkFrame.addEventListener('mousemove', (e) => {
+                    if (!inlineZoomed || !mainImg) return;
+                    const rect = artworkFrame.getBoundingClientRect();
+                    const xPct = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+                    const yPct = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+                    mainImg.style.transformOrigin = `${xPct.toFixed(1)}% ${yPct.toFixed(1)}%`;
+                });
+
+                artworkFrame.addEventListener('click', () => {
+                    if (inlineZoomed) {
+                        setInlineZoom(false);
+                    } else {
+                        openLightbox();
+                    }
+                });
+            }
+
+            if (lbClose) lbClose.addEventListener('click', closeLightbox);
+            if (lbPrev) lbPrev.addEventListener('click', (e) => { e.stopPropagation(); selectImage(activeIndex - 1); });
+            if (lbNext) lbNext.addEventListener('click', (e) => { e.stopPropagation(); selectImage(activeIndex + 1); });
+            if (lbZoomIn) lbZoomIn.addEventListener('click', () => setLightboxZoom(lbScale + 0.75));
+            if (lbZoomOut) lbZoomOut.addEventListener('click', () => setLightboxZoom(lbScale - 0.75));
+            if (lbZoomLevel) lbZoomLevel.addEventListener('click', resetLightboxZoom);
+
+            if (lbStage) {
+                lbStage.addEventListener('wheel', (e) => {
+                    if (!lightbox.classList.contains('open')) return;
+                    e.preventDefault();
+                    setLightboxZoom(lbScale + (e.deltaY < 0 ? 0.35 : -0.35));
+                }, { passive: false });
+
+                lbStage.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('.lb-arrow')) return;
+                    dragMoved = false;
+                    if (lbScale <= 1) return;
+                    dragging = true;
+                    dragStartX = e.clientX;
+                    dragStartY = e.clientY;
+                    panStartX = lbPanX;
+                    panStartY = lbPanY;
+                    lbStage.classList.add('is-dragging');
+                });
+
+                window.addEventListener('mousemove', (e) => {
+                    if (!dragging) return;
+                    const dx = e.clientX - dragStartX;
+                    const dy = e.clientY - dragStartY;
+                    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) dragMoved = true;
+                    lbPanX = panStartX + dx;
+                    lbPanY = panStartY + dy;
+                    applyLightboxTransform();
+                });
+
+                window.addEventListener('mouseup', () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    if (lbStage) lbStage.classList.remove('is-dragging');
+                });
+
+                lbStage.addEventListener('click', (e) => {
+                    if (e.target.closest('.lb-arrow')) return;
+                    if (dragMoved) {
+                        dragMoved = false;
+                        return;
+                    }
+                    if (e.target === lbStage) {
+                        closeLightbox();
+                        return;
+                    }
+                    setLightboxZoom(lbScale > 1 ? 1 : 2.25);
+                });
+            }
+
+            document.addEventListener('keydown', (e) => {
+                const isOpen = lightbox && lightbox.classList.contains('open');
+                if (e.key === 'ArrowLeft') {
+                    if (isOpen || document.activeElement?.tagName !== 'INPUT') {
+                        selectImage(activeIndex - 1);
+                    }
+                } else if (e.key === 'ArrowRight') {
+                    if (isOpen || document.activeElement?.tagName !== 'INPUT') {
+                        selectImage(activeIndex + 1);
+                    }
+                } else if (isOpen && e.key === 'Escape') {
+                    closeLightbox();
+                } else if (isOpen && (e.key === '+' || e.key === '=')) {
+                    setLightboxZoom(lbScale + 0.75);
+                } else if (isOpen && e.key === '-') {
+                    setLightboxZoom(lbScale - 0.75);
+                }
+            });
+        })();
     </script>
     <script src="/static/js/cart-sync.js"></script>
 </body>

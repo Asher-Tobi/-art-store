@@ -366,6 +366,14 @@
             font-size: 12px;
         }
 
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-links a:hover { color: #ffffff; }
+
         @media (max-width: 900px) {
             .cart-layout { grid-template-columns: 1fr; }
             .summary-card { position: static; }
@@ -467,7 +475,7 @@
                 <% } %>
 
                 <p class="checkout-note">
-                    Complimentary courier delivery on orders over $1,500. Pay seamlessly via BTC, ETH, or SOL.
+                    <a href="/shipping" style="text-decoration: underline; text-underline-offset: 3px;">Complimentary courier delivery</a> on orders over $1,500. Pay seamlessly via BTC, ETH, or SOL.
                 </p>
             </aside>
         </div>
@@ -476,7 +484,13 @@
     <footer class="footer">
         <div class="footer-inner">
             <span>© 2026 ART STUDIO. All rights reserved.</span>
-            <span>BTC · ETH · SOL Accepted at Checkout</span>
+            <nav class="footer-links" aria-label="Footer policies">
+                <a href="/shipping">Shipping &amp; Delivery</a>
+                <a href="/authenticity">Authenticity</a>
+                <a href="/terms">Terms</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/contact">Contact &amp; Support</a>
+            </nav>
         </div>
     </footer>
 

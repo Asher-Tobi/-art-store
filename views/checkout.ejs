@@ -1001,7 +1001,11 @@
                         <button type="submit" class="submit-btn" id="submitOrderBtn">
                             Complete Order · <span id="submitAmtLabel"><%= crypto_options[selected_method || 'bitcoin'].amount %> <%= crypto_options[selected_method || 'bitcoin'].symbol %></span>
                         </button>
-                        <p class="submit-footnote">Insured fine art courier delivery worldwide. 100% authenticity guarantee with certificate.</p>
+                        <p class="submit-footnote">
+                            By completing your order, you agree to our
+                            <a href="/terms" style="text-decoration: underline; text-underline-offset: 2px;">Terms &amp; Conditions</a> and
+                            <a href="/privacy-policy" style="text-decoration: underline; text-underline-offset: 2px;">Privacy Policy</a>.
+                        </p>
                     </div>
                 </form>
             </div>
@@ -1065,9 +1069,9 @@
                     </div>
 
                     <div class="trust-list">
-                        <div class="trust-item"><span class="trust-check">✓</span><span>Insured fine art courier delivery with tracking</span></div>
-                        <div class="trust-item"><span class="trust-check">✓</span><span>100% authenticity guarantee with signed certificate</span></div>
-                        <div class="trust-item"><span class="trust-check">✓</span><span>Zero fees or intermediary bank holds on crypto transfers</span></div>
+                        <div class="trust-item"><span class="trust-check">✓</span><a href="/shipping" style="text-decoration: underline; text-underline-offset: 2px;">Insured fine art courier delivery with tracking</a></div>
+                        <div class="trust-item"><span class="trust-check">✓</span><a href="/authenticity" style="text-decoration: underline; text-underline-offset: 2px;">100% authenticity guarantee with signed certificate</a></div>
+                        <div class="trust-item"><span class="trust-check">✓</span><a href="/contact" style="text-decoration: underline; text-underline-offset: 2px;">Concierge support &amp; direct crypto settlement guidance</a></div>
                     </div>
                 </div>
             </aside>

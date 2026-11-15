@@ -87,6 +87,12 @@ const products: Product[] = [
     price_display: "$2,825",
     size: "32 x 40 in",
     image: "/static/images/3044136-HSC00001-7.jpg",
+    images: [
+      "/static/images/3044136-HSC00001-7.jpg",
+      "/static/images/p4-detail-1.jpg",
+      "/static/images/p4-detail-2.jpg",
+      "/static/images/p4-detail-3.jpg",
+    ],
     description:
       "A richly layered figurative work that explores growth, memory, and mutation through vivid color and texture.",
   },
@@ -99,6 +105,12 @@ const products: Product[] = [
     price_display: "$1,680",
     size: "39.4 x 27.6 in",
     image: "/static/images/8125999-IVGGQOPI-7.jpg",
+    images: [
+      "/static/images/8125999-IVGGQOPI-7.jpg",
+      "/static/images/p5-detail-1.jpg",
+      "/static/images/p5-detail-2.jpg",
+      "/static/images/p5-detail-3.jpg",
+    ],
     description:
       "A misty woodland photograph that captures quiet depth and atmosphere with a cinematic sense of stillness.",
   },
@@ -111,6 +123,12 @@ const products: Product[] = [
     price_display: "$904",
     size: "38 x 26 in",
     image: "/static/images/8702937-ICZMCJPJ-7.jpg",
+    images: [
+      "/static/images/8702937-ICZMCJPJ-7.jpg",
+      "/static/images/p7-detail-1.jpg",
+      "/static/images/p7-detail-2.jpg",
+      "/static/images/p7-detail-3.jpg",
+    ],
     description:
       "A quiet landscape photograph with expressive natural contrast, ideal for collectors drawn to transparent light and serene compositions.",
   },
@@ -123,6 +141,12 @@ const products: Product[] = [
     price_display: "$5,480",
     size: "30 x 30 in",
     image: "/static/images/13158935-GALGXZVV-7.jpg",
+    images: [
+      "/static/images/13158935-GALGXZVV-7.jpg",
+      "/static/images/p8-detail-1.jpg",
+      "/static/images/p8-detail-2.jpg",
+      "/static/images/p8-detail-3.jpg",
+    ],
     description:
       "An atmospheric painting that reads like a twilight memory, balancing earthy pigment with layered, reflective motion.",
   },
@@ -135,6 +159,12 @@ const products: Product[] = [
     price_display: "$1,280",
     size: "24 x 24 in",
     image: "/assets/aistudio/12654265-ZLCJTDIX-7_95a7c268.jpg",
+    images: [
+      "/assets/aistudio/12654265-ZLCJTDIX-7_95a7c268.jpg",
+      "/static/images/p9-detail-1.jpg",
+      "/static/images/p9-detail-2.jpg",
+      "/static/images/p9-detail-3.jpg",
+    ],
     description:
       "An expressive still-life painting pairing deep red grapes on the stem with a luminous teal ceramic bowl against muted slate and stone tones.",
   },
@@ -147,6 +177,12 @@ const products: Product[] = [
     price_display: "$2,450",
     size: "18 x 16 x 4 in",
     image: "/assets/aistudio/product_10_0fec4e65.jpg",
+    images: [
+      "/assets/aistudio/product_10_0fec4e65.jpg",
+      "/static/images/p10-detail-1.jpg",
+      "/static/images/p10-detail-2.jpg",
+      "/static/images/p10-detail-3.jpg",
+    ],
     description:
       "A dark patinated bronze figurative sculpture capturing four elongated silhouettes in synchronized motion, mounted on a minimalist plinth for contemporary interiors.",
   },
@@ -159,6 +195,12 @@ const products: Product[] = [
     price_display: "$20,000",
     size: "48 x 60 in",
     image: "/static/images/atlantic-drift.jpg",
+    images: [
+      "/static/images/atlantic-drift.jpg",
+      "/static/images/p11-detail-1.jpg",
+      "/static/images/p11-detail-2.jpg",
+      "/static/images/p11-detail-3.jpg",
+    ],
     description:
       "An original abstract painting from the Parallels Series created with specialty metallic and fluorescent acrylics on stretched canvas, inspired by the shifting reflections and enduring rhythm of the Atlantic Ocean.",
   },
@@ -171,6 +213,12 @@ const products: Product[] = [
     price_display: "$161",
     size: "5.1 x 5.9 x 5.1 in",
     image: "/static/images/12649329-PYQGAIGQ-7.jpg",
+    images: [
+      "/static/images/12649329-PYQGAIGQ-7.jpg",
+      "/static/images/p12-detail-1.jpg",
+      "/static/images/p12-detail-2.jpg",
+      "/static/images/p12-detail-3.jpg",
+    ],
     description:
       "Handcrafted sculptural table lamp combining frosted blue-rimmed glass, natural wood base, and warm LED illumination in an organic study of light and form.",
   },
@@ -206,9 +254,9 @@ const products: Product[] = [
     image: "/static/images/mary-ogochukwu-memories-sand.jpg",
     images: [
       "/static/images/mary-ogochukwu-memories-sand.jpg",
-      "/assets/aistudio/mary_ogochuku_1_0984b425.webp",
-      "/assets/aistudio/mary_ogochuku_2_0fbb5297.webp",
-      "/assets/aistudio/mary_ogochuku_3_a44055b4.webp",
+      "/static/images/mary-ogochukwu-1.jpg",
+      "/static/images/mary-ogochukwu-2.jpg",
+      "/static/images/mary-ogochukwu-3.jpg",
     ],
     description:
       "A unique 2025 contemporary figurative acrylic painting on canvas by Nigerian artist Mary Ogochukwu, capturing expressive warmth, movement, and sunlit memory. Accompanied by a Certificate of Authenticity.",
@@ -224,10 +272,11 @@ const products: Product[] = [
     image: "/static/images/albert-clark-horses.jpg",
     images: [
       "/static/images/albert-clark-horses.jpg",
-      "/assets/aistudio/Albert_Clark_1_ca56a519.webp",
-      "/assets/aistudio/Albert_Clark_2_ccb70610.webp",
-      "/assets/aistudio/Albert_Clark_3_99475c82.webp",
-      "/assets/aistudio/Albert_Clark_4_b64061e7.webp",
+      "/static/images/albert-clark-1.jpg",
+      "/static/images/albert-clark-2.jpg",
+      "/static/images/albert-clark-3.jpg",
+      "/static/images/albert-clark-4.jpg",
+      "/static/images/albert-clark-5.jpg",
     ],
     description:
       "Signed and dated 1887 oil on canvas by British Victorian sporting artist Albert Clark (1843–1928), depicting a chestnut and a bay horse standing face to face in an open English field, presented in an ornate antique gilt frame.",
@@ -243,10 +292,11 @@ const products: Product[] = [
     image: "/static/images/white-marble-torso.jpg",
     images: [
       "/static/images/white-marble-torso.jpg",
-      "/assets/aistudio/Unknown_1_d2a06c55.webp",
-      "/assets/aistudio/Unknown_2_8c7f2d21.webp",
-      "/assets/aistudio/Unknown_3_1958b1a2.webp",
-      "/assets/aistudio/Unknown_4_c1695a32.webp",
+      "/static/images/white-marble-torso-1.jpg",
+      "/static/images/white-marble-torso-2.jpg",
+      "/static/images/white-marble-torso-3.jpg",
+      "/static/images/white-marble-torso-4.jpg",
+      "/static/images/white-marble-torso-5.jpg",
     ],
     description:
       "Hand-carved 20th-century Italian Grand Tour classical torso in warm white marble with subtle natural veining and weathered patina, mounted upright on a minimalist black steel display stand.",
@@ -259,12 +309,14 @@ const products: Product[] = [
     price: 2516.0,
     price_display: "$2,516",
     size: "12.6 x 10.2 x 12.6 in",
-    image: "/assets/aistudio/nano_3_5ed1d424.webp",
+    image: "/static/images/nando-kallweit-sina-1.jpg",
     images: [
-      "/assets/aistudio/nano_3_5ed1d424.webp",
-      "/assets/aistudio/nano_5_f49dbef6.webp",
-      "/assets/aistudio/nano_4_5ec1329b.webp",
-      "/assets/aistudio/nano_1_ce534eeb.webp",
+      "/static/images/nando-kallweit-sina-1.jpg",
+      "/static/images/nando-kallweit-sina-2.jpg",
+      "/static/images/nando-kallweit-sina-3.jpg",
+      "/static/images/nando-kallweit-sina-4.jpg",
+      "/static/images/nando-kallweit-sina-5.jpg",
+      "/static/images/nando-kallweit-sina-6.jpg",
     ],
     description:
       "Limited edition of 25 bronze sculpture by German sculptor Nando Kallweit. Cast using the traditional lost-wax method from an original hand-carved oak wood body, preserving subtle organic grain and tactile tool marks with poised, elongated figurative lines.",
@@ -277,13 +329,14 @@ const products: Product[] = [
     price: 2880.0,
     price_display: "$2,880",
     size: "29.5 x 25 in",
-    image: "/assets/aistudio/master_1_7710b430.webp",
+    image: "/static/images/madonna-sorrows-1.jpg",
     images: [
-      "/assets/aistudio/master_1_7710b430.webp",
-      "/assets/aistudio/master_2_8106e766.webp",
-      "/assets/aistudio/master_3_60695d30.webp",
-      "/assets/aistudio/master_4_be88bc8f.webp",
-      "/assets/aistudio/master_5_8a26db49.webp",
+      "/static/images/madonna-sorrows-1.jpg",
+      "/static/images/madonna-sorrows-2.jpg",
+      "/static/images/madonna-sorrows-3.jpg",
+      "/static/images/madonna-sorrows-4.jpg",
+      "/static/images/madonna-sorrows-5.jpg",
+      "/static/images/madonna-sorrows-6.jpg",
     ],
     description:
       "Fine antique 19th-century Italian Old Master oil painting on linen canvas after Giovanni Battista Salvi da Sassoferrato's renowned composition, depicting the Virgin Mary in serene devotional prayer draped in a deep ultramarine mantle with rich craquelure and original period stretcher.",
@@ -1180,6 +1233,303 @@ app.post("/clear-cart", (req: Request, res: Response) => {
   const cid = saveCart(req, res, {});
   pushFlash(req, "Your cart has been cleared.");
   redirectWithSession(req, res, "/cart", cid);
+});
+
+interface TrustPageSection {
+  heading: string;
+  paragraphs: string[];
+  bullets?: string[];
+}
+
+interface TrustPageConfig {
+  slug: string;
+  kicker: string;
+  title: string;
+  description: string;
+  lead: string;
+  highlights: Array<{ label: string; value: string }>;
+  sections: TrustPageSection[];
+}
+
+interface SupportInquiry {
+  reference: string;
+  name: string;
+  email: string;
+  topic: string;
+  referenceCode: string;
+  message: string;
+  createdAt: string;
+}
+
+const inquiryStore = new Map<string, SupportInquiry>();
+
+const trustPages: Record<string, TrustPageConfig> = {
+  shipping: {
+    slug: "shipping",
+    kicker: "Fine Art Logistics",
+    title: "Shipping & Delivery",
+    description:
+      "Insured fine art courier delivery, museum-grade crating, and worldwide shipping timelines at ART STUDIO.",
+    lead: "Every original painting, photograph, sculpture, and collectible design work is custom-packed by art handlers and shipped worldwide with full declared-value transit insurance.",
+    highlights: [
+      { label: "Orders $1,500+", value: "Complimentary Courier" },
+      { label: "Transit Coverage", value: "100% Declared Value" },
+      { label: "Tracking & Care", value: "Signature Required" },
+    ],
+    sections: [
+      {
+        heading: "Museum-Grade Crating & Packaging",
+        paragraphs: [
+          "All framed works, stretched canvases, stone sculptures, and design objects are prepared in-house or at the originating studio prior to carrier handover.",
+        ],
+        bullets: [
+          "Paintings and framed works are wrapped in acid-free glassine paper, rigid corner protectors, high-density foam cushioning, and double-walled export cartons or custom timber crates.",
+          "Marble, bronze, and glass sculptures ship in custom-molded cavity inserts suspended inside reinforced wood crating.",
+          "Your signed Certificate of Authenticity travels inside a sealed archival sleeve accompanying the shipment.",
+        ],
+      },
+      {
+        heading: "International Dispatch & Customs",
+        paragraphs: [
+          "Orders are dispatched from our partner studios and gallery vaults across North America and Europe. Tracking credentials and courier airway bills are emailed immediately upon dispatch.",
+          "Import duties, VAT, or local clearance fees outside the originating region are assessed by destination customs authorities and remain the responsibility of the recipient unless specified otherwise.",
+        ],
+      },
+      {
+        heading: "Delivery Inspection & Transit Claims",
+        paragraphs: [
+          "Please inspect the exterior crate or carton before signing with the courier. In the rare event of transit damage, note the condition on the delivery receipt and contact our Logistics Desk within 48 hours with photographs of both the packaging and artwork so our insurance team can resolve the claim promptly.",
+        ],
+      },
+    ],
+  },
+  authenticity: {
+    slug: "authenticity",
+    kicker: "Curatorial Provenance",
+    title: "Artwork Authenticity",
+    description:
+      "Provenance verification, signed Certificates of Authenticity, and condition guarantees for every work offered at ART STUDIO.",
+    lead: "Every piece presented in our archive undergoes multi-point curatorial vetting to verify authorship, materials, edition status, and documented gallery or studio provenance.",
+    highlights: [
+      { label: "Documentation", value: "Signed COA Included" },
+      { label: "Guarantee", value: "Lifetime Authenticity" },
+      { label: "Origin", value: "Vetted Studios & Dealers" },
+    ],
+    sections: [
+      {
+        heading: "Provenance & Studio Verification",
+        paragraphs: [
+          "Contemporary works are acquired directly from independent artist studios or authorized primary galleries. Historical, modernist, and 19th-century works are sourced exclusively through established fine art dealers with documented chain of ownership.",
+        ],
+        bullets: [
+          "Verification of artist signatures, dates, workshop marks, foundry stamps, or edition numbers.",
+          "Condition assessment covering canvas tension, pigment stability, patina, and period framing.",
+          "Direct studio or estate confirmation recorded prior to listing.",
+        ],
+      },
+      {
+        heading: "Certificate of Authenticity",
+        paragraphs: [
+          "Each acquisition includes a physical or registered Certificate of Authenticity detailing the artist, title, medium, dimensions, year, and provenance record, signed by the artist or gallery director.",
+        ],
+      },
+      {
+        heading: "Lifetime Authenticity Guarantee",
+        paragraphs: [
+          "ART STUDIO stands behind the attribution of every cataloged work. Should any independent accredited authority prove an attribution to be materially inaccurate, we guarantee a full refund of the purchase price upon return of the artwork in its delivered condition.",
+        ],
+      },
+    ],
+  },
+  terms: {
+    slug: "terms",
+    kicker: "Acquisition Agreement",
+    title: "Terms & Conditions",
+    description:
+      "Terms of sale, on-chain cryptocurrency settlement, 14-day collector inspection returns, and buyer protections at ART STUDIO.",
+    lead: "These terms govern all acquisitions, reservations, and deliveries arranged through ART STUDIO.",
+    highlights: [
+      { label: "Settlement", value: "BTC · ETH · SOL" },
+      { label: "Return Window", value: "14-Day Inspection" },
+      { label: "Pricing Currency", value: "USD Equivalent" },
+    ],
+    sections: [
+      {
+        heading: "Original Works & Availability",
+        paragraphs: [
+          "Most artworks in our archive are one-of-a-kind originals or strictly limited editions. Adding a work to your shopping bag does not permanently reserve the piece until checkout is completed and on-chain settlement is initiated.",
+        ],
+      },
+      {
+        heading: "Cryptocurrency Payment & Rate Settlement",
+        paragraphs: [
+          "Checkout totals are calculated in USD and converted into Bitcoin (BTC), Ethereum (ETH), or Solana (SOL) using live market pricing at order confirmation. Sending the exact quoted cryptocurrency amount to your assigned deposit address completes settlement with zero intermediary card or wire holds.",
+        ],
+      },
+      {
+        heading: "14-Day Collector Return Policy",
+        paragraphs: [
+          "If an artwork is not suited to your space upon arrival, you may request a return authorization within 14 calendar days of courier delivery.",
+        ],
+        bullets: [
+          "Returned works must remain in their exact delivered condition and be repacked in the original archival crating.",
+          "Return courier & insurance arrangements are coordinated directly by our Logistics Desk.",
+          "Once inspected and received at the originating studio or vault, refunds are issued promptly to your designated wallet or settlement address.",
+        ],
+      },
+      {
+        heading: "Copyright & Intellectual Property",
+        paragraphs: [
+          "Purchasing a physical artwork transfers ownership of the physical object and its Certificate of Authenticity. Reproduction, commercial licensing, and underlying copyright remain with the artist or rights holder unless separately agreed in writing.",
+        ],
+      },
+    ],
+  },
+  "privacy-policy": {
+    slug: "privacy-policy",
+    kicker: "Collector Confidentiality",
+    title: "Privacy Policy",
+    description:
+      "How ART STUDIO safeguards collector contact information, shipping coordinates, and session data.",
+    lead: "Collector discretion is foundational to fine art acquisition. We collect only the details necessary to crate, insure, and deliver your artwork and never sell or rent personal records.",
+    highlights: [
+      { label: "Data Sharing", value: "Zero Ad Brokers" },
+      { label: "Payment Privacy", value: "No Card Data Stored" },
+      { label: "Cookies", value: "Essential Bag State Only" },
+    ],
+    sections: [
+      {
+        heading: "Information We Collect",
+        paragraphs: [
+          "When you place an order or submit an inquiry, we collect only the contact details and shipping coordinates required to coordinate insured fine art delivery and issue provenance documentation:",
+        ],
+        bullets: [
+          "Full legal name, email address, and telephone number (required for courier scheduling and signature release).",
+          "Delivery street address, city, region, and postal code.",
+          "Order reference and selected artwork metadata.",
+        ],
+      },
+      {
+        heading: "Session & Shopping Bag Cookies",
+        paragraphs: [
+          "We use strictly necessary session and signed bag cookies (connect.sid and art_studio_cart) solely to keep items in your shopping bag across page visits. We do not deploy third-party advertising pixels or cross-site behavioral tracking.",
+        ],
+      },
+      {
+        heading: "On-Chain Payment Privacy",
+        paragraphs: [
+          "Because acquisitions are settled directly via Bitcoin, Ethereum, or Solana, ART STUDIO never collects, transmits, or stores credit card numbers, CVV codes, or bank account credentials.",
+        ],
+      },
+      {
+        heading: "Data Retention & Deletion Requests",
+        paragraphs: [
+          "You may request access to, correction of, or deletion of your contact and delivery records at any time by submitting a Privacy & Data Request on our Contact & Support page.",
+        ],
+      },
+    ],
+  },
+  contact: {
+    slug: "contact",
+    kicker: "Collector Concierge",
+    title: "Contact & Customer Support",
+    description:
+      "Contact ART STUDIO curatorial and logistics specialists for condition reports, shipping support, and collector inquiries.",
+    lead: "Our curatorial and fine art logistics team is ready to assist with condition reports, framing questions, courier scheduling, or order support.",
+    highlights: [
+      { label: "Response SLA", value: "Under 24 Hours" },
+      { label: "Studio Hours", value: "Mon–Fri · 9am–6pm EST" },
+      { label: "Concierge", value: "Direct Specialist Desk" },
+    ],
+    sections: [
+      {
+        heading: "Frequently Requested Assistance",
+        paragraphs: [
+          "Before reaching out, you may also find immediate answers in our dedicated Shipping & Delivery, Artwork Authenticity, and Terms & Conditions guides in the sidebar.",
+        ],
+        bullets: [
+          "Condition & Verso Photographs: Additional lighting or back-of-canvas photos can be supplied upon request prior to crating.",
+          "Courier Rescheduling: Need a specific delivery window or white-glove placement? Include your order reference in the form above.",
+          "Transit Claims: Contact logistics@artstudio.gallery within 48 hours of delivery with packaging and artwork photos.",
+        ],
+      },
+    ],
+  },
+};
+
+function renderTrustPage(
+  req: Request,
+  res: Response,
+  slug: string,
+  extra: {
+    messages?: string[];
+    form_values?: { name: string; email: string; topic: string; reference: string; message: string };
+  } = {}
+): void {
+  const page = trustPages[slug];
+  if (!page) {
+    res.status(404).send("Not Found");
+    return;
+  }
+  res.render("info", {
+    page,
+    messages: extra.messages ?? consumeFlashes(req),
+    form_values: extra.form_values ?? null,
+  });
+}
+
+app.get("/shipping", (req: Request, res: Response) => {
+  renderTrustPage(req, res, "shipping");
+});
+
+app.get("/authenticity", (req: Request, res: Response) => {
+  renderTrustPage(req, res, "authenticity");
+});
+
+app.get("/terms", (req: Request, res: Response) => {
+  renderTrustPage(req, res, "terms");
+});
+
+app.get("/privacy-policy", (req: Request, res: Response) => {
+  renderTrustPage(req, res, "privacy-policy");
+});
+
+app.get("/contact", (req: Request, res: Response) => {
+  renderTrustPage(req, res, "contact");
+});
+
+app.post("/contact", (req: Request, res: Response) => {
+  const name = String(req.body.name ?? "").trim();
+  const email = String(req.body.email ?? "").trim();
+  const topic = String(req.body.topic ?? "General Collector Inquiry").trim();
+  const reference = String(req.body.reference ?? "").trim();
+  const message = String(req.body.message ?? "").trim();
+
+  const emailDomain = email.includes("@") ? email.split("@").pop() ?? "" : "";
+  if (name.length < 2 || !email.includes("@") || !emailDomain.includes(".") || message.length < 5) {
+    renderTrustPage(req, res, "contact", {
+      messages: ["Please provide your name, a valid email address, and a brief inquiry message."],
+      form_values: { name, email, topic, reference, message },
+    });
+    return;
+  }
+
+  const refCode = `INQ-${crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+  inquiryStore.set(refCode, {
+    reference: refCode,
+    name,
+    email,
+    topic,
+    referenceCode: reference,
+    message,
+    createdAt: new Date().toISOString(),
+  });
+
+  pushFlash(
+    req,
+    `Thank you, ${name}. Your inquiry (${refCode}) has been received by our Collector Concierge team, who will reply to ${email} within 1 business day.`
+  );
+  redirectWithSession(req, res, "/contact");
 });
 
 app.listen(PORT, "0.0.0.0", () => {

@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="<%= page.description %>" />
+    <title><%= page.title %> | ART STUDIO</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink: #0a0a0a;
+            --ink-soft: #404040;
+            --muted: #666666;
+            --border: #dcdcdc;
+            --card-border: #e5e5e5;
+            --surface: #ffffff;
+            --canvas: #fafafa;
+            --gold: #a3702b;
+            --gold-bright: #d49653;
+            --green: #047857;
+            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-serif: "Playfair Display", Georgia, serif;
+            --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: var(--font-sans);
+            background: var(--surface);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        button, input, select, textarea { font: inherit; }
+
+        .topbar {
+            background: #111111;
+            color: #ffffff;
+            text-align: center;
+            padding: 9px 16px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 32px;
+        }
+
+        .brand-mark {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink);
+            white-space: nowrap;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+
+        .nav a:hover {
+            color: var(--ink);
+            text-decoration: underline;
+            text-underline-offset: 6px;
+        }
+
+        .bag-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-radius: 2px;
+        }
+
+        .bag-trigger:hover { background: #f5f5f5; }
+
+        .bag-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 9999px;
+            background: #171717;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .main-wrap {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+            flex: 1;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #737373;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 28px;
+        }
+
+        .breadcrumb a:hover { color: var(--ink); }
+        .breadcrumb .current { color: var(--ink); font-weight: 500; }
+
+        .trust-layout {
+            display: grid;
+            grid-template-columns: 260px minmax(0, 1fr);
+            gap: 48px;
+            align-items: start;
+        }
+
+        .trust-sidebar {
+            position: sticky;
+            top: 88px;
+            border: 1px solid var(--card-border);
+            background: var(--canvas);
+            padding: 20px;
+            border-radius: 2px;
+        }
+
+        .sidebar-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: #737373;
+            margin: 0 0 12px;
+        }
+
+        .trust-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .trust-nav a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink-soft);
+            border-radius: 2px;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .trust-nav a:hover {
+            background: #efefef;
+            color: var(--ink);
+        }
+
+        .trust-nav a.active {
+            background: #0a0a0a;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .sidebar-meta {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--card-border);
+            font-size: 12px;
+            line-height: 1.6;
+            color: #525252;
+        }
+
+        .sidebar-meta strong {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--ink);
+            margin-bottom: 4px;
+        }
+
+        .trust-article {
+            min-width: 0;
+        }
+
+        .article-kicker {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .article-title {
+            font-family: var(--font-serif);
+            font-size: clamp(2rem, 3.5vw, 2.75rem);
+            font-weight: 400;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin: 0 0 14px;
+            color: var(--ink);
+        }
+
+        .article-lead {
+            font-size: 15px;
+            line-height: 1.75;
+            color: #525252;
+            margin: 0 0 28px;
+            max-width: 700px;
+        }
+
+        .highlights-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+
+        .highlight-card {
+            border: 1px solid var(--card-border);
+            background: var(--canvas);
+            padding: 18px;
+            border-radius: 2px;
+        }
+
+        .highlight-label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #737373;
+            margin-bottom: 6px;
+        }
+
+        .highlight-val {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--ink);
+            line-height: 1.35;
+        }
+
+        .sections-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .info-section {
+            border: 1px solid var(--card-border);
+            background: #ffffff;
+            padding: 28px;
+            border-radius: 2px;
+        }
+
+        .info-section h2 {
+            font-family: var(--font-serif);
+            font-size: 22px;
+            font-weight: 400;
+            margin: 0 0 12px;
+            color: var(--ink);
+        }
+
+        .info-section p {
+            font-size: 14px;
+            line-height: 1.75;
+            color: #404040;
+            margin: 0 0 12px;
+        }
+
+        .info-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-list {
+            margin: 10px 0 0;
+            padding-left: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 14px;
+            line-height: 1.65;
+            color: #404040;
+        }
+
+        .spec-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .spec-table th,
+        .spec-table td {
+            text-align: left;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .spec-table th {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #525252;
+            background: var(--canvas);
+        }
+
+        .spec-table .mono {
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+
+        /* Contact Support Form */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+            gap: 28px;
+            align-items: start;
+        }
+
+        .support-form-card {
+            border: 1px solid var(--border);
+            background: #ffffff;
+            padding: 28px;
+            border-radius: 2px;
+        }
+
+        .support-form-card h2 {
+            font-family: var(--font-serif);
+            font-size: 22px;
+            font-weight: 400;
+            margin: 0 0 6px;
+        }
+
+        .support-form-sub {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0 0 22px;
+            line-height: 1.6;
+        }
+
+        .field-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .field-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #404040;
+            margin-bottom: 6px;
+        }
+
+        .field-input,
+        .field-select,
+        .field-textarea {
+            width: 100%;
+            padding: 11px 12px;
+            background: #fafafa;
+            border: 1px solid #cccccc;
+            border-radius: 2px;
+            font-size: 14px;
+            color: var(--ink);
+            outline: none;
+        }
+
+        .field-input:focus,
+        .field-select:focus,
+        .field-textarea:focus {
+            border-color: #0a0a0a;
+            background: #ffffff;
+        }
+
+        .field-textarea {
+            min-height: 130px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            width: 100%;
+            height: 48px;
+            background: #0a0a0a;
+            color: #ffffff;
+            border: none;
+            border-radius: 2px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .submit-btn:hover { background: #262626; }
+
+        .flash {
+            padding: 13px 16px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            font-size: 13px;
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+
+        .flash.error {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #991b1b;
+        }
+
+        .concierge-card {
+            border: 1px solid var(--card-border);
+            background: var(--canvas);
+            padding: 24px;
+            border-radius: 2px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .concierge-item strong {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: #737373;
+            margin-bottom: 4px;
+        }
+
+        .concierge-item span,
+        .concierge-item a {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .concierge-item p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #525252;
+        }
+
+        .footer {
+            background: #111111;
+            color: #999999;
+            border-top: 1px solid #262626;
+            padding: 44px 24px 36px;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 12px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-links a:hover { color: #ffffff; }
+
+        @media (max-width: 960px) {
+            .nav { display: none; }
+            .trust-layout { grid-template-columns: 1fr; gap: 28px; }
+            .trust-sidebar { position: static; }
+            .highlights-grid { grid-template-columns: 1fr; }
+            .contact-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            .field-row-2 { grid-template-columns: 1fr; }
+            .info-section, .support-form-card { padding: 20px; }
+        }
+    </style>
+</head>
+<body data-cid="<%= cid %>">
+    <div class="topbar">Insured Fine Art Courier Delivery · Pay Direct with BTC, ETH, or SOL</div>
+
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="brand-mark">ART STUDIO</a>
+            <nav class="nav">
+                <a href="/">Shop All</a>
+                <a href="/?category=Painting">Paintings</a>
+                <a href="/?category=Photography">Photography</a>
+                <a href="/?category=Sculpture">Sculpture</a>
+                <a href="/?category=Furniture">Furniture</a>
+            </nav>
+            <a href="/cart" class="bag-trigger" aria-label="Shopping Bag">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+                <span>Bag</span>
+                <span class="bag-badge cart-count"><%= cart_count %></span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main-wrap">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Archive</a>
+            <span>/</span>
+            <span class="current"><%= page.title %></span>
+        </nav>
+
+        <div class="trust-layout">
+            <aside class="trust-sidebar">
+                <span class="sidebar-label">Collector Care &amp; Policies</span>
+                <nav class="trust-nav" aria-label="Trust and policy pages">
+                    <a href="/shipping" class="<%= page.slug === 'shipping' ? 'active' : '' %>">Shipping &amp; Delivery</a>
+                    <a href="/authenticity" class="<%= page.slug === 'authenticity' ? 'active' : '' %>">Artwork Authenticity</a>
+                    <a href="/terms" class="<%= page.slug === 'terms' ? 'active' : '' %>">Terms &amp; Conditions</a>
+                    <a href="/privacy-policy" class="<%= page.slug === 'privacy-policy' ? 'active' : '' %>">Privacy Policy</a>
+                    <a href="/contact" class="<%= page.slug === 'contact' ? 'active' : '' %>">Contact &amp; Support</a>
+                </nav>
+
+                <div class="sidebar-meta">
+                    <strong>Collector Concierge</strong>
+                    Direct guidance on provenance, condition reports, crated courier quotes, and order tracking.
+                </div>
+            </aside>
+
+            <article class="trust-article">
+                <span class="article-kicker"><%= page.kicker %></span>
+                <h1 class="article-title"><%= page.title %></h1>
+                <p class="article-lead"><%= page.lead %></p>
+
+                <% if (page.highlights && page.highlights.length) { %>
+                <div class="highlights-grid">
+                    <% page.highlights.forEach((hl) => { %>
+                    <div class="highlight-card">
+                        <span class="highlight-label"><%= hl.label %></span>
+                        <div class="highlight-val"><%= hl.value %></div>
+                    </div>
+                    <% }) %>
+                </div>
+                <% } %>
+
+                <% if (page.slug === 'contact') { %>
+                <div class="contact-grid">
+                    <section class="support-form-card">
+                        <h2>Send a Collector Inquiry</h2>
+                        <p class="support-form-sub">Reach our curatorial &amp; logistics team regarding condition reports, shipping arrangements, or an existing acquisition.</p>
+
+                        <% if (messages && messages.length) { %>
+                            <% messages.forEach((msg) => { %>
+                                <div class="flash <%= msg.toLowerCase().includes('please') ? 'error' : '' %>" role="status"><%= msg %></div>
+                            <% }) %>
+                        <% } %>
+
+                        <form method="post" action="/contact" class="field-stack">
+                            <div class="field-row-2">
+                                <div>
+                                    <label class="field-label" for="contact-name">Full Name *</label>
+                                    <input class="field-input" id="contact-name" name="name" type="text" placeholder="Your full name" value="<%= form_values ? form_values.name : '' %>" required />
+                                </div>
+                                <div>
+                                    <label class="field-label" for="contact-email">Email Address *</label>
+                                    <input class="field-input" id="contact-email" name="email" type="email" placeholder="name@example.com" value="<%= form_values ? form_values.email : '' %>" required />
+                                </div>
+                            </div>
+
+                            <div class="field-row-2">
+                                <div>
+                                    <label class="field-label" for="contact-topic">Inquiry Topic</label>
+                                    <select class="field-select" id="contact-topic" name="topic">
+                                        <option value="Shipping & Delivery">Shipping &amp; Delivery</option>
+                                        <option value="Artwork Authenticity & Condition">Artwork Authenticity &amp; Condition</option>
+                                        <option value="Order & Crypto Payment Support">Order &amp; Crypto Payment Support</option>
+                                        <option value="Private Acquisition Inquiry">Private Acquisition Inquiry</option>
+                                        <option value="Privacy & Data Request">Privacy &amp; Data Request</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="field-label" for="contact-ref">Order Ref / Artwork Title</label>
+                                    <input class="field-input" id="contact-ref" name="reference" type="text" placeholder="Optional (e.g. order ID or title)" value="<%= form_values ? form_values.reference : '' %>" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="contact-msg">Message *</label>
+                                <textarea class="field-textarea" id="contact-msg" name="message" placeholder="How can our curatorial or logistics team assist you?" required><%= form_values ? form_values.message : '' %></textarea>
+                            </div>
+
+                            <button type="submit" class="submit-btn">Submit Support Inquiry</button>
+                        </form>
+                    </section>
+
+                    <aside class="concierge-card">
+                        <div class="concierge-item">
+                            <strong>Collector Support Desk</strong>
+                            <a href="mailto:concierge@artstudio.gallery">concierge@artstudio.gallery</a>
+                            <p>Dedicated specialist response within 1 business day (Monday–Friday, 09:00–18:00 EST).</p>
+                        </div>
+                        <div class="concierge-item">
+                            <strong>Fine Art Logistics &amp; Claims</strong>
+                            <a href="mailto:logistics@artstudio.gallery">logistics@artstudio.gallery</a>
+                            <p>Custom crating coordinates, courier tracking updates, and 48-hour transit inspection support.</p>
+                        </div>
+                        <div class="concierge-item">
+                            <strong>Provenance &amp; COA Archive</strong>
+                            <span>Included with Every Work</span>
+                            <p>Request additional high-resolution verso photographs or framing measurements prior to dispatch.</p>
+                        </div>
+                    </aside>
+                </div>
+                <% } %>
+
+                <div class="sections-stack" style="<%= page.slug === 'contact' ? 'margin-top: 28px;' : '' %>">
+                    <% if (page.slug === 'shipping') { %>
+                    <section class="info-section">
+                        <h2>Delivery Schedule &amp; Rates</h2>
+                        <p>Every painting, photograph, sculpture, and furniture piece is packed in custom-fitted archival crating and dispatched via insured specialist fine art carriers.</p>
+                        <table class="spec-table">
+                            <thead>
+                                <tr>
+                                    <th>Service Tier</th>
+                                    <th>Estimated Preparation &amp; Transit</th>
+                                    <th>Courier Fee</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Orders $1,500 USD &amp; Above</td>
+                                    <td>3–5 days crating · 4–10 business days transit</td>
+                                    <td class="mono" style="color: var(--green);">COMPLIMENTARY</td>
+                                </tr>
+                                <tr>
+                                    <td>Orders Under $1,500 USD</td>
+                                    <td>3–5 days crating · 4–10 business days transit</td>
+                                    <td class="mono">$65.00 USD</td>
+                                </tr>
+                                <tr>
+                                    <td>Large-Format &amp; Oversized Sculpture</td>
+                                    <td>White-glove scheduled delivery &amp; signature verification</td>
+                                    <td class="mono">Included in Tier</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+                    <% } %>
+
+                    <% page.sections.forEach((sec) => { %>
+                    <section class="info-section">
+                        <h2><%= sec.heading %></h2>
+                        <% sec.paragraphs.forEach((p) => { %>
+                            <p><%= p %></p>
+                        <% }) %>
+                        <% if (sec.bullets && sec.bullets.length) { %>
+                            <ul class="info-list">
+                                <% sec.bullets.forEach((b) => { %>
+                                    <li><%= b %></li>
+                                <% }) %>
+                            </ul>
+                        <% } %>
+                    </section>
+                    <% }) %>
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <span>© 2026 ART STUDIO. All rights reserved.</span>
+            <nav class="footer-links" aria-label="Footer policies">
+                <a href="/shipping">Shipping &amp; Delivery</a>
+                <a href="/authenticity">Authenticity</a>
+                <a href="/terms">Terms</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/contact">Contact &amp; Support</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script src="/static/js/cart-sync.js"></script>
+</body>
+</html>
