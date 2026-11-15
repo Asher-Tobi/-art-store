@@ -183,6 +183,15 @@ const products: Product[] = [
     price_display: "$39,700",
     size: "41.3 x 46.1 x 29.9 in",
     image: "/static/images/hans-wegner-ge225.jpg",
+    images: [
+      "/static/images/hans-wegner-ge225.jpg",
+      "/static/images/hans-wegner-ge225-2.jpg",
+      "/static/images/hans-wegner-ge225-3.jpg",
+      "/static/images/hans-wegner-ge225-4.jpg",
+      "/static/images/hans-wegner-ge225-5.jpg",
+      "/static/images/hans-wegner-ge225-6.jpg",
+      "/static/images/hans-wegner-ge225-7.jpg",
+    ],
     description:
       "Early 1958 edition of Hans J. Wegner's iconic Flag Halyard lounge chair (Model GE225), woven from 250 meters of flag halyard rope over a dark green lacquered and chromed steel frame with original wooden feet, leather headrest, and sheepskin throw.",
   },
