@@ -312,8 +312,8 @@
 
         .crypto-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 10px;
             margin-bottom: 16px;
         }
 
@@ -374,6 +374,58 @@
             font-weight: 700;
             color: var(--ink);
             margin-top: 6px;
+        }
+
+        .card-unavail-panel {
+            border: 1px solid #f59e0b;
+            background: #fffbeb;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-unavail-title {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: #92400e;
+        }
+
+        .card-unavail-desc {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #78350f;
+        }
+
+        .switch-crypto-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .switch-crypto-btn {
+            background: var(--ink);
+            color: #ffffff;
+            border: none;
+            padding: 10px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+        }
+
+        .switch-crypto-btn:hover { background: #262626; }
+
+        .payment-prompt-box {
+            border: 1px dashed #d4d4d4;
+            background: #fafafa;
+            padding: 18px;
+            font-size: 13px;
+            color: #525252;
+            text-align: center;
         }
 
         .deposit-panel {
@@ -760,10 +812,14 @@
             .summary-sticky { position: static; }
         }
 
+        @media (max-width: 780px) {
+            .crypto-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
         @media (max-width: 640px) {
             .wrap { padding: 20px 16px 60px; }
             .card, .summary-card { padding: 20px; }
-            .row-2, .row-6, .crypto-grid { grid-template-columns: 1fr; }
+            .row-2, .row-6 { grid-template-columns: 1fr; }
             .deposit-flex { flex-direction: column; align-items: flex-start; }
         }
     </style>
@@ -919,25 +975,54 @@
                     <section class="card">
                         <div class="card-header">
                             <h2 class="card-title">Payment Method</h2>
-                            <span class="card-tag mono">Instant Crypto Settlement</span>
+                            <span class="card-tag mono">Secure Checkout</span>
                         </div>
                         <p class="crypto-intro">
-                            All transactions are settled securely on-chain. Select your preferred cryptocurrency to generate a direct deposit address:
+                            Select your preferred payment method below to complete your acquisition:
                         </p>
 
-                        <input type="hidden" id="paymentMethodInput" name="payment_method" value="<%= selected_method || 'bitcoin' %>" />
+                        <input type="hidden" id="paymentMethodInput" name="payment_method" value="<%= selected_method || '' %>" />
                         <input type="hidden" id="promoCodeHidden" name="promo_code" value="<%= promo_code || '' %>" />
 
-                        <div class="crypto-grid" role="radiogroup" aria-label="Cryptocurrency payment method">
+                        <div class="crypto-grid" role="radiogroup" aria-label="Payment method">
+                            <button
+                                type="button"
+                                class="crypto-btn <%= selected_method === 'card' ? 'active' : '' %>"
+                                data-method="card"
+                                aria-pressed="<%= selected_method === 'card' ? 'true' : 'false' %>"
+                            >
+                                <span class="crypto-icon" style="background-color: #171717;">
+                                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <rect x="2" y="5" width="20" height="14" rx="2" stroke-width="2" />
+                                        <path d="M2 10h20" stroke-width="2" />
+                                    </svg>
+                                </span>
+                                <span class="crypto-name">Card Payment</span>
+                                <span class="crypto-sym">VISA · MC · AMEX</span>
+                                <span class="crypto-amt" style="color: #525252; font-weight: 500;">Credit / Debit</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                class="crypto-btn <%= selected_method === 'paypal' ? 'active' : '' %>"
+                                data-method="paypal"
+                                aria-pressed="<%= selected_method === 'paypal' ? 'true' : 'false' %>"
+                            >
+                                <span class="crypto-icon" style="background-color: #003087; font-family: Georgia, serif; font-style: italic;">P</span>
+                                <span class="crypto-name">PayPal</span>
+                                <span class="crypto-sym">PAYPAL EXPRESS</span>
+                                <span class="crypto-amt" style="color: #525252; font-weight: 500;">Express Pay</span>
+                            </button>
+
                             <% ['bitcoin', 'ethereum', 'solana'].forEach((key) => { const opt = crypto_options[key]; %>
                             <button
                                 type="button"
-                                class="crypto-btn <%= (selected_method || 'bitcoin') === key ? 'active' : '' %>"
+                                class="crypto-btn <%= selected_method === key ? 'active' : '' %>"
                                 data-method="<%= key %>"
                                 data-symbol="<%= opt.symbol %>"
                                 data-rate="<%= opt.usdPrice %>"
                                 data-decimals="<%= opt.decimals %>"
-                                aria-pressed="<%= (selected_method || 'bitcoin') === key ? 'true' : 'false' %>"
+                                aria-pressed="<%= selected_method === key ? 'true' : 'false' %>"
                             >
                                 <span class="crypto-icon" style="background-color: <%= opt.accentColor %>;"><%= opt.icon %></span>
                                 <span class="crypto-name"><%= opt.label %></span>
@@ -947,10 +1032,14 @@
                             <% }) %>
                         </div>
 
+                        <div id="details-empty" class="payment-prompt-box <%= !selected_method ? '' : 'hidden' %>">
+                            Select a payment option above to proceed with checkout.
+                        </div>
+
                         <% ['bitcoin', 'ethereum', 'solana'].forEach((key) => { const opt = crypto_options[key]; %>
                         <div
                             id="details-<%= key %>"
-                            class="deposit-panel <%= (selected_method || 'bitcoin') === key ? '' : 'hidden' %>"
+                            class="deposit-panel <%= selected_method === key ? '' : 'hidden' %>"
                             data-has-wallet="<%= opt.walletAddress ? 'true' : 'false' %>"
                         >
                             <% if (opt.walletAddress) { %>
@@ -995,11 +1084,33 @@
                             </div>
                         </div>
                         <% }) %>
+
+                        <div id="details-card" class="card-unavail-panel <%= selected_method === 'card' ? '' : 'hidden' %>" data-has-wallet="false">
+                            <p class="card-unavail-title">Card Payment Gateway Under Maintenance</p>
+                            <p class="card-unavail-desc">
+                                Credit and debit card checkout on this site is currently under maintenance. Please try another payment method above to complete your order.
+                            </p>
+                        </div>
+
+                        <div id="details-paypal" class="card-unavail-panel <%= selected_method === 'paypal' ? '' : 'hidden' %>" data-has-wallet="false">
+                            <p class="card-unavail-title">PayPal Checkout Under Maintenance</p>
+                            <p class="card-unavail-desc">
+                                PayPal checkout on this site is currently under maintenance. Please try another payment method above to complete your order.
+                            </p>
+                        </div>
                     </section>
 
                     <div>
-                        <button type="submit" class="submit-btn" id="submitOrderBtn">
-                            Complete Order · <span id="submitAmtLabel"><%= crypto_options[selected_method || 'bitcoin'].amount %> <%= crypto_options[selected_method || 'bitcoin'].symbol %></span>
+                        <button type="submit" class="submit-btn" id="submitOrderBtn" <%= !selected_method || selected_method === 'card' || selected_method === 'paypal' ? 'disabled' : '' %>>
+                            <span id="submitAmtLabel">
+                                <% if (selected_method && crypto_options[selected_method]) { %>
+                                    Complete Order · <%= crypto_options[selected_method].amount %> <%= crypto_options[selected_method].symbol %>
+                                <% } else if (selected_method === 'card' || selected_method === 'paypal') { %>
+                                    Gateway Under Maintenance · Try Another Payment Method
+                                <% } else { %>
+                                    Select a Payment Method Above
+                                <% } %>
+                            </span>
                         </button>
                         <p class="submit-footnote">
                             By completing your order, you agree to our
@@ -1062,7 +1173,11 @@
                             <div class="totals-grand-values">
                                 <span class="totals-grand-usd" id="summaryTotalUsd">$<%= formatCurrency(total) %></span>
                                 <span class="totals-grand-crypto" id="summaryTotalCrypto">
-                                    ≈ <%= crypto_options[selected_method || 'bitcoin'].amount %> <%= crypto_options[selected_method || 'bitcoin'].symbol %>
+                                    <% if (selected_method && crypto_options[selected_method]) { %>
+                                        ≈ <%= crypto_options[selected_method].amount %> <%= crypto_options[selected_method].symbol %>
+                                    <% } else { %>
+                                        Select payment method
+                                    <% } %>
                                 </span>
                             </div>
                         </div>
@@ -1094,7 +1209,8 @@
         const submitAmtLabel = document.getElementById('submitAmtLabel');
         const submitBtn = document.getElementById('submitOrderBtn');
         const cryptoBtns = document.querySelectorAll('.crypto-btn');
-        const methods = ['bitcoin', 'ethereum', 'solana'];
+        const emptyPromptBox = document.getElementById('details-empty');
+        const methods = ['card', 'paypal', 'bitcoin', 'ethereum', 'solana'];
 
         let currentPromo = (promoHidden.value || '').trim().toUpperCase();
 
@@ -1137,8 +1253,30 @@
                 el.textContent = '≈ $' + formatUsd(total);
             });
 
+            if (emptyPromptBox) {
+                emptyPromptBox.classList.toggle('hidden', Boolean(selectedMethod));
+            }
+
+            if (!selectedMethod && submitBtn) {
+                submitBtn.disabled = true;
+                if (summaryTotalCryptoEl) summaryTotalCryptoEl.textContent = 'Select payment method';
+                if (submitAmtLabel) submitAmtLabel.textContent = 'Select a Payment Method Above';
+            }
+
             cryptoBtns.forEach((btn) => {
-                const method = btn.dataset.method || 'bitcoin';
+                const method = btn.dataset.method || '';
+                const isSelected = method === selectedMethod;
+                btn.classList.toggle('active', isSelected);
+                btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+
+                if (method === 'card' || method === 'paypal') {
+                    if (isSelected) {
+                        if (summaryTotalCryptoEl) summaryTotalCryptoEl.textContent = 'Under maintenance · Try another method';
+                        if (submitAmtLabel) submitAmtLabel.textContent = 'Gateway Under Maintenance · Try Another Payment Method';
+                    }
+                    return;
+                }
+
                 const symbol = btn.dataset.symbol || 'BTC';
                 const rate = Number(btn.dataset.rate || 1);
                 const decimals = Number(btn.dataset.decimals || 8);
@@ -1150,13 +1288,9 @@
                 const sendAmt = document.getElementById('send-amt-' + method);
                 if (sendAmt) sendAmt.textContent = amount;
 
-                const isSelected = method === selectedMethod;
-                btn.classList.toggle('active', isSelected);
-                btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-
                 if (isSelected) {
                     if (summaryTotalCryptoEl) summaryTotalCryptoEl.textContent = '≈ ' + amount + ' ' + symbol;
-                    if (submitAmtLabel) submitAmtLabel.textContent = amount + ' ' + symbol;
+                    if (submitAmtLabel) submitAmtLabel.textContent = 'Complete Order · ' + amount + ' ' + symbol;
                 }
             });
 
@@ -1173,14 +1307,20 @@
         }
 
         function selectPaymentMethod(method) {
-            if (!methods.includes(method)) return;
+            if (method !== '' && !methods.includes(method)) return;
             methodInput.value = method;
             refreshAmountsAndSelection(method);
         }
 
         cryptoBtns.forEach((btn) => {
             btn.addEventListener('click', () => {
-                selectPaymentMethod(btn.dataset.method || 'bitcoin');
+                selectPaymentMethod(btn.dataset.method || '');
+            });
+        });
+
+        document.querySelectorAll('[data-switch-method]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                selectPaymentMethod(btn.dataset.switchMethod || 'bitcoin');
             });
         });
 
@@ -1198,7 +1338,7 @@
                     promoStatus.textContent = code ? 'Invalid promo code. Try ART10 or COLLECTOR10.' : '';
                     promoStatus.className = code ? 'promo-status err' : 'promo-status hidden';
                 }
-                refreshAmountsAndSelection(methodInput.value || 'bitcoin');
+                refreshAmountsAndSelection(methodInput.value || '');
             });
         }
 
@@ -1219,7 +1359,7 @@
             });
         });
 
-        selectPaymentMethod(methodInput.value || 'bitcoin');
+        selectPaymentMethod(methodInput.value || '');
     </script>
     <script src="/static/js/cart-sync.js"></script>
 </body>

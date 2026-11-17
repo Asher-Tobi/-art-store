@@ -413,6 +413,24 @@ const products: Product[] = [
     description:
       "Original 2026 oil on canvas landscape by contemporary American painter Will Klemm, sourced with Wally Workman Gallery provenance and signed at lower left. Luminous crimson and amber sky glazes sweep above a sunlit golden horizon and quiet meadow treeline.",
   },
+  {
+    id: 23,
+    title: "Blue & White Landscape Short Porcelain Tulipiere",
+    artist: "Cobalt Guild",
+    category: "Sculpture",
+    price: 460.0,
+    price_display: "$460",
+    size: "23.5 x 7.5 x 7.5 in",
+    image: "/static/images/tulipiere-1.jpg",
+    images: [
+      "/static/images/tulipiere-1.jpg",
+      "/static/images/tulipiere-2.jpg",
+      "/static/images/tulipiere-3.jpg",
+      "/static/images/p23-detail-glaze.jpg",
+    ],
+    description:
+      "Multi-tier Jingdezhen blue-and-white porcelain tulipiere crafted by Cobalt Guild in four interlocking sculptural sections with tubular floral spouts. Hand-painted underglaze cobalt motifs alternate between serene lakeside landscapes, sailboats, and classic floral scrollwork.",
+  },
 ];
 
 const featuredCollection: Product[] = [];
@@ -1156,7 +1174,7 @@ app.get("/checkout", async (req: Request, res: Response) => {
     promo_code: "",
     shipping,
     total,
-    selected_method: "bitcoin",
+    selected_method: "",
     crypto_options: cryptoOptions,
     form_values: {
       name: "",
@@ -1237,8 +1255,13 @@ app.post("/checkout", async (req: Request, res: Response) => {
       req,
       "Please complete your country/region, street address, city, state, and ZIP/postal code."
     );
+  } else if (rawMethod === "card" || rawMethod === "paypal") {
+    pushFlash(
+      req,
+      "Card and PayPal payment gateways are currently under maintenance. Please try another payment method above to complete your order."
+    );
   } else if (!isSupportedMethod) {
-    pushFlash(req, "Please select a cryptocurrency payment method (BTC, ETH, or SOL).");
+    pushFlash(req, "Please select a payment method (BTC, ETH, or SOL) to complete your order.");
   } else if (!cryptoOptions[rawMethod].walletAddress) {
     pushFlash(
       req,
@@ -1284,7 +1307,7 @@ app.post("/checkout", async (req: Request, res: Response) => {
     promo_code: promoApplied ? rawPromo : "",
     shipping,
     total,
-    selected_method: isSupportedMethod ? rawMethod : "bitcoin",
+    selected_method: isSupportedMethod || rawMethod === "card" || rawMethod === "paypal" ? rawMethod : "",
     crypto_options: cryptoOptions,
     form_values: formValues,
     messages: consumeFlashes(req),
