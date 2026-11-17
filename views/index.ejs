@@ -641,6 +641,360 @@
             cursor: pointer;
         }
 
+        /* Live Fine Art Showcase & History of Art in London */
+        .london-showcase-band {
+            background: #fafafa;
+            border-top: 1px solid var(--border);
+            padding: 72px 24px 80px;
+        }
+
+        .london-showcase-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .london-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .london-kicker {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .london-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.85rem, 3vw, 2.5rem);
+            font-weight: 400;
+            line-height: 1.15;
+            letter-spacing: -0.015em;
+            margin: 0;
+            color: var(--ink);
+            text-wrap: balance;
+        }
+
+        .london-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .london-counter {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--muted);
+            padding-right: 8px;
+            white-space: nowrap;
+        }
+
+        .london-ctrl-btn {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            color: var(--ink);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: border-color 0.15s ease, background-color 0.15s ease;
+        }
+
+        .london-ctrl-btn:hover,
+        .london-ctrl-btn:focus-visible {
+            border-color: var(--ink);
+            background: #f5f5f5;
+            outline: none;
+        }
+
+        .london-stage {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            max-height: 600px;
+            background: #141414;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .london-slide {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .london-slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 1;
+        }
+
+        .london-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .london-scrim {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to top,
+                rgba(10, 10, 10, 0.86) 0%,
+                rgba(10, 10, 10, 0.36) 42%,
+                rgba(10, 10, 10, 0) 100%
+            );
+            pointer-events: none;
+        }
+
+        .london-caption {
+            position: absolute;
+            left: 28px;
+            right: 28px;
+            bottom: 24px;
+            z-index: 2;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+        }
+
+        .london-fig {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #e5e5e5;
+            margin-bottom: 6px;
+        }
+
+        .london-caption-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.2rem, 2.2vw, 1.65rem);
+            font-weight: 400;
+            margin: 0 0 4px;
+            color: #ffffff;
+        }
+
+        .london-caption-sub {
+            margin: 0;
+            font-size: 13px;
+            color: #d4d4d4;
+            max-width: 64ch;
+            line-height: 1.5;
+        }
+
+        .london-progress-track {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.22);
+            z-index: 3;
+        }
+
+        .london-progress-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--gold-bright);
+            transform-origin: left center;
+            transform: scaleX(0);
+        }
+
+        .london-chapters {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .london-chapter-btn {
+            text-align: left;
+            padding: 14px 16px;
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: border-color 0.15s ease, background-color 0.15s ease;
+        }
+
+        .london-chapter-btn:hover,
+        .london-chapter-btn:focus-visible {
+            border-color: #737373;
+            outline: none;
+        }
+
+        .london-chapter-btn.active {
+            border-color: var(--ink);
+            background: #ffffff;
+            box-shadow: inset 0 -2px 0 var(--ink);
+        }
+
+        .london-chapter-num {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .london-chapter-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .london-essay-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+            gap: 56px;
+            margin-top: 52px;
+            padding-top: 44px;
+            border-top: 1px solid var(--border);
+            align-items: start;
+        }
+
+        .london-essay-kicker {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .london-essay-heading {
+            font-family: var(--font-serif);
+            font-size: clamp(1.65rem, 2.5vw, 2.15rem);
+            font-weight: 400;
+            line-height: 1.2;
+            margin: 0 0 22px;
+            color: var(--ink);
+            text-wrap: balance;
+        }
+
+        .london-essay-body {
+            max-width: 68ch;
+        }
+
+        .london-essay-body p {
+            margin: 0 0 18px;
+            font-size: 15px;
+            line-height: 1.78;
+            color: #262626;
+        }
+
+        .london-essay-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .london-dropcap::first-letter {
+            font-family: var(--font-serif);
+            font-size: 3.35rem;
+            font-weight: 500;
+            line-height: 0.85;
+            float: left;
+            padding-right: 12px;
+            padding-top: 4px;
+            color: var(--ink);
+        }
+
+        .london-timeline {
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 2px;
+            padding: 28px;
+        }
+
+        .london-timeline-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--ink);
+            margin: 0 0 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .london-timeline-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .london-timeline-item {
+            display: grid;
+            grid-template-columns: 64px 1fr;
+            gap: 14px;
+            padding: 13px 0;
+            border-bottom: 1px solid #ececec;
+            align-items: baseline;
+        }
+
+        .london-timeline-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .london-year {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .london-milestone strong {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 3px;
+        }
+
+        .london-milestone span {
+            display: block;
+            font-size: 12px;
+            line-height: 1.55;
+            color: #525252;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .london-slide {
+                transition: none;
+            }
+        }
+
         /* Dark Editorial Footer (Matching Northstar) */
         .footer {
             background: #111111;
@@ -815,6 +1169,7 @@
             .mobile-toggle { display: inline-flex; }
             .archive-hero { grid-template-columns: 1fr; }
             .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .london-essay-grid { grid-template-columns: 1fr; gap: 32px; }
             .footer-newsletter { grid-template-columns: 1fr; }
             .newsletter-form { margin-left: 0; }
             .newsletter-msg { text-align: left; }
@@ -825,11 +1180,15 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 14px;
             }
+            .london-chapters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .london-stage { aspect-ratio: 4 / 3; }
             .footer-cols { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 520px) {
             .main-wrap { padding: 28px 16px 56px; }
+            .london-showcase-band { padding: 48px 16px 56px; }
+            .london-caption { left: 16px; right: 16px; bottom: 16px; }
             .header-inner { padding: 0 16px; }
             .brand-mark { font-size: 20px; }
             .footer-bottom { flex-direction: column; align-items: flex-start; }
@@ -1040,6 +1399,165 @@
         <% } %>
     </main>
 
+    <!-- Live Fine Art Showcase & History of Art in London -->
+    <section class="london-showcase-band" id="london-exhibition" aria-labelledby="london-exhibition-title">
+        <div class="london-showcase-inner">
+            <div class="london-header">
+                <div>
+                    <span class="london-kicker">Live Fine Art Showcase</span>
+                    <h2 class="london-title" id="london-exhibition-title">London Exhibitions &amp; Living Studios</h2>
+                </div>
+                <div class="london-controls" aria-label="Exhibition slideshow controls">
+                    <span class="london-counter" id="londonSlideCounter">01 / 04</span>
+                    <button type="button" class="london-ctrl-btn" id="londonPrevBtn" aria-label="Previous exhibition view">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="london-ctrl-btn" id="londonNextBtn" aria-label="Next exhibition view">
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="london-stage" id="londonStage" role="region" aria-roledescription="carousel" aria-label="Live fine art exhibition rooms">
+                <figure class="london-slide active" data-slide="0">
+                    <img src="/static/images/london-gallery-1.jpg" alt="Trafalgar Square classical gallery hall with gilt-framed historic British portraits and maritime oils" referrerPolicy="no-referrer" />
+                    <div class="london-scrim" aria-hidden="true"></div>
+                    <figcaption class="london-caption">
+                        <div>
+                            <span class="london-fig">Fig. 01 · Trafalgar Square Archive</span>
+                            <h3 class="london-caption-title">Georgian Portraiture &amp; The National Collection</h3>
+                            <p class="london-caption-sub">From Joshua Reynolds's Royal Academy lectures to Trafalgar Square's grand rooms, London established public access to Old Master and British painting.</p>
+                        </div>
+                    </figcaption>
+                </figure>
+
+                <figure class="london-slide" data-slide="1">
+                    <img src="/static/images/london-gallery-2.jpg" alt="19th-century Romantic British landscape gallery room depicting golden light over the River Thames and Westminster" referrerPolicy="no-referrer" />
+                    <div class="london-scrim" aria-hidden="true"></div>
+                    <figcaption class="london-caption">
+                        <div>
+                            <span class="london-fig">Fig. 02 · Millbank &amp; Westminster</span>
+                            <h3 class="london-caption-title">Thames Luminosity &amp; Romantic Light</h3>
+                            <p class="london-caption-sub">J.M.W. Turner and John Constable transformed 19th-century landscape painting along London's docks, bridges, and shifting river mist.</p>
+                        </div>
+                    </figcaption>
+                </figure>
+
+                <figure class="london-slide" data-slide="2">
+                    <img src="/static/images/london-gallery-3.jpg" alt="Early 20th-century Bloomsbury and Fitzrovia London artist studio with north-facing sash windows and modernist canvases" referrerPolicy="no-referrer" />
+                    <div class="london-scrim" aria-hidden="true"></div>
+                    <figcaption class="london-caption">
+                        <div>
+                            <span class="london-fig">Fig. 03 · Bloomsbury &amp; Fitzrovia</span>
+                            <h3 class="london-caption-title">Modernist Ateliers &amp; The School of London</h3>
+                            <p class="london-caption-sub">From Fitzroy Square's Omega Workshops to postwar Soho studios, London ateliers reshaped European abstraction and visceral figuration.</p>
+                        </div>
+                    </figcaption>
+                </figure>
+
+                <figure class="london-slide" data-slide="3">
+                    <img src="/static/images/london-gallery-4.jpg" alt="Contemporary Mayfair and East London gallery space exhibiting impasto oil paintings and bronze sculpture" referrerPolicy="no-referrer" />
+                    <div class="london-scrim" aria-hidden="true"></div>
+                    <figcaption class="london-caption">
+                        <div>
+                            <span class="london-fig">Fig. 04 · Mayfair &amp; Shoreditch</span>
+                            <h3 class="london-caption-title">Contemporary London &amp; Independent Studios</h3>
+                            <p class="london-caption-sub">Today's galleries from Cork Street to Hackney Wick bridge historic craft with bold contemporary painting, ceramics, and sculpture.</p>
+                        </div>
+                    </figcaption>
+                </figure>
+
+                <div class="london-progress-track" aria-hidden="true">
+                    <div class="london-progress-bar" id="londonProgressBar"></div>
+                </div>
+            </div>
+
+            <div class="london-chapters" role="tablist" aria-label="London art eras">
+                <button type="button" class="london-chapter-btn active" data-goto-slide="0" role="tab" aria-selected="true">
+                    <span class="london-chapter-num">01 / 1768–1824</span>
+                    <span class="london-chapter-label">Trafalgar Square</span>
+                </button>
+                <button type="button" class="london-chapter-btn" data-goto-slide="1" role="tab" aria-selected="false">
+                    <span class="london-chapter-num">02 / 1825–1897</span>
+                    <span class="london-chapter-label">Thames Romanticism</span>
+                </button>
+                <button type="button" class="london-chapter-btn" data-goto-slide="2" role="tab" aria-selected="false">
+                    <span class="london-chapter-num">03 / 1905–1975</span>
+                    <span class="london-chapter-label">Bloomsbury &amp; Soho</span>
+                </button>
+                <button type="button" class="london-chapter-btn" data-goto-slide="3" role="tab" aria-selected="false">
+                    <span class="london-chapter-num">04 / 1988–Present</span>
+                    <span class="london-chapter-label">Contemporary London</span>
+                </button>
+            </div>
+
+            <div class="london-essay-grid">
+                <article class="london-essay-body">
+                    <span class="london-essay-kicker">Curatorial Essay · London Art Chronicle</span>
+                    <h3 class="london-essay-heading">The History of Art in London</h3>
+
+                    <p class="london-dropcap">
+                        London's emergence as an international center of fine art began in royal workshops and guild halls along the Thames. During the sixteenth century, Hans Holbein the Younger elevated Tudor court portraiture at Whitehall, while in the eighteenth century William Hogarth turned Covent Garden's coffeehouses and streets into vivid narratives of modern civic life.
+                    </p>
+                    <p>
+                        In 1768, the founding of the Royal Academy of Arts under Sir Joshua Reynolds gave British painters, sculptors, and architects formal institutional stature. That momentum culminated in 1824 with the opening of the National Gallery at Trafalgar Square, placing European and British masterworks on public view for every citizen rather than confining them to private estates.
+                    </p>
+                    <p>
+                        Across the nineteenth century, J.M.W. Turner and John Constable dissolved rigid academic conventions in favor of atmospheric light, steam, and river mist, paving the way for the Pre-Raphaelite Brotherhood in Bloomsbury and Chelsea. By the early twentieth century, Roger Fry and Vanessa Bell's Omega Workshops introduced Post-Impressionism and bold studio craft to Fitzrovia, before postwar masters including Francis Bacon and Lucian Freud forged the visceral School of London inside Soho's cramped upstairs rooms.
+                    </p>
+                    <p>
+                        With the transformation of Bankside Power Station into Tate Modern in 2000 and the flourishing of independent studios across Shoreditch, Hackney, and Mayfair, London remains one of the world's most vital crossroads—uniting centuries of museum provenance with living artists working directly for global collectors.
+                    </p>
+                </article>
+
+                <aside class="london-timeline" aria-label="Chronology of Art in London">
+                    <h4 class="london-timeline-title">Milestones in London Art</h4>
+                    <ol class="london-timeline-list">
+                        <li class="london-timeline-item">
+                            <span class="london-year">1768</span>
+                            <div class="london-milestone">
+                                <strong>Royal Academy of Arts</strong>
+                                <span>Founded by Sir Joshua Reynolds and George III to champion British painting, sculpture, and architecture.</span>
+                            </div>
+                        </li>
+                        <li class="london-timeline-item">
+                            <span class="london-year">1824</span>
+                            <div class="london-milestone">
+                                <strong>The National Gallery</strong>
+                                <span>Established on Trafalgar Square, opening the national collection of European paintings free to the public.</span>
+                            </div>
+                        </li>
+                        <li class="london-timeline-item">
+                            <span class="london-year">1897</span>
+                            <div class="london-milestone">
+                                <strong>Tate Britain (Millbank)</strong>
+                                <span>Opened as the National Gallery of British Art, anchored by Turner's sweeping bequest to the nation.</span>
+                            </div>
+                        </li>
+                        <li class="london-timeline-item">
+                            <span class="london-year">1913</span>
+                            <div class="london-milestone">
+                                <strong>Bloomsbury &amp; Omega Workshops</strong>
+                                <span>Vanessa Bell, Duncan Grant, and Roger Fry bridge modernist painting with decorative studio objects in Fitzrovia.</span>
+                            </div>
+                        </li>
+                        <li class="london-timeline-item">
+                            <span class="london-year">2000</span>
+                            <div class="london-milestone">
+                                <strong>Tate Modern &amp; East End Studios</strong>
+                                <span>Bankside opens on the Thames alongside thriving contemporary galleries across Mayfair and East London.</span>
+                            </div>
+                        </li>
+                    </ol>
+                </aside>
+            </div>
+        </div>
+    </section>
+
     <!-- Editorial Dark Footer -->
     <footer class="footer">
         <div class="footer-inner">
@@ -1212,6 +1730,85 @@
                 if (input) input.value = '';
             });
         }
+
+        (() => {
+            const slides = Array.from(document.querySelectorAll('.london-slide'));
+            const chapterBtns = Array.from(document.querySelectorAll('.london-chapter-btn'));
+            const counterEl = document.getElementById('londonSlideCounter');
+            const prevBtn = document.getElementById('londonPrevBtn');
+            const nextBtn = document.getElementById('londonNextBtn');
+            const progressBar = document.getElementById('londonProgressBar');
+            const stage = document.getElementById('londonStage');
+            if (!slides.length) return;
+
+            const INTERVAL_MS = 5000;
+            const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let activeSlide = 0;
+            let isPaused = false;
+            let elapsedBeforePause = 0;
+            let cycleStart = performance.now();
+            let rafId = null;
+
+            function renderSlide(idx) {
+                activeSlide = (idx + slides.length) % slides.length;
+                slides.forEach((s, i) => s.classList.toggle('active', i === activeSlide));
+                chapterBtns.forEach((b, i) => {
+                    const active = i === activeSlide;
+                    b.classList.toggle('active', active);
+                    b.setAttribute('aria-selected', active ? 'true' : 'false');
+                });
+                if (counterEl) {
+                    counterEl.textContent = `${String(activeSlide + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+                }
+                elapsedBeforePause = 0;
+                cycleStart = performance.now();
+                if (progressBar) {
+                    progressBar.style.transform = 'scaleX(0)';
+                }
+            }
+
+            function tick(now) {
+                if (!isPaused && !reducedMotion) {
+                    const elapsed = elapsedBeforePause + (now - cycleStart);
+                    const pct = Math.min(1, elapsed / INTERVAL_MS);
+                    if (progressBar) {
+                        progressBar.style.transform = `scaleX(${pct.toFixed(4)})`;
+                    }
+                    if (elapsed >= INTERVAL_MS) {
+                        renderSlide(activeSlide + 1);
+                    }
+                }
+                rafId = requestAnimationFrame(tick);
+            }
+
+            if (prevBtn) prevBtn.addEventListener('click', () => renderSlide(activeSlide - 1));
+            if (nextBtn) nextBtn.addEventListener('click', () => renderSlide(activeSlide + 1));
+            chapterBtns.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const target = Number(btn.dataset.gotoSlide || 0);
+                    renderSlide(target);
+                });
+            });
+
+            if (stage) {
+                stage.addEventListener('mouseenter', () => {
+                    if (!isPaused) elapsedBeforePause += performance.now() - cycleStart;
+                    isPaused = true;
+                });
+                stage.addEventListener('mouseleave', () => {
+                    cycleStart = performance.now();
+                    isPaused = false;
+                });
+            }
+
+            renderSlide(0);
+            if (!reducedMotion) {
+                rafId = requestAnimationFrame(tick);
+            }
+            window.addEventListener('beforeunload', () => {
+                if (rafId !== null) cancelAnimationFrame(rafId);
+            });
+        })();
     </script>
     <script src="/static/js/cart-sync.js"></script>
 </body>
