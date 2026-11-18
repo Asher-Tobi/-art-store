@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Meet the contemporary artists, master photographers, furniture designers, and historical workshops represented at ART STUDIO." />
+    <meta property="og:title" content="Meet the Artists | ART STUDIO" />
+    <meta property="og:description" content="Explore biographies, studio histories, and collected works from the artists and historical ateliers of ART STUDIO." />
+    <title>Meet the Artists | ART STUDIO</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink: #0a0a0a;
+            --ink-soft: #404040;
+            --muted: #666666;
+            --border: #dcdcdc;
+            --card-border: #e5e5e5;
+            --surface: #ffffff;
+            --canvas: #fafafa;
+            --gold: #a3702b;
+            --gold-bright: #d4af37;
+            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-serif: "Playfair Display", Georgia, serif;
+            --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            margin: 0;
+            font-family: var(--font-sans);
+            background: var(--surface);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        button, input { font: inherit; }
+        img { max-width: 100%; display: block; }
+
+        .topbar {
+            background: #111111;
+            color: #ffffff;
+            text-align: center;
+            padding: 9px 16px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            padding: 6px;
+            margin-left: -6px;
+            color: var(--ink);
+            cursor: pointer;
+        }
+
+        .brand-mark {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+
+        .nav a {
+            white-space: nowrap;
+            padding: 4px 0;
+            transition: color 0.15s ease;
+        }
+
+        .nav a:hover,
+        .nav a.active {
+            color: var(--ink);
+            text-decoration: underline;
+            text-underline-offset: 6px;
+        }
+
+        .bag-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-radius: 2px;
+            white-space: nowrap;
+            transition: background-color 0.15s ease;
+        }
+
+        .bag-trigger:hover { background: #f5f5f5; }
+
+        .bag-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 9999px;
+            background: #171717;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .mobile-drawer {
+            display: none;
+            border-top: 1px solid var(--card-border);
+            background: #ffffff;
+            padding: 16px 24px 20px;
+        }
+
+        .mobile-drawer.open { display: block; }
+
+        .mobile-drawer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+        }
+
+        .main-wrap {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 44px 24px 80px;
+            flex: 1;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        .breadcrumb a:hover { color: var(--ink); text-decoration: underline; }
+        .breadcrumb .current { color: var(--ink); font-weight: 600; }
+
+        .artists-hero {
+            padding-bottom: 36px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+            gap: 40px;
+            align-items: end;
+        }
+
+        .hero-kicker {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .artists-title {
+            font-family: var(--font-serif);
+            font-size: clamp(2.25rem, 4.2vw, 3.15rem);
+            font-weight: 400;
+            line-height: 1.08;
+            letter-spacing: -0.02em;
+            margin: 0 0 14px;
+            color: var(--ink);
+            text-wrap: balance;
+        }
+
+        .artists-lead {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #404040;
+            max-width: 62ch;
+            margin: 0;
+        }
+
+        .artists-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-left: 28px;
+            border-left: 1px solid var(--border);
+        }
+
+        .meta-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ececec;
+            font-size: 13px;
+        }
+
+        .meta-line:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .meta-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+        }
+
+        .meta-value {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        /* Roster Filter Toolbar */
+        .roster-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding-bottom: 24px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .discipline-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .disc-btn {
+            padding: 8px 14px;
+            min-height: 36px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border: none;
+            border-radius: 2px;
+            background: #e3e3e3;
+            color: #404040;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .disc-btn:hover { background: #d4d4d4; color: var(--ink); }
+        .disc-btn.active { background: #0a0a0a; color: #ffffff; }
+
+        .roster-search {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .roster-search input {
+            width: 240px;
+            padding: 9px 12px;
+            border: 1px solid #d4d4d4;
+            border-radius: 2px;
+            background: var(--canvas);
+            font-size: 13px;
+            color: var(--ink);
+            outline: none;
+        }
+
+        .roster-search input:focus {
+            border-color: var(--ink);
+            background: #ffffff;
+        }
+
+        .roster-count {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 12px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        /* Artist Directory Grid */
+        .artist-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 28px;
+        }
+
+        .artist-card {
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 2px;
+            overflow: hidden;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .artist-card:hover {
+            border-color: #8c8c8c;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
+        }
+
+        .artist-thumb {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            background: #f5f5f5;
+            overflow: hidden;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .artist-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .artist-card:hover .artist-thumb img {
+            transform: scale(1.03);
+        }
+
+        .artist-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .artist-meta-row {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+
+        .artist-meta-row .era {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        .artist-name {
+            font-family: var(--font-serif);
+            font-size: 22px;
+            font-weight: 400;
+            line-height: 1.2;
+            color: var(--ink);
+            margin: 0 0 8px;
+        }
+
+        .artist-excerpt {
+            margin: 0;
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: #525252;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .artist-foot {
+            padding-top: 12px;
+            border-top: 1px solid #ececec;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .works-count {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .read-bio-link {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--ink);
+            white-space: nowrap;
+        }
+
+        .artist-card:hover .read-bio-link {
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            border: 1px solid var(--card-border);
+            background: var(--canvas);
+        }
+
+        .empty-state h2 {
+            font-family: var(--font-serif);
+            font-weight: 400;
+            font-size: 24px;
+            margin: 0 0 8px;
+        }
+
+        .empty-state p {
+            color: var(--muted);
+            font-size: 14px;
+            margin: 0 0 18px;
+        }
+
+        .reset-btn {
+            padding: 10px 20px;
+            background: var(--ink);
+            color: #ffffff;
+            border: none;
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            cursor: pointer;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Dark Editorial Footer */
+        .footer {
+            background: #111111;
+            color: #999999;
+            border-top: 1px solid #262626;
+            padding: 40px 24px;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 12px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-links a:hover { color: #ffffff; }
+
+        @media (max-width: 1024px) {
+            .nav { display: none; }
+            .mobile-toggle { display: inline-flex; }
+            .artists-hero { grid-template-columns: 1fr; gap: 24px; }
+            .artists-meta { padding-left: 0; border-left: none; padding-top: 16px; border-top: 1px solid var(--border); }
+            .artist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+        }
+
+        @media (max-width: 640px) {
+            .main-wrap { padding: 28px 16px 56px; }
+            .artist-grid { grid-template-columns: 1fr; }
+            .roster-search { width: 100%; justify-content: space-between; }
+            .roster-search input { flex: 1; width: auto; }
+        }
+    </style>
+</head>
+<body data-cid="<%= cid %>">
+    <div class="topbar">Insured Fine Art Courier Delivery · Pay Direct with BTC, ETH, or SOL</div>
+
+    <header class="header">
+        <div class="header-inner">
+            <div class="header-left">
+                <button type="button" class="mobile-toggle" id="menuToggle" aria-label="Toggle navigation menu">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <a href="/" class="brand-mark">ART STUDIO</a>
+            </div>
+
+            <nav class="nav" aria-label="Primary navigation">
+                <a href="/">Shop All</a>
+                <a href="/?category=Painting">Paintings</a>
+                <a href="/?category=Prints">Prints</a>
+                <a href="/?category=Photography">Photography</a>
+                <a href="/?category=Sculpture">Sculpture</a>
+                <a href="/?category=Furniture">Furniture</a>
+                <a href="/artists" class="active">Artists</a>
+            </nav>
+
+            <a href="/cart" class="bag-trigger" aria-label="Shopping Bag">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+                <span>Bag</span>
+                <span class="bag-badge cart-count"><%= cart_count %></span>
+            </a>
+        </div>
+
+        <div class="mobile-drawer" id="mobileDrawer">
+            <div class="mobile-drawer-links">
+                <a href="/">Shop All</a>
+                <a href="/?category=Painting">Paintings</a>
+                <a href="/?category=Prints">Prints &amp; Etchings</a>
+                <a href="/?category=Photography">Photography</a>
+                <a href="/?category=Sculpture">Sculpture</a>
+                <a href="/?category=Furniture">Furniture</a>
+                <a href="/artists">Meet the Artists</a>
+                <a href="/contact">Contact &amp; Support</a>
+                <a href="/cart">Shopping Bag (<span class="cart-count"><%= cart_count %></span>)</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-wrap">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Archive</a>
+            <span>/</span>
+            <span class="current">Meet the Artists</span>
+        </nav>
+
+        <section class="artists-hero">
+            <div>
+                <span class="hero-kicker">Curatorial Roster · Biographies &amp; Provenance</span>
+                <h1 class="artists-title">Meet the Artists</h1>
+                <p class="artists-lead">
+                    Discover the living contemporary painters, fine art photographers, modernist furniture architects, and historic European ateliers whose works form the ART STUDIO collection. Select any profile to read their biography, artistic history, and available works.
+                </p>
+            </div>
+
+            <div class="artists-meta" aria-label="Roster summary">
+                <div class="meta-line">
+                    <span class="meta-label">Represented Profiles</span>
+                    <span class="meta-value"><%= artists.length %> Artists &amp; Studios</span>
+                </div>
+                <div class="meta-line">
+                    <span class="meta-label">Historical Span</span>
+                    <span class="meta-value">c. 1580 – 2026</span>
+                </div>
+                <div class="meta-line">
+                    <span class="meta-label">Disciplines</span>
+                    <span class="meta-value">Painting · Prints · Photo · Sculpture · Design</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="roster-toolbar" aria-label="Filter artists">
+            <div class="discipline-tabs">
+                <button type="button" class="disc-btn active" data-artist-cat="All">All Disciplines</button>
+                <button type="button" class="disc-btn" data-artist-cat="Painting">Painting</button>
+                <button type="button" class="disc-btn" data-artist-cat="Prints">Prints</button>
+                <button type="button" class="disc-btn" data-artist-cat="Photography">Photography</button>
+                <button type="button" class="disc-btn" data-artist-cat="Sculpture">Sculpture</button>
+                <button type="button" class="disc-btn" data-artist-cat="Furniture">Furniture</button>
+            </div>
+
+            <div class="roster-search">
+                <input type="search" id="artistSearchInput" placeholder="Search artist or origin..." aria-label="Search artist or origin" />
+                <span class="roster-count"><span id="artistVisibleCount"><%= artists.length %></span> Shown</span>
+            </div>
+        </section>
+
+        <section>
+            <div class="artist-grid" id="artistGrid">
+                <% artists.forEach((profile) => { %>
+                <article
+                    class="artist-card"
+                    data-category="<%= profile.categoryKey %>"
+                    data-search="<%= `${profile.name} ${profile.origin} ${profile.discipline}`.toLowerCase() %>"
+                >
+                    <a href="/artists/<%= profile.slug %>" class="artist-thumb" aria-label="Read monograph for <%= profile.name %>">
+                        <img src="<%= profile.featuredImage %>" alt="<%= profile.name %> — <%= profile.featuredTitle %>" loading="lazy" referrerPolicy="no-referrer" />
+                    </a>
+
+                    <div class="artist-body">
+                        <div>
+                            <div class="artist-meta-row">
+                                <span><%= profile.discipline %></span>
+                                <span aria-hidden="true">·</span>
+                                <span><%= profile.origin %></span>
+                                <span aria-hidden="true">·</span>
+                                <span class="era"><%= profile.era %></span>
+                            </div>
+                            <h2 class="artist-name">
+                                <a href="/artists/<%= profile.slug %>"><%= profile.name %></a>
+                            </h2>
+                            <p class="artist-excerpt"><%= profile.tagline %></p>
+                        </div>
+
+                        <div class="artist-foot">
+                            <span class="works-count"><%= profile.worksCount %> <%= profile.worksCount === 1 ? 'Work' : 'Works' %> in Archive</span>
+                            <a href="/artists/<%= profile.slug %>" class="read-bio-link">Read History &amp; Bio →</a>
+                        </div>
+                    </div>
+                </article>
+                <% }) %>
+            </div>
+
+            <div class="empty-state hidden" id="artistEmptyState">
+                <h2>No artists match this filter</h2>
+                <p>Reset your discipline selection or search term to browse all represented artists and studios.</p>
+                <button type="button" class="reset-btn" id="resetArtistsBtn">Show All Artists</button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <span>© 2026 ART STUDIO. All rights reserved.</span>
+            <nav class="footer-links" aria-label="Footer navigation">
+                <a href="/artists">Meet the Artists</a>
+                <a href="/shipping">Shipping &amp; Delivery</a>
+                <a href="/authenticity">Artwork Authenticity</a>
+                <a href="/terms">Terms &amp; Conditions</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/contact">Contact &amp; Support</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const mobileDrawer = document.getElementById('mobileDrawer');
+        if (menuToggle && mobileDrawer) {
+            menuToggle.addEventListener('click', () => mobileDrawer.classList.toggle('open'));
+        }
+
+        const catBtns = Array.from(document.querySelectorAll('[data-artist-cat]'));
+        const cards = Array.from(document.querySelectorAll('.artist-card'));
+        const searchInput = document.getElementById('artistSearchInput');
+        const visibleCountEl = document.getElementById('artistVisibleCount');
+        const emptyStateEl = document.getElementById('artistEmptyState');
+        const resetBtn = document.getElementById('resetArtistsBtn');
+
+        let activeCat = 'All';
+
+        function filterArtists() {
+            const term = (searchInput ? searchInput.value : '').trim().toLowerCase();
+            let count = 0;
+            cards.forEach((card) => {
+                const matchCat = activeCat === 'All' || (card.dataset.category || '') === activeCat;
+                const matchSearch = !term || (card.dataset.search || '').includes(term);
+                const visible = matchCat && matchSearch;
+                card.classList.toggle('hidden', !visible);
+                if (visible) count += 1;
+            });
+            if (visibleCountEl) visibleCountEl.textContent = String(count);
+            if (emptyStateEl) emptyStateEl.classList.toggle('hidden', count > 0);
+        }
+
+        catBtns.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                activeCat = btn.dataset.artistCat || 'All';
+                catBtns.forEach((b) => b.classList.toggle('active', b === btn));
+                filterArtists();
+            });
+        });
+
+        if (searchInput) {
+            searchInput.addEventListener('input', filterArtists);
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                activeCat = 'All';
+                if (searchInput) searchInput.value = '';
+                catBtns.forEach((b) => b.classList.toggle('active', b.dataset.artistCat === 'All'));
+                filterArtists();
+            });
+        }
+    </script>
+    <script src="/static/js/cart-sync.js"></script>
+</body>
+</html>

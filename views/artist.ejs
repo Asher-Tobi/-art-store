@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="<%= artist.tagline %>" />
+    <meta property="og:title" content="<%= artist.name %> | Meet the Artists | ART STUDIO" />
+    <meta property="og:description" content="<%= artist.tagline %>" />
+    <title><%= artist.name %> | ART STUDIO</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink: #0a0a0a;
+            --ink-soft: #404040;
+            --muted: #666666;
+            --border: #dcdcdc;
+            --card-border: #e5e5e5;
+            --surface: #ffffff;
+            --canvas: #fafafa;
+            --gold: #a3702b;
+            --gold-bright: #d4af37;
+            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-serif: "Playfair Display", Georgia, serif;
+            --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            margin: 0;
+            font-family: var(--font-sans);
+            background: var(--surface);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        button { font: inherit; }
+        img { max-width: 100%; display: block; }
+
+        .topbar {
+            background: #111111;
+            color: #ffffff;
+            text-align: center;
+            padding: 9px 16px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            padding: 6px;
+            margin-left: -6px;
+            color: var(--ink);
+            cursor: pointer;
+        }
+
+        .brand-mark {
+            font-family: var(--font-serif);
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--ink);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--ink-soft);
+        }
+
+        .nav a {
+            white-space: nowrap;
+            padding: 4px 0;
+            transition: color 0.15s ease;
+        }
+
+        .nav a:hover,
+        .nav a.active {
+            color: var(--ink);
+            text-decoration: underline;
+            text-underline-offset: 6px;
+        }
+
+        .bag-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-radius: 2px;
+            white-space: nowrap;
+            transition: background-color 0.15s ease;
+        }
+
+        .bag-trigger:hover { background: #f5f5f5; }
+
+        .bag-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 9999px;
+            background: #171717;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .mobile-drawer {
+            display: none;
+            border-top: 1px solid var(--card-border);
+            background: #ffffff;
+            padding: 16px 24px 20px;
+        }
+
+        .mobile-drawer.open { display: block; }
+
+        .mobile-drawer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+        }
+
+        .main-wrap {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+            flex: 1;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 28px;
+        }
+
+        .breadcrumb a:hover { color: var(--ink); text-decoration: underline; }
+        .breadcrumb .current { color: var(--ink); font-weight: 600; }
+
+        /* Artist Monograph Hero */
+        .monograph-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+            gap: 44px;
+            align-items: center;
+            padding-bottom: 44px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .mono-kicker {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .mono-title {
+            font-family: var(--font-serif);
+            font-size: clamp(2.25rem, 4.2vw, 3.25rem);
+            font-weight: 400;
+            line-height: 1.08;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            margin: 0 0 16px;
+            text-wrap: balance;
+        }
+
+        .mono-lead {
+            font-size: 16px;
+            line-height: 1.7;
+            color: #404040;
+            margin: 0 0 28px;
+            max-width: 60ch;
+        }
+
+        .mono-facts {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 28px;
+        }
+
+        .fact-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--muted);
+            margin-bottom: 5px;
+        }
+
+        .fact-val {
+            display: block;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--ink);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .mono-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 13px 22px;
+            background: var(--ink);
+            color: #ffffff;
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-primary:hover { background: #262626; }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            background: #ffffff;
+            color: var(--ink);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            transition: border-color 0.15s ease;
+        }
+
+        .btn-secondary:hover { border-color: var(--ink); }
+
+        .hero-plate {
+            margin: 0;
+        }
+
+        .hero-plate-frame {
+            aspect-ratio: 4 / 5;
+            background: var(--canvas);
+            border: 1px solid var(--card-border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .hero-plate-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-plate-caption {
+            margin-top: 10px;
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        /* Biography & History Asymmetric Section */
+        .bio-section {
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+            gap: 56px;
+            padding: 52px 0;
+            border-bottom: 1px solid var(--border);
+            align-items: start;
+        }
+
+        .bio-kicker {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .bio-heading {
+            font-family: var(--font-serif);
+            font-size: clamp(1.65rem, 2.5vw, 2.15rem);
+            font-weight: 400;
+            line-height: 1.2;
+            margin: 0 0 24px;
+            color: var(--ink);
+        }
+
+        .bio-prose {
+            max-width: 68ch;
+        }
+
+        .bio-prose p {
+            margin: 0 0 20px;
+            font-size: 15.5px;
+            line-height: 1.82;
+            color: #262626;
+        }
+
+        .bio-prose p:last-of-type { margin-bottom: 0; }
+
+        .bio-dropcap::first-letter {
+            font-family: var(--font-serif);
+            font-size: 3.45rem;
+            font-weight: 500;
+            line-height: 0.85;
+            float: left;
+            padding-right: 12px;
+            padding-top: 4px;
+            color: var(--ink);
+        }
+
+        .bio-pullquote {
+            margin: 32px 0 0;
+            padding: 24px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-size: 20px;
+            line-height: 1.55;
+            color: var(--ink);
+        }
+
+        .milestones-box {
+            background: var(--canvas);
+            border: 1px solid var(--card-border);
+            border-radius: 2px;
+            padding: 28px;
+        }
+
+        .milestones-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--ink);
+            margin: 0 0 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .milestones-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .milestone-row {
+            display: grid;
+            grid-template-columns: 76px 1fr;
+            gap: 14px;
+            padding: 13px 0;
+            border-bottom: 1px solid #e7e7e7;
+            align-items: baseline;
+        }
+
+        .milestone-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .milestone-year {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .milestone-text {
+            font-size: 13px;
+            line-height: 1.55;
+            color: #404040;
+        }
+
+        .provenance-note {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: var(--muted);
+        }
+
+        /* Artist's Works Grid */
+        .works-section {
+            padding-top: 52px;
+        }
+
+        .works-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .works-title {
+            font-family: var(--font-serif);
+            font-size: 28px;
+            font-weight: 400;
+            margin: 0;
+        }
+
+        .works-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 24px;
+        }
+
+        .work-card {
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 2px;
+            overflow: hidden;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .work-card:hover {
+            border-color: #8c8c8c;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .work-thumb {
+            aspect-ratio: 4 / 5;
+            background: #f5f5f5;
+            overflow: hidden;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .work-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .work-body {
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            justify-content: space-between;
+            gap: 14px;
+        }
+
+        .work-title {
+            margin: 0 0 6px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .work-meta {
+            margin: 0;
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        .work-foot {
+            padding-top: 12px;
+            border-top: 1px solid #ececec;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .work-price {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .work-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .view-work-link {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ink);
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+        }
+
+        .view-work-link:hover { border-color: var(--ink); }
+
+        .add-bag-mini {
+            padding: 8px 12px;
+            background: var(--ink);
+            color: #ffffff;
+            border: none;
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+        }
+
+        .add-bag-mini:hover { background: #262626; }
+
+        /* Peer Artist Pagination */
+        .peer-nav {
+            margin-top: 56px;
+            padding-top: 28px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .peer-link {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink-soft);
+        }
+
+        .peer-link:hover {
+            color: var(--ink);
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .footer {
+            background: #111111;
+            color: #999999;
+            border-top: 1px solid #262626;
+            padding: 40px 24px;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 12px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-links a:hover { color: #ffffff; }
+
+        @media (max-width: 1024px) {
+            .nav { display: none; }
+            .mobile-toggle { display: inline-flex; }
+            .monograph-hero { grid-template-columns: 1fr; gap: 28px; }
+            .bio-section { grid-template-columns: 1fr; gap: 32px; }
+            .works-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 640px) {
+            .main-wrap { padding: 28px 16px 56px; }
+            .mono-facts { grid-template-columns: 1fr; }
+            .works-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body data-cid="<%= cid %>">
+    <div class="topbar">Insured Fine Art Courier Delivery · Pay Direct with BTC, ETH, or SOL</div>
+
+    <header class="header">
+        <div class="header-inner">
+            <div class="header-left">
+                <button type="button" class="mobile-toggle" id="menuToggle" aria-label="Toggle navigation menu">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <a href="/" class="brand-mark">ART STUDIO</a>
+            </div>
+
+            <nav class="nav" aria-label="Primary navigation">
+                <a href="/">Shop All</a>
+                <a href="/?category=Painting">Paintings</a>
+                <a href="/?category=Prints">Prints</a>
+                <a href="/?category=Photography">Photography</a>
+                <a href="/?category=Sculpture">Sculpture</a>
+                <a href="/?category=Furniture">Furniture</a>
+                <a href="/artists" class="active">Artists</a>
+            </nav>
+
+            <a href="/cart" class="bag-trigger" aria-label="Shopping Bag">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+                <span>Bag</span>
+                <span class="bag-badge cart-count"><%= cart_count %></span>
+            </a>
+        </div>
+
+        <div class="mobile-drawer" id="mobileDrawer">
+            <div class="mobile-drawer-links">
+                <a href="/">Shop All</a>
+                <a href="/?category=Painting">Paintings</a>
+                <a href="/?category=Prints">Prints &amp; Etchings</a>
+                <a href="/?category=Photography">Photography</a>
+                <a href="/?category=Sculpture">Sculpture</a>
+                <a href="/?category=Furniture">Furniture</a>
+                <a href="/artists">Meet the Artists</a>
+                <a href="/contact">Contact &amp; Support</a>
+                <a href="/cart">Shopping Bag (<span class="cart-count"><%= cart_count %></span>)</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-wrap">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Archive</a>
+            <span>/</span>
+            <a href="/artists">Meet the Artists</a>
+            <span>/</span>
+            <span class="current"><%= artist.name %></span>
+        </nav>
+
+        <section class="monograph-hero">
+            <div>
+                <span class="mono-kicker"><%= artist.discipline %> · <%= artist.origin %> (<%= artist.era %>)</span>
+                <h1 class="mono-title"><%= artist.name %></h1>
+                <p class="mono-lead"><%= artist.tagline %></p>
+
+                <div class="mono-facts">
+                    <div>
+                        <span class="fact-label">Origin &amp; Base</span>
+                        <span class="fact-val"><%= artist.origin %></span>
+                    </div>
+                    <div>
+                        <span class="fact-label">Active Period</span>
+                        <span class="fact-val"><%= artist.era %></span>
+                    </div>
+                    <div>
+                        <span class="fact-label">Works in Archive</span>
+                        <span class="fact-val"><%= works.length %> <%= works.length === 1 ? 'Work' : 'Works' %></span>
+                    </div>
+                </div>
+
+                <div class="mono-actions">
+                    <a href="#artist-works" class="btn-primary">View Works in Archive</a>
+                    <a href="/artists" class="btn-secondary">← All Artists</a>
+                </div>
+            </div>
+
+            <figure class="hero-plate">
+                <div class="hero-plate-frame">
+                    <img src="<%= works[0] ? works[0].image : artist.featuredImage %>" alt="<%= artist.name %> — <%= works[0] ? works[0].title : artist.featuredTitle %>" referrerPolicy="no-referrer" />
+                </div>
+                <figcaption class="hero-plate-caption">
+                    Featured work: <%= works[0] ? works[0].title : artist.featuredTitle %> · <%= artist.discipline %>
+                </figcaption>
+            </figure>
+        </section>
+
+        <section class="bio-section">
+            <div>
+                <span class="bio-kicker">Artist Biography &amp; History</span>
+                <h2 class="bio-heading">Practice, Heritage &amp; Trajectory</h2>
+                <div class="bio-prose">
+                    <% artist.biography.forEach((para, idx) => { %>
+                        <p class="<%= idx === 0 ? 'bio-dropcap' : '' %>"><%= para %></p>
+                    <% }) %>
+                    <% if (artist.quote) { %>
+                        <blockquote class="bio-pullquote"><%= artist.quote %></blockquote>
+                    <% } %>
+                </div>
+            </div>
+
+            <aside class="milestones-box" aria-label="Career and provenance milestones">
+                <h3 class="milestones-title">Career &amp; Archival Milestones</h3>
+                <ol class="milestones-list">
+                    <% artist.milestones.forEach((m) => { %>
+                    <li class="milestone-row">
+                        <span class="milestone-year"><%= m.year %></span>
+                        <span class="milestone-text"><%= m.detail %></span>
+                    </li>
+                    <% }) %>
+                </ol>
+                <div class="provenance-note">
+                    Every work attributed to <strong><%= artist.name %></strong> ships with documented provenance and a signed Certificate of Authenticity from ART STUDIO.
+                </div>
+            </aside>
+        </section>
+
+        <section class="works-section" id="artist-works">
+            <div class="works-header">
+                <h2 class="works-title">Collected Works by <%= artist.name %></h2>
+                <a href="/?artist=<%= encodeURIComponent(artist.name) %>" class="peer-link">Filter in Complete Archive →</a>
+            </div>
+
+            <div class="works-grid">
+                <% works.forEach((item) => { %>
+                <article class="work-card">
+                    <a href="/product/<%= item.id %>" class="work-thumb" aria-label="View <%= item.title %>">
+                        <img src="<%= item.image %>" alt="<%= item.title %> by <%= item.artist %>" referrerPolicy="no-referrer" />
+                    </a>
+                    <div class="work-body">
+                        <div>
+                            <h3 class="work-title">
+                                <a href="/product/<%= item.id %>"><%= item.title %></a>
+                            </h3>
+                            <p class="work-meta"><%= item.category %> · <%= item.size %></p>
+                        </div>
+
+                        <div class="work-foot">
+                            <span class="work-price">$<%= formatCurrency(item.price) %></span>
+                            <div class="work-actions">
+                                <a href="/product/<%= item.id %>" class="view-work-link">Details</a>
+                                <form action="/add-to-cart" method="POST">
+                                    <input type="hidden" name="product_id" value="<%= item.id %>" />
+                                    <input type="hidden" name="quantity" value="1" />
+                                    <button type="submit" class="add-bag-mini">Add to Bag</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                <% }) %>
+            </div>
+
+            <nav class="peer-nav" aria-label="Adjacent artist profiles">
+                <% if (prevArtist) { %>
+                    <a href="/artists/<%= prevArtist.slug %>" class="peer-link">← Previous: <%= prevArtist.name %></a>
+                <% } else { %>
+                    <span></span>
+                <% } %>
+                <a href="/artists" class="peer-link">All Artists Directory</a>
+                <% if (nextArtist) { %>
+                    <a href="/artists/<%= nextArtist.slug %>" class="peer-link">Next: <%= nextArtist.name %> →</a>
+                <% } else { %>
+                    <span></span>
+                <% } %>
+            </nav>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <span>© 2026 ART STUDIO. All rights reserved.</span>
+            <nav class="footer-links" aria-label="Footer navigation">
+                <a href="/artists">Meet the Artists</a>
+                <a href="/shipping">Shipping &amp; Delivery</a>
+                <a href="/authenticity">Artwork Authenticity</a>
+                <a href="/terms">Terms &amp; Conditions</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/contact">Contact &amp; Support</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const mobileDrawer = document.getElementById('mobileDrawer');
+        if (menuToggle && mobileDrawer) {
+            menuToggle.addEventListener('click', () => mobileDrawer.classList.toggle('open'));
+        }
+    </script>
+    <script src="/static/js/cart-sync.js"></script>
+</body>
+</html>

@@ -431,6 +431,239 @@ const products: Product[] = [
     description:
       "Multi-tier Jingdezhen blue-and-white porcelain tulipiere crafted by Cobalt Guild in four interlocking sculptural sections with tubular floral spouts. Hand-painted underglaze cobalt motifs alternate between serene lakeside landscapes, sailboats, and classic floral scrollwork.",
   },
+  {
+    id: 24,
+    title: "Upholstered Swivel Armchair",
+    artist: "Bernhardt & Vella",
+    category: "Furniture",
+    price: 7622.5,
+    price_display: "$7,622.50",
+    size: "34.3 x 35.4 x 38.2 in",
+    image: "/static/images/swivel-armchair-1.jpg",
+    images: [
+      "/static/images/swivel-armchair-1.jpg",
+      "/static/images/swivel-armchair-2.jpg",
+      "/static/images/swivel-armchair-3.jpg",
+      "/static/images/swivel-armchair-4.jpg",
+      "/static/images/swivel-armchair-5.jpg",
+    ],
+    description:
+      "Italian neoclassical-inspired swivel armchair crafted in bentwood with a glossy bronze lacquer plinth base and upholstered in soft, velvet-like warm camel fabric. Designed with an enveloping deep seat and contoured backrest (16.9 in seat height).",
+  },
+  {
+    id: 25,
+    title: "Antique 19th Century English Leather Library Chair",
+    artist: "English Victorian School",
+    category: "Furniture",
+    price: 1900.0,
+    price_display: "$1,900",
+    size: "39 x 24 x 32 in",
+    image: "/static/images/english-library-chair-1.jpg",
+    images: [
+      "/static/images/english-library-chair-1.jpg",
+      "/static/images/english-library-chair-2.jpg",
+      "/static/images/english-library-chair-3.jpg",
+      "/static/images/english-library-chair-4.jpg",
+      "/static/images/english-library-chair-5.jpg",
+      "/static/images/english-library-chair-6.jpg",
+    ],
+    description:
+      "Circa 1880 English Victorian library armchair crafted with a solid hand-carved mahogany framework, contoured back, open scrolled arms, and ring-turned legs on signed period brass casters. Upholstered in original button-tufted olive green leather with brass nailhead trim and rich aged patina (17 in seat height).",
+  },
+  {
+    id: 26,
+    title: "MW02 x NEP Design Armchair — Limited Edition \"Interface(s)\"",
+    artist: "MW Exclusive x NEP",
+    category: "Furniture",
+    price: 4913.15,
+    price_display: "$4,913.15",
+    size: "30.5 x 29.1 x 34.1 in",
+    image: "/static/images/mw02-nep-armchair-1.jpg",
+    images: [
+      "/static/images/mw02-nep-armchair-1.jpg",
+      "/static/images/mw02-nep-armchair-2.jpg",
+      "/static/images/mw02-nep-armchair-3.jpg",
+      "/static/images/mw02-nep-armchair-4.jpg",
+      "/static/images/mw02-nep-armchair-5.jpg",
+      "/static/images/mw02-nep-armchair-6.jpg",
+    ],
+    description:
+      "Handcrafted in France, this signed and numbered limited-edition MW02 armchair created by MW Exclusive and French contemporary artist NEP pairs suspended tempered glass side panels housing original 'Interface(s)' street-art compositions with high-resilience HR40 cushions in green upholstery and stainless steel joinery (16.1 in seat height).",
+  },
+  {
+    id: 27,
+    title: "Pair of Art Deco Lounge Chairs in Teak & Cane",
+    artist: "Style of Francis Jourdain",
+    category: "Furniture",
+    price: 3770.91,
+    price_display: "$3,770.91",
+    size: "29.5 x 23.2 x 30.3 in (Set of 2)",
+    image: "/static/images/art-deco-lounge-chairs-1.jpg",
+    images: [
+      "/static/images/art-deco-lounge-chairs-1.jpg",
+      "/static/images/art-deco-lounge-chairs-2.jpg",
+      "/static/images/art-deco-lounge-chairs-3.jpg",
+      "/static/images/art-deco-lounge-chairs-4.jpg",
+      "/static/images/art-deco-lounge-chairs-5.jpg",
+      "/static/images/art-deco-lounge-chairs-6.jpg",
+    ],
+    description:
+      "Matched pair of circa 1930 Italian Art Deco lounge chairs in the style of Francis Jourdain, crafted in shellac-polished teak with geometric woven cane backs, ebonized feet, and professionally stabilized joinery preserving authentic period patina (13 in seat height).",
+  },
+  {
+    id: 28,
+    title: "Pair of Ebonised Tub Armchairs with Floral Upholstery",
+    artist: "French Early 20th Century",
+    category: "Furniture",
+    price: 2847.22,
+    price_display: "$2,847.22",
+    size: "29.7 x 22.8 x 20.3 in (Set of 2)",
+    image: "/static/images/ebonised-tub-armchairs-1.jpg",
+    images: [
+      "/static/images/ebonised-tub-armchairs-1.jpg",
+      "/static/images/ebonised-tub-armchairs-2.jpg",
+      "/static/images/ebonised-tub-armchairs-3.jpg",
+      "/static/images/ebonised-tub-armchairs-4.jpg",
+      "/static/images/ebonised-tub-armchairs-5.jpg",
+      "/static/images/ebonised-tub-armchairs-6.jpg",
+    ],
+    description:
+      "Matched pair of circa 1900 French tub armchairs featuring barrel-shaped backs flowing into carved ebonised wooden frames, curved front legs, and tapered rear legs, upholstered in woven floral tapestry fabric with decorative braid trim (16.9 in seat height).",
+  },
+  {
+    id: 29,
+    title: "Danube River, Sebins (Castle on the Danube)",
+    artist: "Wenceslaus Hollar",
+    category: "Prints",
+    price: 300.0,
+    price_display: "$300",
+    size: "2.4 x 5.4 in (6.1 x 13.7 cm)",
+    image: "/static/images/hollar-danube-etching-1.jpg",
+    images: [
+      "/static/images/hollar-danube-etching-1.jpg",
+      "/static/images/hollar-danube-etching-2.jpg",
+      "/static/images/hollar-danube-etching-3.jpg",
+      "/static/images/hollar-danube-etching-4.jpg",
+      "/static/images/hollar-danube-etching-5.jpg",
+      "/static/images/hollar-danube-etching-6.jpg",
+    ],
+    description:
+      "Original 17th-century etching (circa 1652–1677) by Wenceslaus Hollar (1607–1677), signed in the plate at lower left. Depicting Sebins Castle overlooking the Danube with a foreground passenger cabin boat; impressions from this series are held in the British Museum and Metropolitan Museum of Art (New Hollstein 2491, Pennington 779, Parthey 1295).",
+  },
+  {
+    id: 30,
+    title: "Ancient Bridge Views (Stay)",
+    artist: "Stefanie Schneider",
+    category: "Photography",
+    price: 400.0,
+    price_display: "$400",
+    size: "7.9 x 7.9 in (20 x 20 cm)",
+    image: "/static/images/stefanie-schneider-ancient-bridge-1.jpg",
+    images: [
+      "/static/images/stefanie-schneider-ancient-bridge-1.jpg",
+    ],
+    description:
+      "2006 archival C-print derived from original Polaroid film by German contemporary photographer Stefanie Schneider, issued in an edition of 5 plus 2 Artist Proofs. Accompanied by certificate and signature label (Inventory #2192, unmounted 20 x 20 cm).",
+  },
+  {
+    id: 31,
+    title: "Burlesque Series, Delilah Right Red Hand III (Whoopee Club, London)",
+    artist: "Richard Heeps",
+    category: "Photography",
+    price: 676.26,
+    price_display: "$676.26",
+    size: "24 x 36.6 in (61 x 93 cm)",
+    image: "/static/images/richard-heeps-delilah-1.jpg",
+    images: [
+      "/static/images/richard-heeps-delilah-1.jpg",
+      "/static/images/richard-heeps-delilah-2.jpg",
+      "/static/images/richard-heeps-delilah-3.jpg",
+      "/static/images/richard-heeps-delilah-4.jpg",
+      "/static/images/richard-heeps-delilah-5.jpg",
+      "/static/images/richard-heeps-delilah-6.jpg",
+    ],
+    description:
+      "2003 photograph from British photographer Richard Heeps' acclaimed Burlesque Series, captured at London's Whoopee Club. Master-printed from the original negative in his Cambridge darkroom as a limited-edition gloss photographic print of 25, complete with signed and numbered Certificate of Authenticity.",
+  },
+  {
+    id: 32,
+    title: "\"The Calm\" — Wild Horses (Black & White)",
+    artist: "Shane Russeck",
+    category: "Photography",
+    price: 520.0,
+    price_display: "$520",
+    size: "40 x 60 in (101.6 x 152.4 cm)",
+    image: "/static/images/shane-russeck-calm-1.jpg",
+    images: [
+      "/static/images/shane-russeck-calm-1.jpg",
+      "/static/images/shane-russeck-calm-2.jpg",
+      "/static/images/shane-russeck-calm-3.jpg",
+      "/static/images/shane-russeck-calm-4.jpg",
+      "/static/images/shane-russeck-calm-5.jpg",
+      "/static/images/shane-russeck-calm-6.jpg",
+    ],
+    description:
+      "2018 large-scale monochrome archival pigment photograph of American wild mustangs by Shane Russeck, created during his cross-country Wild Life series. Unsigned open studio print measuring 40 x 60 inches.",
+  },
+  {
+    id: 33,
+    title: "Art Deco Patinated Bronze Flamingos (c. 1920s)",
+    artist: "Alexandre Kéléty",
+    category: "Sculpture",
+    price: 5500.0,
+    price_display: "$5,500",
+    size: "13 x 19 x 2.8 in (33 x 48.3 x 7 cm)",
+    image: "/static/images/kelety-bronze-flamingos-1.jpg",
+    images: [
+      "/static/images/kelety-bronze-flamingos-1.jpg",
+      "/static/images/kelety-bronze-flamingos-2.jpg",
+      "/static/images/kelety-bronze-flamingos-3.jpg",
+      "/static/images/kelety-bronze-flamingos-4.jpg",
+      "/static/images/kelety-bronze-flamingos-5.jpg",
+    ],
+    description:
+      "Circa 1920 Art Deco patinated bronze sculpture of graceful flamingos mounted on a dark veined marble plinth by Hungarian-born Parisian sculptor Alexandre Kéléty (1874–1940), signed 'A. Kéléty' on the base.",
+  },
+  {
+    id: 34,
+    title: "16th/17th Century Spanish Renaissance Giltwood Angel Frieze Sculpture",
+    artist: "Spanish Renaissance School",
+    category: "Sculpture",
+    price: 1591.76,
+    price_display: "$1,591.76",
+    size: "7.3 x 14 x 2.8 in (18.5 x 35.5 x 7 cm)",
+    image: "/static/images/spanish-giltwood-angel-1.jpg",
+    images: [
+      "/static/images/spanish-giltwood-angel-1.jpg",
+      "/static/images/spanish-giltwood-angel-2.jpg",
+      "/static/images/spanish-giltwood-angel-3.jpg",
+      "/static/images/spanish-giltwood-angel-4.jpg",
+      "/static/images/spanish-giltwood-angel-5.jpg",
+      "/static/images/spanish-giltwood-angel-6.jpg",
+    ],
+    description:
+      "Rare circa 1580–1620 Spanish Golden Age hand-carved deep-relief giltwood frieze depicting a central cherub flanked by sweeping festoons and fruit clusters, retaining original polychrome pigments and aged water-gilding on a custom stepped black display stand.",
+  },
+  {
+    id: 35,
+    title: "19th-Century English Carved Walnut Barley Twist Bar Cabinet On Stand",
+    artist: "English Victorian School",
+    category: "Furniture",
+    price: 2990.0,
+    price_display: "$2,990",
+    size: "47.5 x 43.5 x 18.5 in (120.7 x 110.5 x 47 cm)",
+    image: "/static/images/english-walnut-cabinet-1.jpg",
+    images: [
+      "/static/images/english-walnut-cabinet-1.jpg",
+      "/static/images/english-walnut-cabinet-2.jpg",
+      "/static/images/english-walnut-cabinet-3.jpg",
+      "/static/images/english-walnut-cabinet-4.jpg",
+      "/static/images/english-walnut-cabinet-5.jpg",
+      "/static/images/english-walnut-cabinet-6.jpg",
+    ],
+    description:
+      "Circa 1880 English Jacobean-style carved walnut cabinet resting on a barley twist stand. Detailed with three front doors separated by sculpted caryatids, inlaid mother-of-pearl floral vases, lion masks, and raised paneled joinery suited for collectors' cabinets or luxury bar storage.",
+  },
 ];
 
 const featuredCollection: Product[] = [];
@@ -1007,6 +1240,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.locals.brand_name = "ART STUDIO";
   res.locals.formatCurrency = formatCurrency;
   res.locals.cid = cid ?? "";
+  res.locals.getArtistSlug = getArtistSlug;
   next();
 });
 
@@ -1625,6 +1859,651 @@ app.post("/contact", (req: Request, res: Response) => {
     `Thank you, ${name}. Your inquiry (${refCode}) has been received by our Collector Concierge team, who will reply to ${email} within 1 business day.`
   );
   redirectWithSession(req, res, "/contact");
+});
+
+interface ArtistMilestone {
+  year: string;
+  detail: string;
+}
+
+interface ArtistProfile {
+  slug: string;
+  name: string;
+  discipline: string;
+  origin: string;
+  era: string;
+  tagline: string;
+  biography: string[];
+  quote?: string;
+  milestones: ArtistMilestone[];
+}
+
+function slugifyArtistName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+const artistProfiles: ArtistProfile[] = [
+  {
+    slug: "wenceslaus-hollar",
+    name: "Wenceslaus Hollar",
+    discipline: "Etching & Printmaking",
+    origin: "Prague · London · Antwerp",
+    era: "1607–1677",
+    tagline:
+      "Bohemian Baroque master etcher celebrated for encyclopedic topographical plates, architectural views, and delicate Danube and London copperplate sequences.",
+    biography: [
+      "Born in Prague in 1607, Wenceslaus Hollar (Václav Hollar) trained in Frankfurt under the renowned Swiss engraver and publisher Matthäus Merian before developing a remarkably fine, silver-toned etching line across Central Europe, Antwerp, and London.",
+      "In 1636, Hollar entered the patronage of Thomas Howard, 14th Earl of Arundel, accompanying the English diplomat's embassies along the Rhine and Danube rivers. His intimate travel sketchbooks became the source for hundreds of crisp riverine, castle, and townscape etchings—including the Danube River sequence around Sebins.",
+      "Settling in London prior to the English Civil War and working continuously until his death in 1677, Hollar produced nearly three thousand cataloged plates documenting costumes, natural history, European cities, and pre-Great Fire London. His impressions remain cornerstones of print rooms at the British Museum and the Metropolitan Museum of Art.",
+    ],
+    quote:
+      "Topography rendered at miniature scale yet possessing the clarity and architectural authority of a panoramic survey.",
+    milestones: [
+      { year: "1607", detail: "Born in Prague, Kingdom of Bohemia." },
+      { year: "1627–1635", detail: "Apprenticed in Matthäus Merian's workshop in Frankfurt; worked in Strasbourg and Cologne." },
+      { year: "1636", detail: "Joined the Earl of Arundel's diplomatic journey down the Rhine and Danube rivers." },
+      { year: "1644–1652", detail: "Worked in Antwerp printing major landscapes, still lifes, and Arundel collection plates." },
+      { year: "1652–1677", detail: "Returned to London, executing topographical surveys and Danube river etchings prior to his burial at St Margaret's, Westminster." },
+    ],
+  },
+  {
+    slug: "hans-j-wegner",
+    name: "Hans J. Wegner",
+    discipline: "Modernist Furniture Design",
+    origin: "Tønder & Copenhagen, Denmark",
+    era: "1914–2007",
+    tagline:
+      "Pioneering Danish modernist architect and cabinetmaker whose over 500 chair designs united sculptural restraint with honest structural joinery.",
+    biography: [
+      "Trained originally as a cabinetmaker in his hometown of Tønder at age seventeen before studying at the Copenhagen School of Arts and Crafts, Hans Jørgensen Wegner approached furniture first through the discipline of the hand plane, chisel, and load-bearing joint.",
+      "During the golden era of Danish Modernism in the late 1940s and 1950s, Wegner collaborated with masters such as Arne Jacobsen and Erik Møller and forged lifelong partnerships with workshops including Johannes Hansen and Getama. In 1950, he conceived the legendary Flag Halyard Chair (GE225)—a radical departure from heavy wood upholstery inspired while relaxing in shallow beach sand.",
+      "Suspended from 250 meters of tightly tensioned flag halyard cord across a lacquered and chromed tubular steel frame, the GE225 demonstrated Wegner's rare ability to pair industrial rigor with organic tactile warmth, earning permanent inclusion in major design museums worldwide.",
+    ],
+    quote:
+      "A chair should have no rear side; it should be beautiful from all sides and angles.",
+    milestones: [
+      { year: "1931", detail: "Completed cabinetmaker's apprenticeship in Tønder, Denmark." },
+      { year: "1936–1938", detail: "Studied at the School of Arts and Crafts in Copenhagen." },
+      { year: "1950", detail: "Designed the iconic Flag Halyard Lounge Chair (Model GE225) for Getama." },
+      { year: "1958", detail: "Early production period of the lacquered-frame GE225 represented in the ART STUDIO archive." },
+      { year: "1995", detail: "Hans J. Wegner Museum opened in his birthplace of Tønder." },
+    ],
+  },
+  {
+    slug: "albert-clark",
+    name: "Albert Clark",
+    discipline: "Victorian Sporting Painting",
+    origin: "London, England",
+    era: "1843–1928",
+    tagline:
+      "British Victorian equine and sporting painter renowned for naturalistic anatomical studies of thoroughbreds, carriage horses, and pastoral estates.",
+    biography: [
+      "Active in London throughout the late nineteenth and early twentieth centuries, Albert Clark belonged to a celebrated dynasty of British animal and sporting painters who chronicled equestrian life at its height.",
+      "Working predominantly in oil on canvas, Clark focused on the quiet dignity and muscular poise of prized hunters, polo ponies, and carriage horses set within open hedgerows and meadow landscapes. Rather than theatrical hunting chases, his finest canvases favor still, observant side-profile and conversational groupings bathed in soft English daylight.",
+      "His dated 1887 composition of chestnut and bay horses standing face-to-face exemplifies his signature balance of glossy coat modeling, crisp bridle detail, and tranquil rural atmosphere housed inside classic giltwood framing.",
+    ],
+    milestones: [
+      { year: "1843", detail: "Born into an artistic London family specializing in animal portraiture." },
+      { year: "1870s–1890s", detail: "Executed private estate commissions across London and the English counties." },
+      { year: "1887", detail: "Signed and dated 'Chestnut & Bay Horses in Landscape' in oil on canvas." },
+      { year: "1928", detail: "Left a lasting body of Victorian sporting works prized by British and international collectors." },
+    ],
+  },
+  {
+    slug: "alexandre-kelety",
+    name: "Alexandre Kéléty",
+    discipline: "Art Deco Sculpture",
+    origin: "Budapest, Hungary · Paris, France",
+    era: "1874–1940",
+    tagline:
+      "Hungarian-born Parisian Art Deco sculptor celebrated for patinated bronze animaliers, chryselephantine figures, and sleek geometric bases.",
+    biography: [
+      "Born in Budapest in 1874, Alexandre (Sándor) Kéléty moved to Paris after the First World War, establishing himself among the leading sculptors of the interwar French Art Deco movement. Studying under Imre Simay in Budapest and exhibiting actively at the Paris Salons during the 1920s and 1930s, he bridged academic modeling with Jazz Age stylization.",
+      "Kéléty worked closely with prominent Parisian foundries and éditeurs d'art including Etling, Goldscheider, and Arthur Goldscheider's ateliers, translating dynamic movement into crisp silhouettes cast in patinated bronze, terracotta, and ivory.",
+      "His circa 1920s study of wading flamingos captures the signature tension of Art Deco animalier sculpture—slender, rhythmic necks and feathered volumes poised cleanly above stepped, veined marble plinths.",
+    ],
+    milestones: [
+      { year: "1874", detail: "Born in Budapest, Austria-Hungary." },
+      { year: "1918–1920", detail: "Relocated to Paris and entered the interwar École de Paris sculptural circle." },
+      { year: "1920s", detail: "Cast signed patinated bronze animalier sculptures on marble plinths, including the Art Deco Flamingos." },
+      { year: "1925–1937", detail: "Exhibited works at Parisian Salons and international decorative arts expositions." },
+    ],
+  },
+  {
+    slug: "alex-garant",
+    name: "Alex Garant",
+    discipline: "Contemporary Figurative Oil",
+    origin: "Notre-Dame-du-Lac, Quebec · Toronto, Canada",
+    era: "Contemporary",
+    tagline:
+      "Canadian oil painter and pioneer of Contemporary Figurative Op-Art, known for hypnotic double-eyed portraiture and nostalgic allegory.",
+    biography: [
+      "Born in Notre-Dame-du-Lac, Quebec, Alex Garant began drawing at a young age and later studied visual arts at Notre-Dame-de-Foy in Quebec City before establishing her painting practice in Toronto.",
+      "Following a transformative health turning point in 2012, Garant developed her unmistakable visual vocabulary: classic portraiture disrupted by doubled eyes, graphic symmetry, and layered optical vibration. Her canvases compel viewers to slow down and reconcile stillness with perceptual shimmer.",
+      "Exhibited widely across North America and Europe—including major showcases at Arch Enemy Arts in Philadelphia—her 2026 oil painting 'Swan Maiden' pairs delicate feathered symbolism with serene slate-blue tonal glazes in a bespoke diamond floater frame.",
+    ],
+    milestones: [
+      { year: "2001", detail: "Completed visual arts studies at Campus Notre-Dame-de-Foy, Quebec." },
+      { year: "2012–2015", detail: "Originated her signature double-eye figurative optical painting language." },
+      { year: "2016–2025", detail: "Solo and featured exhibitions across Toronto, New York, Los Angeles, London, and Philadelphia." },
+      { year: "2026", detail: "Painted 'Swan Maiden' for the Imaginary Menagerie exhibition at Arch Enemy Arts." },
+    ],
+  },
+  {
+    slug: "stefanie-schneider",
+    name: "Stefanie Schneider",
+    discipline: "Analog & Polaroid Photography",
+    origin: "Cuxhaven, Germany · Twentynine Palms, California",
+    era: "b. 1968",
+    tagline:
+      "German photographic artist celebrated for dreamlike narrative sequences shot exclusively on expired instant Polaroid film in the Mojave Desert.",
+    biography: [
+      "Born in Cuxhaven, Germany in 1968, Stefanie Schneider studied photography and visual communication at Folkwang University of the Arts in Essen, absorbing a rigorous German photographic tradition before turning deliberately toward chance, chemical decay, and mythic Americana.",
+      "Working predominantly in the arid expanses of Twentynine Palms, California, Schneider builds cinematic, unscripted vignettes using expired Polaroid SX-70 and Spectra stocks. Because aged emulsions drift unpredictably toward amber, crimson, and washed cobalt, each frame carries an irreproducible organic patina.",
+      "Her intimate 2006 work 'Ancient Bridge Views (Stay)' translates that fleeting Polaroid alchemy into a luminous square archival C-print edition of 5 plus 2 Artist Proofs.",
+    ],
+    milestones: [
+      { year: "1968", detail: "Born in Cuxhaven, Northern Germany." },
+      { year: "1996", detail: "Graduated in Photography & Visual Communication from Folkwang University, Essen." },
+      { year: "2000s", detail: "Established desert studio practice in Twentynine Palms using expired Polaroid instant films." },
+      { year: "2006", detail: "Created 'Ancient Bridge Views (Stay)' in a strictly limited edition of 5 + 2 AP." },
+    ],
+  },
+  {
+    slug: "richard-heeps",
+    name: "Richard Heeps",
+    discipline: "Darkroom Photography",
+    origin: "Cambridge, England",
+    era: "Contemporary",
+    tagline:
+      "British darkroom photographer and printmaker whose unmanipulated medium-format negatives capture saturated mid-century Americana and London nightlife.",
+    biography: [
+      "Based in Cambridge, England, Richard Heeps has spent more than three decades championing traditional wet-darkroom color photography at a moment when digital retouching became ubiquitous.",
+      "Working with vintage Hasselblad medium-format cameras and hand-printing every edition himself on gloss photographic paper directly from the original negative, Heeps preserves razor-sharp architectural and theatrical detail alongside rich, velvety shadow tones.",
+      "His celebrated 2003 'Burlesque Series'—photographed backstage and onstage at London's storied Whoopee Club—documents contemporary cabaret with the poise, wit, and intimate lighting of classic British portraiture.",
+    ],
+    milestones: [
+      { year: "1980s–1990s", detail: "Established independent wet-color darkroom practice in Cambridge, England." },
+      { year: "2003", detail: "Photographed the acclaimed 'Burlesque Series' at London's Whoopee Club." },
+      { year: "2010s–2026", detail: "Master-printed limited editions exhibited in London, New York, Paris, and international art fairs." },
+    ],
+  },
+  {
+    slug: "shane-russeck",
+    name: "Shane Russeck",
+    discipline: "Large-Format Monochrome Photography",
+    origin: "Los Angeles, California, USA",
+    era: "b. 1977",
+    tagline:
+      "American fine art photographer whose monumental black-and-white landscapes and wild mustang studies honor the raw stillness of the American West.",
+    biography: [
+      "Born in 1977 and working out of California, Shane Russeck turned from commercial visual production toward sweeping open-country expeditions across the American West, documenting wild horses, desert expanses, and mountain light on high-resolution monochrome.",
+      "Drawing inspiration from classic twentieth-century landscape masters while printing on architectural forty-by-sixty-inch scales, Russeck strips away color distraction so gesture, dust, breath, and horizon line command the room.",
+      "Created during his 2018 'Wild Life' field series, 'The Calm' captures free-roaming wild mustangs in an unhurried moment of quiet solidarity and tonal balance.",
+    ],
+    milestones: [
+      { year: "1977", detail: "Born in the United States." },
+      { year: "2015–2018", detail: "Embarked on cross-country photographic expeditions for the 'Wild Life' monochrome series." },
+      { year: "2018", detail: "Captured and produced monumental 40 × 60 inch editions of 'The Calm — Wild Horses'." },
+    ],
+  },
+  {
+    slug: "nando-kallweit",
+    name: "Nando Kallweit",
+    discipline: "Wood & Lost-Wax Bronze Sculpture",
+    origin: "Germany",
+    era: "Contemporary",
+    tagline:
+      "German sculptor uniting hand-carved European oak originals with limited-edition lost-wax bronze casts of elongated, meditative figures.",
+    biography: [
+      "German contemporary sculptor Nando Kallweit works in the tactile dialogue between carved timber and cast bronze. Each sculpture begins slowly at the workbench as an original hand-carved oak wood figure shaped with gouges, adzes, and rasps.",
+      "Once the wooden form achieves its quiet equilibrium, Kallweit casts strictly limited editions—typically 25 numbered bronzes—using the ancient lost-wax (cire perdue) foundry process. This technique faithfully records every subtle tool facet and organic timber grain directly into dark-patinated metal.",
+      "His sculpture 'Sina' balances architectural restraint with fragile human poise, allowing slender limbs and calm posture to anchor intimate residential or gallery spaces.",
+    ],
+    milestones: [
+      { year: "2000s", detail: "Developed signature wood-carving to lost-wax bronze casting studio workflow in Germany." },
+      { year: "2010s–2025", detail: "Exhibited figurative bronze series across European galleries and collector salons." },
+      { year: "Present", detail: "'Sina' cast in a strictly numbered edition of 25 bronze impressions." },
+    ],
+  },
+  {
+    slug: "paul-chang",
+    name: "Paul Chang",
+    discipline: "Contemporary Figurative Painting",
+    origin: "Contemporary Studio",
+    era: "Contemporary",
+    tagline:
+      "Contemporary figurative painter whose richly layered compositions investigate biological growth, memory, and chromatic transformation.",
+    biography: [
+      "Paul Chang's studio practice investigates the threshold where human figuration meets organic metamorphosis. Working on mid-to-large canvas formats, he builds surface depth through successive strata of opaque pigment, scumbled edges, and luminous color contrasts.",
+      "Rather than freezing subjects in static portraiture, Chang treats form as an evolving biological system—suggesting cellular division, memory traces, and continuous adaptation across time.",
+      "'Biological Transformation' (32 × 40 in) exemplifies his command of textured brushwork and emotional color temperature, offering collectors a resonant centerpiece steeped in vitality.",
+    ],
+    milestones: [
+      { year: "Studio Practice", detail: "Focuses on layered figurative and organic-abstraction oil & mixed works on canvas." },
+      { year: "Catalog Highlight", detail: "'Biological Transformation' acquired into the ART STUDIO permanent contemporary archive." },
+    ],
+  },
+  {
+    slug: "igor-vitomirov",
+    name: "Igor Vitomirov",
+    discipline: "Atmospheric Landscape Photography",
+    origin: "Europe",
+    era: "Contemporary",
+    tagline:
+      "Fine art photographer known for misty woodland compositions, muted northern palettes, and serene natural stillness.",
+    biography: [
+      "Working predominantly in quiet dawn hours across northern forests and mist-laden valleys, Igor Vitomirov approaches landscape photography as an exercise in patience and tonal restraint.",
+      "By photographing into diffuse morning fog rather than harsh midday glare, he compresses cluttered woodland depths into delicate atmospheric planes where vertical tree trunks recede like ink washes on archival paper.",
+      "'Morning Forest #2' showcases his contemplative visual rhythm—bringing calm acoustic quietness and spatial depth into contemporary interiors.",
+    ],
+    milestones: [
+      { year: "Practice", detail: "Specializes in dawn atmospheric woodland photography on archival fine art substrates." },
+      { year: "Catalog Highlight", detail: "'Morning Forest #2' (39.4 × 27.6 in) featured as a flagship work at ART STUDIO." },
+    ],
+  },
+  {
+    slug: "emily-kent",
+    name: "Emily Kent",
+    discipline: "Fine Art Landscape Photography",
+    origin: "North America",
+    era: "Contemporary",
+    tagline:
+      "Photographic artist drawn to high-altitude aspen groves, transparent natural light, and serene seasonal contrasts.",
+    biography: [
+      "Emily Kent focuses her lens on quiet architectural rhythms within the natural world—tracking how pale bark, slender branches, and dappled canopy light interact across changing seasons.",
+      "With an understated eye for natural contrast rather than heavy post-processing, Kent's prints emphasize clarity, airiness, and fine botanical detail across wide horizontal frames.",
+      "'July Aspens' exemplifies her serene sensibility, translating summer mountain light into a balanced study of vertical line and luminous shadow.",
+    ],
+    milestones: [
+      { year: "Practice", detail: "Dedicated to quiet, high-clarity landscape and botanical photography." },
+      { year: "Catalog Highlight", detail: "'July Aspens' (38 × 26 in) presented in the ART STUDIO photography archive." },
+    ],
+  },
+  {
+    slug: "suren-ter-avakian",
+    name: "Suren Ter-Avakian",
+    discipline: "Atmospheric Painting",
+    origin: "Armenian Heritage · Contemporary Studio",
+    era: "Contemporary",
+    tagline:
+      "Painter bridging textured earth pigments and twilight lyricism in square, memory-infused figurative and landscape canvases.",
+    biography: [
+      "Drawing from a rich painterly tradition steeped in warm mineral tones and expressive impasto, Suren Ter-Avakian composes atmospheric scenes that hover between lived observation and nocturnal recollection.",
+      "Working in balanced square formats such as 30 × 30 inches, he layers veiled glazes over tactile underpainting so figures and architecture emerge gently through fading evening light.",
+      "'An Evening Walk' captures his signature equilibrium between grounded earthy pigment and poetic, reflective motion.",
+    ],
+    milestones: [
+      { year: "Practice", detail: "Produces original atmospheric oil and mixed-pigment paintings on canvas." },
+      { year: "Catalog Highlight", detail: "'An Evening Walk' (30 × 30 in) curated for the ART STUDIO painting collection." },
+    ],
+  },
+  {
+    slug: "juan-alvarez",
+    name: "Juan Alvarez",
+    discipline: "Contemporary Still-Life Painting",
+    origin: "Contemporary Studio",
+    era: "Contemporary",
+    tagline:
+      "Painter of intimate contemporary still lifes pairing saturated fruit and glazed ceramics against quiet slate-toned grounds.",
+    biography: [
+      "Juan Alvarez revitalizes classical still-life painting through confident brushwork, tactile paint handling, and unexpected chromatic pairings.",
+      "Avoiding photographic stiffness, Alvarez builds forms with decisive, visible strokes—allowing deep crimson clusters, cool ceramic reflections, and matte mineral backgrounds to vibrate naturally against one another.",
+      "'Grapes in a Teal Bowl' demonstrates his refined instinct for intimate domestic subject matter elevated by painterly authority.",
+    ],
+    milestones: [
+      { year: "Practice", detail: "Contemporary still-life and tonal study painter on stretched canvas." },
+      { year: "Catalog Highlight", detail: "'Grapes in a Teal Bowl' (24 × 24 in) included in the ART STUDIO collection." },
+    ],
+  },
+  {
+    slug: "luc-moreau",
+    name: "Luc Moreau",
+    discipline: "Bronze Figurative Sculpture",
+    origin: "France",
+    era: "Contemporary",
+    tagline:
+      "Sculptor working in dark patinated bronze to distill collective human stride, rhythm, and elongated architectural silhouette.",
+    biography: [
+      "Working in the enduring French tradition of figurative bronze modeling, Luc Moreau reduces the human form to its essential kinetic geometry—capturing balance, forward lean, and shared momentum.",
+      "By stripping away facial specificity in favor of slender proportions and hand-rubbed dark patinas, his multi-figure compositions read simultaneously as ancient processionals and crisp modernist silhouettes.",
+      "'Figures in Stride' aligns four elongated forms along a clean plinth, generating rhythmic shadow play across minimalist interiors.",
+    ],
+    milestones: [
+      { year: "Practice", detail: "Cast-bronze figurative sculptor focused on kinetic group compositions." },
+      { year: "Catalog Highlight", detail: "'Figures in Stride' (18 × 16 × 4 in) offered in the ART STUDIO sculpture collection." },
+    ],
+  },
+  {
+    slug: "gregory-christeas",
+    name: "Gregory Christeas",
+    discipline: "Large-Scale Abstract Painting",
+    origin: "United States",
+    era: "Contemporary",
+    tagline:
+      "Contemporary abstract painter whose monumental 'Parallels Series' harnesses metallic and fluorescent pigments inspired by oceanic light.",
+    biography: [
+      "Gregory Christeas works at architectural scale—often forty-eight by sixty inches and beyond—to immerse viewers inside shifting fields of tidal motion and specular reflection.",
+      "Incorporating specialty metallic and fluorescent acrylic pigments on heavy stretched canvas, his 'Parallels Series' responds dynamically to natural daylight and evening gallery illumination, shifting subtly as a collector moves across the room.",
+      "'Atlantic Drift' translates the rhythmic swell and horizon shimmer of the North Atlantic into a commanding, museum-scaled abstract statement.",
+    ],
+    milestones: [
+      { year: "Parallels Series", detail: "Developed signature multi-pigment metallic and fluorescent acrylic technique." },
+      { year: "Catalog Highlight", detail: "'Atlantic Drift' (48 × 60 in) anchors the ART STUDIO large-format painting selection." },
+    ],
+  },
+  {
+    slug: "cozy-art-land",
+    name: "Cozy Art Land",
+    discipline: "Sculptural Lighting Atelier",
+    origin: "Contemporary Craft Studio",
+    era: "Contemporary",
+    tagline:
+      "Design workshop crafting intimate sculptural table lamps in frosted blown glass, turned timber, and warm ambient illumination.",
+    biography: [
+      "Cozy Art Land operates at the intersection of domestic sculpture and functional lighting—treating small tabletop lamps as luminous glass-and-wood vessels.",
+      "Drawing from mid-century Scandinavian and Italian glassmaking forms, their 'Mushroom Lamp No. 4' pairs a frosted blue-rimmed diffuser with a turned natural wood base to cast soft, glare-free warmth across studies and reading tables.",
+    ],
+    milestones: [
+      { year: "Atelier Focus", detail: "Handcrafted glass and timber accent lighting editions." },
+      { year: "Catalog Highlight", detail: "'Mushroom Lamp No. 4' curated in the ART STUDIO sculptural objects selection." },
+    ],
+  },
+  {
+    slug: "mary-ogochukwu",
+    name: "Mary Ogochukwu",
+    discipline: "Contemporary Figurative Painting",
+    origin: "Nigeria",
+    era: "Contemporary",
+    tagline:
+      "Nigerian contemporary figurative painter capturing sunlit memory, expressive warmth, and lyrical movement on large canvas.",
+    biography: [
+      "Mary Ogochukwu belongs to a vibrant generation of contemporary West African figurative painters whose canvases celebrate everyday grace, sunlight, and emotional immediacy.",
+      "Working boldly in acrylic on canvas with sunlit ochres, coastal blues, and tactile surface energy, Ogochukwu constructs scenes where human presence feels intimately connected to sand, air, and recollection.",
+      "Completed in 2025, 'Memories in the Sand' exemplifies her luminous storytelling and ships directly with a signed Certificate of Authenticity.",
+    ],
+    milestones: [
+      { year: "2025", detail: "Completed the original large-format canvas 'Memories in the Sand' (40 × 30 in)." },
+      { year: "Collection", detail: "Represented in the ART STUDIO international contemporary painting archive." },
+    ],
+  },
+  {
+    slug: "italian-school",
+    name: "Italian School",
+    discipline: "Classical Marble Carving",
+    origin: "Italy",
+    era: "20th Century Grand Tour Tradition",
+    tagline:
+      "Italian stone-carving workshop continuing the Grand Tour tradition of classical fragmentary marble torsos with authentic hand-worked patina.",
+    biography: [
+      "Rooted in centuries of Tuscan and Roman stoneworking heritage, the 20th-century Italian School continued sculpting faithful fragmentary torsos after Hellenistic and High Renaissance antiquities for discerning private libraries and architectural galleries.",
+      "Hand-carved from naturally veined white marble and lightly weathered to honor archaeological softness across musculature and drapery breaks, each torso transforms raw stone into timeless anatomical balance.",
+      "Mounted cleanly upon a custom black steel display stand, this fragment brings classical Mediterranean gravity into modern living spaces.",
+    ],
+    milestones: [
+      { year: "Grand Tour Lineage", detail: "Preserved traditional Italian chisel-work and marble patination techniques." },
+      { year: "20th Century", detail: "Carved 'White Marble Italian Torso Sculpture' with bespoke black steel plinth." },
+    ],
+  },
+  {
+    slug: "italian-old-master",
+    name: "Italian Old Master",
+    discipline: "19th-Century Devotional Oil Painting",
+    origin: "Italy",
+    era: "19th Century (After Sassoferrato)",
+    tagline:
+      "Skilled 19th-century Italian academic copyist continuing the serene Baroque devotional tradition of Giovanni Battista Salvi da Sassoferrato.",
+    biography: [
+      "Throughout the eighteenth and nineteenth centuries, accomplished Italian academy painters studied and perpetuated Baroque devotional masterpieces by Giovanni Battista Salvi da Sassoferrato (1609–1685), whose 'Madonna of Sorrows' became one of Rome's most beloved images of quiet contemplation.",
+      "Painted on hand-woven linen stretched over an original period stretcher, this antique work demonstrates the luminous ultramarine lapis-inspired drapery glazes, porcelain flesh transitions, and delicate network of age craquelure prized by collectors of historic European oil painting.",
+    ],
+    milestones: [
+      { year: "1640s", detail: "Sassoferrato paints the celebrated Baroque archetype of the 'Madonna of Sorrows' in Rome." },
+      { year: "19th Century", detail: "Executed on period linen canvas by an accomplished Italian Old Master studio painter." },
+    ],
+  },
+  {
+    slug: "beth-barry",
+    name: "Beth Barry",
+    discipline: "Contemporary Landscape & Coastal Acrylic",
+    origin: "United States",
+    era: "Contemporary",
+    tagline:
+      "Contemporary American painter with Gallery Sitka provenance whose gestural brushwork distills shoreline light and shimmering water reflections.",
+    biography: [
+      "Contemporary American painter Beth Barry works with expressive color velocity—capturing ephemeral reflections across coastal harbors, lakes, and tidal flats before light shifts away.",
+      "Combining cerulean blues, emerald greens, and warm sunbaked ochres in decisive gestural strokes, Barry lets woven canvas texture breathe beneath translucent and opaque passages.",
+      "Her 2026 canvas 'Mexico in Reflection' enters the ART STUDIO archive directly with Gallery Sitka provenance.",
+    ],
+    milestones: [
+      { year: "Exhibition", detail: "Represented by Gallery Sitka across contemporary New England and coastal exhibitions." },
+      { year: "2026", detail: "Completed 'Mexico in Reflection' (14 × 11 in acrylic on canvas)." },
+    ],
+  },
+  {
+    slug: "shiri-phillips",
+    name: "Shiri Phillips",
+    discipline: "Impasto Contemporary Painting",
+    origin: "Contemporary Studio",
+    era: "Contemporary",
+    tagline:
+      "Painter with PxP Contemporary provenance building tactile, sculptural impasto reliefs in radiant sunlit yellow, emerald, plum, and rose.",
+    biography: [
+      "Shiri Phillips treats acrylic pigment as a three-dimensional building material—layering thick palette-knife ridges and brush reliefs that physically cast shadows across the picture plane.",
+      "With provenance from PxP Contemporary, Phillips frequently extends her palette onto custom-toned wood framing edges, erasing the rigid divide between painted surface and enclosure.",
+      "Her 2026 work 'Structure' packs dense chromatic energy and tactile geometry into an intimate, jewel-like framed format.",
+    ],
+    milestones: [
+      { year: "Curatorial Provenance", detail: "Exhibited and curated through PxP Contemporary." },
+      { year: "2026", detail: "Completed 'Structure' (11 × 9 in framed acrylic with painted mauve frame edge)." },
+    ],
+  },
+  {
+    slug: "will-klemm",
+    name: "Will Klemm",
+    discipline: "Contemporary Oil Landscape",
+    origin: "Austin, Texas, USA",
+    era: "Contemporary",
+    tagline:
+      "American landscape painter with Wally Workman Gallery provenance whose glowing crimson and amber skies illuminate quiet meadow horizons.",
+    biography: [
+      "Working in Austin, Texas and long represented by the respected Wally Workman Gallery, Will Klemm paints quiet, emotionally resonant landscapes rooted in memory and atmospheric color.",
+      "Rather than strict topographical realism, Klemm distills pastures, treelines, and twilight clouds into saturated oil glazes—allowing luminous crimson heavens and golden horizons to radiate warmth from modest, intimately scaled panels.",
+      "'Red Sky' (2026) demonstrates his mastery of twilight color harmony, framed generously to frame its glowing horizon line.",
+    ],
+    milestones: [
+      { year: "Representation", detail: "Longstanding artist roster member at Wally Workman Gallery, Austin." },
+      { year: "2026", detail: "Completed 'Red Sky' (12 × 12 in oil on canvas, 16 × 16 in framed)." },
+    ],
+  },
+  {
+    slug: "cobalt-guild",
+    name: "Cobalt Guild",
+    discipline: "Jingdezhen Porcelain Sculpture",
+    origin: "Jingdezhen, China",
+    era: "Contemporary Atelier",
+    tagline:
+      "Porcelain studio rooted in Jingdezhen's imperial kiln lineage, crafting architectural multi-tier tulipieres in hand-painted underglaze cobalt.",
+    biography: [
+      "Drawing directly on over a millennium of high-fired porcelain mastery in Jingdezhen—historically China's imperial porcelain capital—Cobalt Guild produces multi-tiered architectural vessels inspired by 17th-century Dutch and Chinese export tulipieres.",
+      "Each section is wheel-thrown and hand-assembled with tubular floral spouts before artists brush fine cobalt-oxide landscapes, sailboats, and classical scrollwork beneath clear vitreous glaze prior to high-temperature kiln firing.",
+    ],
+    milestones: [
+      { year: "Heritage", detail: "Continues classic Jingdezhen underglaze cobalt blue-and-white ceramic craft." },
+      { year: "Catalog Highlight", detail: "Four-tier 'Blue & White Landscape Short Porcelain Tulipiere' (23.5 in tall)." },
+    ],
+  },
+  {
+    slug: "bernhardt-and-vella",
+    name: "Bernhardt & Vella",
+    discipline: "Italian Contemporary Furniture Design",
+    origin: "Milan, Italy",
+    era: "Contemporary Studio",
+    tagline:
+      "Milan-based design duo founded by Ellen Bernhardt and Paola Vella, pairing Italian neoclassical curves with sensual contemporary materials.",
+    biography: [
+      "Founded in Milan in 2008 by Ellen Bernhardt and Paola Vella, Studio Bernhardt & Vella brings together German-Italian architectural discipline and poetic, residential softness.",
+      "Collaborating with Italy's premier luxury furniture houses, the duo approaches seating and tables through sinuous bentwood silhouettes, warm lacquer finishes, and enveloping tactile upholstery.",
+      "Their 'Upholstered Swivel Armchair' anchors neoclassical proportion upon a gleaming bronze lacquer swivel plinth wrapped in velvety camel fabric.",
+    ],
+    milestones: [
+      { year: "2008", detail: "Ellen Bernhardt and Paola Vella establish Studio Bernhardt & Vella in Milan." },
+      { year: "2010s–2026", detail: "Designed signature seating and residential collections unveiled at Salone del Mobile." },
+    ],
+  },
+  {
+    slug: "english-victorian-school",
+    name: "English Victorian School",
+    discipline: "19th-Century Cabinetmaking & Seating",
+    origin: "London & English Midlands",
+    era: "c. 1870–1890",
+    tagline:
+      "Master English Victorian workshops celebrated for solid mahogany library armchairs, Jacobean-revival carved walnut cabinetry, and heirloom joinery.",
+    biography: [
+      "During the high Victorian era of the 1870s and 1880s, master English cabinetmakers produced domestic furnishings built to endure for generations—uniting seasoned solid mahogany and walnut timbers with crisp lathe turning, hand carving, and cast brass hardware.",
+      "Whether outfitting private gentlemen's libraries with deeply buttoned olive-leather reading chairs on stamped brass casters, or crafting revivalist carved walnut bar cabinets featuring mother-of-pearl inlay, caryatid pilasters, and barley-twist stands, these workshops defined architectural gravitas.",
+      "Both pieces represented in the ART STUDIO archive preserve authentic nineteenth-century patina and time-honored mortise-and-tenon construction.",
+    ],
+    milestones: [
+      { year: "c. 1880", detail: "Crafted button-tufted mahogany & olive leather Library Chair on period brass casters." },
+      { year: "c. 1880", detail: "Executed Carved Walnut Barley Twist Bar Cabinet with inlaid mother-of-pearl vases and caryatids." },
+    ],
+  },
+  {
+    slug: "mw-exclusive-x-nep",
+    name: "MW Exclusive x NEP",
+    discipline: "Limited-Edition Collectible Design",
+    origin: "France",
+    era: "Contemporary",
+    tagline:
+      "French luxury furniture house MW Exclusive partnering with contemporary street artist NEP to merge sculptural glass seating with original urban art.",
+    biography: [
+      "French design house MW Exclusive specializes in architectural collector seating defined by suspended tempered-glass side planes and high-resilience ergonomic cushions framed in precision stainless steel joinery.",
+      "For the signed and numbered 'Interface(s)' limited edition, MW Exclusive collaborated with French contemporary artist NEP—embedding original street-art graphic compositions directly within the structural glass panels to create functional collectible sculpture.",
+    ],
+    milestones: [
+      { year: "Collaboration", detail: "MW Exclusive partnered with artist NEP in France on numbered 'Interface(s)' editions." },
+      { year: "Craft", detail: "Combines suspended tempered art glass panels with HR40 cushioning and stainless steel hardware." },
+    ],
+  },
+  {
+    slug: "style-of-francis-jourdain",
+    name: "Style of Francis Jourdain",
+    discipline: "Interwar Art Deco Seating",
+    origin: "Paris & Northern Italy",
+    era: "c. 1930",
+    tagline:
+      "Interwar European Art Deco furniture atelier echoing Francis Jourdain's geometric clarity in shellac-polished teak and hand-woven cane.",
+    biography: [
+      "French architect, painter, and pioneering modernist designer Francis Jourdain (1876–1958) championed stripped-back geometric honesty during the 1920s and 1930s—rejecting heavy historicist ornament in favor of crisp wooden planes and airy proportions.",
+      "Created circa 1930 in that refined interwar spirit, this matched pair of Art Deco lounge chairs pairs French-polished teak arms and ebonized feet with taut, architectural woven cane backrests designed for serene modern living.",
+    ],
+    milestones: [
+      { year: "1919–1930", detail: "Francis Jourdain co-founds the Union des Artistes Modernes (UAM) in Paris." },
+      { year: "c. 1930", detail: "Matched pair of teak and woven-cane Art Deco lounge chairs crafted in Northern Italy." },
+    ],
+  },
+  {
+    slug: "french-early-20th-century",
+    name: "French Early 20th Century",
+    discipline: "Belle Époque Atelier Seating",
+    origin: "France",
+    era: "c. 1900",
+    tagline:
+      "Turn-of-the-century French upholstery and ebonised wood workshops bridging late Belle Époque salons and early modern restraint.",
+    biography: [
+      "At the turn of the twentieth century in Paris and regional French cabinetmaking centers, small workshops continued producing intimate salon tub chairs featuring gently enveloping barrel backs and finely tapered legs.",
+      "This matched circa 1900 pair contrasts sleek ebonised hardwood framing against rich woven floral tapestry textiles and braided trim—embodying the effortless grace of French interior rooms.",
+    ],
+    milestones: [
+      { year: "c. 1900", detail: "Crafted matched pair of French ebonised wood barrel-back tub armchairs." },
+      { year: "Preservation", detail: "Maintains historic curvilinear joinery and decorative woven floral tapestry upholstery." },
+    ],
+  },
+  {
+    slug: "spanish-renaissance-school",
+    name: "Spanish Renaissance School",
+    discipline: "Golden Age Polychrome Giltwood",
+    origin: "Spain (Castile / Andalusia)",
+    era: "c. 1580–1620",
+    tagline:
+      "Spanish Golden Age (Siglo de Oro) woodcarving and estofado gilding workshops producing architectural friezes, altarpieces, and carved cherub reliefs.",
+    biography: [
+      "During Spain's artistic Golden Age (Siglo de Oro) in the late sixteenth and early seventeenth centuries, specialized teams of master entalladores (woodcarvers), doradores (gilders), and encarnadores (flesh painters) collaborated in guild workshops to carve expressive polychrome reliefs.",
+      "Deeply undercut from seasoned timber before receiving layers of bole clay, burnished water-gilding, and tempera pigments, these architectural friezes brought warmth and movement to ecclesiastical Choir stalls and noble chapels.",
+      "Dating to circa 1580–1620, this giltwood angel frieze preserves authentic Renaissance water-gilding and aged polychrome flanking a serene central cherub.",
+    ],
+    milestones: [
+      { year: "1580–1620", detail: "Hand-carved deep-relief angel and fruit-festoon frieze created in a Spanish Renaissance guild workshop." },
+      { year: "Conservation", detail: "Mounted on a custom stepped black display stand preserving original polychrome and water-gilding." },
+    ],
+  },
+];
+
+const artistBySlug = new Map<string, ArtistProfile>(
+  artistProfiles.map((profile) => [profile.slug, profile])
+);
+const artistSlugByName = new Map<string, string>(
+  artistProfiles.map((profile) => [profile.name.toLowerCase(), profile.slug])
+);
+
+function getArtistSlug(artistName: string): string {
+  const mapped = artistSlugByName.get(artistName.trim().toLowerCase());
+  return mapped || slugifyArtistName(artistName);
+}
+
+app.get("/artists", (req: Request, res: Response) => {
+  const enrichedArtists = artistProfiles.map((profile) => {
+    const artistWorks = products.filter(
+      (p) => p.artist.toLowerCase() === profile.name.toLowerCase()
+    );
+    const primaryWork = artistWorks[0];
+    return {
+      ...profile,
+      categoryKey: primaryWork ? primaryWork.category : "Painting",
+      featuredImage: primaryWork ? primaryWork.image : "/static/images/london-gallery-1.jpg",
+      featuredTitle: primaryWork ? primaryWork.title : profile.name,
+      worksCount: artistWorks.length,
+    };
+  });
+
+  res.render("artists", {
+    artists: enrichedArtists,
+  });
+});
+
+app.get("/artists/:slug", (req: Request, res: Response) => {
+  const slug = String(req.params.slug ?? "").trim().toLowerCase();
+  const idx = artistProfiles.findIndex((a) => a.slug === slug);
+  if (idx === -1) {
+    res.status(404).send("Artist not found");
+    return;
+  }
+
+  const profile = artistProfiles[idx];
+  const works = products.filter(
+    (p) => p.artist.toLowerCase() === profile.name.toLowerCase()
+  );
+  const primaryWork = works[0];
+  const prevProfile = idx > 0 ? artistProfiles[idx - 1] : null;
+  const nextProfile = idx < artistProfiles.length - 1 ? artistProfiles[idx + 1] : null;
+
+  res.render("artist", {
+    artist: {
+      ...profile,
+      featuredImage: primaryWork ? primaryWork.image : "/static/images/london-gallery-1.jpg",
+      featuredTitle: primaryWork ? primaryWork.title : profile.name,
+    },
+    works,
+    prevArtist: prevProfile ? { slug: prevProfile.slug, name: prevProfile.name } : null,
+    nextArtist: nextProfile ? { slug: nextProfile.slug, name: nextProfile.name } : null,
+  });
 });
 
 app.listen(PORT, "0.0.0.0", () => {
