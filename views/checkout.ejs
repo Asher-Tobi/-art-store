@@ -546,6 +546,16 @@
             line-height: 1.5;
         }
 
+        .btc-shipping-prompt {
+            margin-top: 14px;
+            padding: 12px 14px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            font-size: 12.5px;
+            line-height: 1.5;
+        }
+
         .submit-btn {
             width: 100%;
             padding: 18px 24px;
@@ -576,6 +586,89 @@
             border: 1px solid #fecaca;
             color: #b91c1c;
             font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .btc-notice-card {
+            margin-bottom: 16px;
+            padding: 18px 20px;
+            background: #fcfaf6;
+            border: 1px solid #e6dcc8;
+            border-left: 3px solid var(--gold);
+            color: var(--ink);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btc-notice-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btc-notice-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #f7931a;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .btc-notice-title {
+            margin: 0;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--ink);
+            letter-spacing: -0.01em;
+        }
+
+        .btc-notice-body {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #525252;
+        }
+
+        .btc-notice-meta {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px 16px;
+            padding: 12px 14px;
+            background: #ffffff;
+            border: 1px solid #ece6da;
+            font-size: 12px;
+            align-items: baseline;
+        }
+
+        .btc-notice-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .btc-notice-value {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 12px;
+            color: var(--ink);
+            word-break: break-all;
+        }
+
+        @media (max-width: 540px) {
+            .btc-notice-meta {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
         }
 
         /* Summary Column */
@@ -825,13 +918,7 @@
     </style>
 </head>
 <body data-subtotal="<%= subtotal %>" data-cid="<%= cid %>">
-    <div class="topbar">Insured Fine Art Courier Delivery · Pay with BTC, ETH, or SOL</div>
-    <header class="header">
-        <div class="header-inner">
-            <a href="/" class="brand">ART STUDIO</a>
-            <a href="/cart" class="header-back">← Back to Bag</a>
-        </div>
-    </header>
+    <%- include('partials/site-header') %>
 
     <main class="wrap">
         <div class="breadcrumb-bar">
@@ -1082,6 +1169,12 @@
                             <div class="deposit-footer">
                                 Send only <%= opt.label %> to this address via the <%= opt.network %>. Transfer the exact converted amount shown above to settle your order.
                             </div>
+
+                            <% if (key === 'bitcoin' && opt.walletAddress) { %>
+                            <div id="btcShippingPrompt" class="btc-shipping-prompt hidden" role="status">
+                                Bitcoin payment received — please complete your contact and shipping details above to generate your order confirmation slip.
+                            </div>
+                            <% } %>
                         </div>
                         <% }) %>
 
@@ -1101,9 +1194,24 @@
                     </section>
 
                     <div>
+                        <div id="btcPaymentNotice" class="btc-notice-card <%= (typeof btc_notice !== 'undefined' && btc_notice) ? '' : 'hidden' %>" role="status" aria-live="polite">
+                            <div class="btc-notice-header">
+                                <span class="btc-notice-icon" aria-hidden="true">₿</span>
+                                <h3 class="btc-notice-title" id="btcNoticeTitle"><%= (typeof btc_notice !== 'undefined' && btc_notice) ? btc_notice.title : 'Awaiting Bitcoin Transfer' %></h3>
+                            </div>
+                            <p class="btc-notice-body" id="btcNoticeBody"><%= (typeof btc_notice !== 'undefined' && btc_notice) ? btc_notice.body : '' %></p>
+                            <div class="btc-notice-meta" id="btcNoticeMeta">
+                                <span class="btc-notice-label">Amount Due</span>
+                                <span class="btc-notice-value" id="btcNoticeAmount" style="font-weight: 700;"><%= (typeof btc_notice !== 'undefined' && btc_notice) ? btc_notice.amount + ' BTC' : '' %></span>
+                                <span class="btc-notice-label">Deposit Address</span>
+                                <span class="btc-notice-value" id="btcNoticeAddress"><%= (typeof btc_notice !== 'undefined' && btc_notice) ? btc_notice.address : '' %></span>
+                            </div>
+                        </div>
                         <button type="submit" class="submit-btn" id="submitOrderBtn" <%= !selected_method || selected_method === 'card' || selected_method === 'paypal' ? 'disabled' : '' %>>
                             <span id="submitAmtLabel">
-                                <% if (selected_method && crypto_options[selected_method]) { %>
+                                <% if (selected_method === 'bitcoin' && crypto_options.bitcoin) { %>
+                                    Verify Payment &amp; View Confirmation Slip · <%= crypto_options.bitcoin.amount %> BTC
+                                <% } else if (selected_method && crypto_options[selected_method]) { %>
                                     Complete Order · <%= crypto_options[selected_method].amount %> <%= crypto_options[selected_method].symbol %>
                                 <% } else if (selected_method === 'card' || selected_method === 'paypal') { %>
                                     Gateway Under Maintenance · Try Another Payment Method
@@ -1290,7 +1398,11 @@
 
                 if (isSelected) {
                     if (summaryTotalCryptoEl) summaryTotalCryptoEl.textContent = '≈ ' + amount + ' ' + symbol;
-                    if (submitAmtLabel) submitAmtLabel.textContent = 'Complete Order · ' + amount + ' ' + symbol;
+                    if (submitAmtLabel) {
+                        submitAmtLabel.textContent = method === 'bitcoin'
+                            ? 'Verify Payment & View Confirmation Slip · ' + amount + ' ' + symbol
+                            : 'Complete Order · ' + amount + ' ' + symbol;
+                    }
                 }
             });
 
@@ -1359,7 +1471,190 @@
             });
         });
 
-        selectPaymentMethod(methodInput.value || '');
+        const checkoutForm = document.getElementById('checkoutForm');
+        const btcShippingPrompt = document.getElementById('btcShippingPrompt');
+        const btcPaymentNotice = document.getElementById('btcPaymentNotice');
+        const btcNoticeTitle = document.getElementById('btcNoticeTitle');
+        const btcNoticeBody = document.getElementById('btcNoticeBody');
+        const btcNoticeMeta = document.getElementById('btcNoticeMeta');
+        const btcNoticeAmount = document.getElementById('btcNoticeAmount');
+        const btcNoticeAddress = document.getElementById('btcNoticeAddress');
+        let btcPollTimer = null;
+        let btcPaymentDetected = false;
+        let btcAutoSubmitting = false;
+        let btcCheckingSubmit = false;
+
+        function hideBtcNotice() {
+            if (btcPaymentNotice) {
+                btcPaymentNotice.classList.add('hidden');
+            }
+        }
+
+        function showBtcNotice(opts) {
+            if (!btcPaymentNotice) return;
+            if (btcNoticeTitle) btcNoticeTitle.textContent = opts.title || 'Awaiting Bitcoin Transfer';
+            if (btcNoticeBody) btcNoticeBody.textContent = opts.body || '';
+            if (btcNoticeMeta) {
+                const showMeta = Boolean(opts.amount && opts.address);
+                btcNoticeMeta.classList.toggle('hidden', !showMeta);
+                if (btcNoticeAmount) btcNoticeAmount.textContent = opts.amount ? opts.amount + ' BTC' : '';
+                if (btcNoticeAddress) btcNoticeAddress.textContent = opts.address || '';
+            }
+            btcPaymentNotice.classList.remove('hidden');
+        }
+
+        function submitOrderForSlip() {
+            if (!checkoutForm || btcAutoSubmitting) return;
+            hideBtcNotice();
+            if (checkoutForm.checkValidity()) {
+                btcAutoSubmitting = true;
+                if (btcShippingPrompt) btcShippingPrompt.classList.add('hidden');
+                checkoutForm.submit();
+            } else {
+                if (btcShippingPrompt) btcShippingPrompt.classList.remove('hidden');
+                if (typeof checkoutForm.reportValidity === 'function') {
+                    checkoutForm.reportValidity();
+                }
+            }
+        }
+
+        async function fetchBitcoinListenStatus(forceRefresh = false) {
+            const expectedBtc = document.getElementById('send-amt-bitcoin')?.textContent?.trim() || '0';
+            const activeCid = document.body?.dataset?.cid || '';
+            const params = new URLSearchParams({ expected_btc: expectedBtc });
+            if (activeCid) params.set('cid', activeCid);
+            if (forceRefresh) params.set('refresh', '1');
+
+            const res = await fetch('/api/bitcoin/listen?' + params.toString(), {
+                credentials: 'include',
+                cache: 'no-store'
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return await res.json();
+        }
+
+        async function checkBitcoinMempoolSilently() {
+            if (btcPaymentDetected || (methodInput.value || '') !== 'bitcoin') return;
+
+            try {
+                const data = await fetchBitcoinListenStatus(false);
+
+                if (data.status === 'detected' || data.status === 'confirmed') {
+                    btcPaymentDetected = true;
+                    if (btcPollTimer) {
+                        clearInterval(btcPollTimer);
+                        btcPollTimer = null;
+                    }
+                    submitOrderForSlip();
+                }
+            } catch {
+                // Retry quietly on next interval
+            }
+        }
+
+        if (checkoutForm) {
+            checkoutForm.addEventListener('submit', async (e) => {
+                if ((methodInput.value || '') !== 'bitcoin' || btcPaymentDetected || btcAutoSubmitting) {
+                    return;
+                }
+                e.preventDefault();
+                if (btcCheckingSubmit) return;
+                if (!checkoutForm.checkValidity()) {
+                    if (typeof checkoutForm.reportValidity === 'function') {
+                        checkoutForm.reportValidity();
+                    }
+                    return;
+                }
+
+                btcCheckingSubmit = true;
+                const prevLabel = submitAmtLabel ? submitAmtLabel.textContent : '';
+                if (submitBtn) submitBtn.disabled = true;
+                if (submitAmtLabel) submitAmtLabel.textContent = 'Verifying Bitcoin Transfer...';
+                hideBtcNotice();
+
+                try {
+                    const data = await fetchBitcoinListenStatus(true);
+                    if (data.status === 'detected' || data.status === 'confirmed') {
+                        btcPaymentDetected = true;
+                        if (btcPollTimer) {
+                            clearInterval(btcPollTimer);
+                            btcPollTimer = null;
+                        }
+                        submitOrderForSlip();
+                        return;
+                    }
+                    const expectedBtc = document.getElementById('send-amt-bitcoin')?.textContent?.trim() || data.expectedBtc || '0';
+                    const btcAddr = document.getElementById('wallet-bitcoin')?.textContent?.trim() || data.address || '';
+                    if (data.status === 'partial') {
+                        showBtcNotice({
+                            title: 'Partial Bitcoin Transfer Received',
+                            body: 'We detected ' + data.receivedBtc + ' BTC so far. Please send the remaining balance below — your order confirmation slip will appear automatically once full payment arrives.',
+                            amount: expectedBtc,
+                            address: btcAddr
+                        });
+                    } else if (data.status === 'unavailable') {
+                        showBtcNotice({
+                            title: 'Verifying Network Connection',
+                            body: 'Unable to reach Mempool.space at this moment. Please wait a few seconds and try again.'
+                        });
+                    } else {
+                        showBtcNotice({
+                            title: 'Awaiting Your Bitcoin Transfer',
+                            body: 'No payment has arrived yet. Please send the exact amount shown below — your order confirmation slip will appear automatically as soon as your transfer is picked up.',
+                            amount: expectedBtc,
+                            address: btcAddr
+                        });
+                    }
+                } catch {
+                    showBtcNotice({
+                        title: 'Verification Temporarily Unavailable',
+                        body: 'Please verify your internet connection or try again in a few seconds.'
+                    });
+                } finally {
+                    btcCheckingSubmit = false;
+                    if (!btcAutoSubmitting) {
+                        if (submitBtn) submitBtn.disabled = false;
+                        if (submitAmtLabel && prevLabel) submitAmtLabel.textContent = prevLabel;
+                    }
+                }
+            });
+
+            checkoutForm.addEventListener('change', () => {
+                if (btcPaymentDetected && (methodInput.value || '') === 'bitcoin' && checkoutForm.checkValidity()) {
+                    submitOrderForSlip();
+                }
+            });
+        }
+
+        function syncBitcoinListener(selectedMethod, isInitialLoad = false) {
+            if (btcPollTimer) {
+                clearInterval(btcPollTimer);
+                btcPollTimer = null;
+            }
+            if (!isInitialLoad) {
+                hideBtcNotice();
+            }
+            if (selectedMethod === 'bitcoin') {
+                if (btcPaymentDetected) {
+                    submitOrderForSlip();
+                    return;
+                }
+                checkBitcoinMempoolSilently();
+                btcPollTimer = setInterval(() => {
+                    if (!document.hidden && (methodInput.value || '') === 'bitcoin' && !btcPaymentDetected) {
+                        checkBitcoinMempoolSilently();
+                    }
+                }, 5000);
+            }
+        }
+
+        const origSelectPaymentMethod = selectPaymentMethod;
+        selectPaymentMethod = function(method, isInitialLoad = false) {
+            origSelectPaymentMethod(method);
+            syncBitcoinListener(method, isInitialLoad);
+        };
+
+        selectPaymentMethod(methodInput.value || '', true);
     </script>
     <script src="/static/js/cart-sync.js"></script>
 </body>

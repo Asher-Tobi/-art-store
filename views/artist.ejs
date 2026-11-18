@@ -657,52 +657,7 @@
     </style>
 </head>
 <body data-cid="<%= cid %>">
-    <div class="topbar">Insured Fine Art Courier Delivery · Pay Direct with BTC, ETH, or SOL</div>
-
-    <header class="header">
-        <div class="header-inner">
-            <div class="header-left">
-                <button type="button" class="mobile-toggle" id="menuToggle" aria-label="Toggle navigation menu">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
-                </button>
-                <a href="/" class="brand-mark">ART STUDIO</a>
-            </div>
-
-            <nav class="nav" aria-label="Primary navigation">
-                <a href="/">Shop All</a>
-                <a href="/?category=Painting">Paintings</a>
-                <a href="/?category=Prints">Prints</a>
-                <a href="/?category=Photography">Photography</a>
-                <a href="/?category=Sculpture">Sculpture</a>
-                <a href="/?category=Furniture">Furniture</a>
-                <a href="/artists" class="active">Artists</a>
-            </nav>
-
-            <a href="/cart" class="bag-trigger" aria-label="Shopping Bag">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                </svg>
-                <span>Bag</span>
-                <span class="bag-badge cart-count"><%= cart_count %></span>
-            </a>
-        </div>
-
-        <div class="mobile-drawer" id="mobileDrawer">
-            <div class="mobile-drawer-links">
-                <a href="/">Shop All</a>
-                <a href="/?category=Painting">Paintings</a>
-                <a href="/?category=Prints">Prints &amp; Etchings</a>
-                <a href="/?category=Photography">Photography</a>
-                <a href="/?category=Sculpture">Sculpture</a>
-                <a href="/?category=Furniture">Furniture</a>
-                <a href="/artists">Meet the Artists</a>
-                <a href="/contact">Contact &amp; Support</a>
-                <a href="/cart">Shopping Bag (<span class="cart-count"><%= cart_count %></span>)</a>
-            </div>
-        </div>
-    </header>
+    <%- include('partials/site-header') %>
 
     <main class="main-wrap">
         <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -846,13 +801,6 @@
         </div>
     </footer>
 
-    <script>
-        const menuToggle = document.getElementById('menuToggle');
-        const mobileDrawer = document.getElementById('mobileDrawer');
-        if (menuToggle && mobileDrawer) {
-            menuToggle.addEventListener('click', () => mobileDrawer.classList.toggle('open'));
-        }
-    </script>
     <script src="/static/js/cart-sync.js"></script>
 </body>
 </html>

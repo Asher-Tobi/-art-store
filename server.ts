@@ -41,6 +41,10 @@ interface Order {
   wallet_address: string;
   qr_svg: string;
   payment_status: string;
+  payment_txid?: string;
+  payment_received_btc?: string;
+  payment_block_height?: number;
+  created_at_ms?: number;
   subtotal: number;
   discount: number;
   shipping: number;
@@ -54,6 +58,7 @@ declare module "express-session" {
     cartUpdatedAt?: number;
     cartId?: string;
     order?: Order;
+    btcCheckoutStartedAt?: number;
     flashes?: string[];
   }
 }
@@ -862,7 +867,223 @@ interface StoredCartEntry {
 const CART_COOKIE_NAME = "art_studio_cart";
 const cartStore = new Map<string, StoredCartEntry>();
 const orderStore = new Map<string, Order>();
+const orderByReference = new Map<string, Order>();
 const flashStore = new Map<string, string[]>();
+
+const MEMPOOL_API_BASE =
+  process.env.MEMPOOL_API_BASE || "https://mempool.space/api";
+
+interface MempoolVout {
+  scriptpubkey_address?: string;
+  value?: number;
+}
+
+interface MempoolTx {
+  txid: string;
+  fee?: number;
+  status?: {
+    confirmed?: boolean;
+    block_height?: number;
+    block_time?: number;
+  };
+  vout?: MempoolVout[];
+}
+
+interface BitcoinListenerResult {
+  status: "listening" | "partial" | "detected" | "confirmed" | "unavailable";
+  address: string;
+  mempoolApiUrl: string;
+  expectedBtc: string;
+  expectedSats: number;
+  receivedBtc: string;
+  receivedSats: number;
+  txid: string | null;
+  confirmed: boolean;
+  blockHeight: number | null;
+  txCount: number;
+  checkedAt: string;
+  message: string;
+}
+
+const mempoolTxCache = new Map<
+  string,
+  { txs: MempoolTx[]; fetchedAt: number }
+>();
+
+const consumedBitcoinTxids = new Map<string, string>();
+
+async function fetchMempoolAddressTxs(
+  address: string,
+  forceRefresh = false
+): Promise<{
+  ok: boolean;
+  txs: MempoolTx[];
+  apiUrl: string;
+}> {
+  const cleanAddress = address.trim();
+  const apiUrl = `${MEMPOOL_API_BASE}/address/${encodeURIComponent(cleanAddress)}/txs`;
+  const now = Date.now();
+  const cached = mempoolTxCache.get(cleanAddress);
+  if (!forceRefresh && cached && now - cached.fetchedAt < 4000) {
+    return { ok: true, txs: cached.txs, apiUrl };
+  }
+
+  try {
+    const response = await fetch(apiUrl, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!response.ok) {
+      return { ok: false, txs: cached?.txs ?? [], apiUrl };
+    }
+    const parsed = (await response.json()) as unknown;
+    const txs = Array.isArray(parsed) ? (parsed as MempoolTx[]) : [];
+    mempoolTxCache.set(cleanAddress, { txs, fetchedAt: now });
+    return { ok: true, txs, apiUrl };
+  } catch {
+    return { ok: false, txs: cached?.txs ?? [], apiUrl };
+  }
+}
+
+async function checkBitcoinPaymentStatus(params: {
+  address: string;
+  expectedBtc: string | number;
+  sinceMs?: number;
+  forceRefresh?: boolean;
+  orderReference?: string;
+}): Promise<BitcoinListenerResult> {
+  const address = params.address.trim();
+  const expectedNum = Math.max(0, Number(params.expectedBtc) || 0);
+  const expectedSats = Math.round(expectedNum * 1e8);
+  const minAcceptedSats =
+    expectedSats > 0 ? Math.max(1, Math.floor(expectedSats * 0.995)) : 1;
+  const checkedAt = new Date().toISOString();
+
+  if (!address) {
+    return {
+      status: "unavailable",
+      address: "",
+      mempoolApiUrl: "",
+      expectedBtc: expectedNum.toFixed(8),
+      expectedSats,
+      receivedBtc: "0.00000000",
+      receivedSats: 0,
+      txid: null,
+      confirmed: false,
+      blockHeight: null,
+      txCount: 0,
+      checkedAt,
+      message: "No Bitcoin address configured.",
+    };
+  }
+
+  const { ok, txs, apiUrl } = await fetchMempoolAddressTxs(
+    address,
+    Boolean(params.forceRefresh)
+  );
+  if (!ok && txs.length === 0) {
+    return {
+      status: "unavailable",
+      address,
+      mempoolApiUrl: apiUrl,
+      expectedBtc: expectedNum.toFixed(8),
+      expectedSats,
+      receivedBtc: "0.00000000",
+      receivedSats: 0,
+      txid: null,
+      confirmed: false,
+      blockHeight: null,
+      txCount: 0,
+      checkedAt,
+      message: "Unable to reach Mempool.space right now. Retrying automatically.",
+    };
+  }
+
+  const cutoffSec = params.sinceMs
+    ? Math.floor(params.sinceMs / 1000) - 600
+    : 0;
+
+  const matchingTxs = txs
+    .filter((tx) => {
+      const claimedBy = consumedBitcoinTxids.get(tx.txid);
+      return !claimedBy || claimedBy === params.orderReference;
+    })
+    .map((tx) => {
+      const satsToAddr = (tx.vout ?? [])
+        .filter((out) => out.scriptpubkey_address === address)
+        .reduce((sum, out) => sum + Math.round(Number(out.value) || 0), 0);
+      const isConfirmed = Boolean(tx.status?.confirmed);
+      const blockTime = Number(tx.status?.block_time || 0);
+      const isFresh =
+        !cutoffSec || !isConfirmed || !blockTime || blockTime >= cutoffSec;
+      return {
+        txid: tx.txid,
+        satsToAddr,
+        isConfirmed,
+        blockHeight: tx.status?.block_height ?? null,
+        isFresh,
+      };
+    })
+    .filter((entry) => entry.satsToAddr > 0 && entry.isFresh);
+
+  if (matchingTxs.length === 0) {
+    return {
+      status: "listening",
+      address,
+      mempoolApiUrl: apiUrl,
+      expectedBtc: expectedNum.toFixed(8),
+      expectedSats,
+      receivedBtc: "0.00000000",
+      receivedSats: 0,
+      txid: null,
+      confirmed: false,
+      blockHeight: null,
+      txCount: txs.length,
+      checkedAt,
+      message: "Listening on Mempool.space for incoming BTC transaction...",
+    };
+  }
+
+  const totalReceivedSats = matchingTxs.reduce(
+    (sum, entry) => sum + entry.satsToAddr,
+    0
+  );
+  const sufficientTx =
+    matchingTxs.find((entry) => entry.satsToAddr >= minAcceptedSats) ||
+    matchingTxs[0];
+  const allConfirmed = matchingTxs.every((entry) => entry.isConfirmed);
+  const settledSufficiently = totalReceivedSats >= minAcceptedSats;
+
+  let status: BitcoinListenerResult["status"] = "partial";
+  let message = `Partial transfer detected (${(totalReceivedSats / 1e8).toFixed(8)} BTC received of ${expectedNum.toFixed(8)} BTC expected).`;
+
+  if (settledSufficiently && (sufficientTx.isConfirmed || allConfirmed)) {
+    status = "confirmed";
+    message = sufficientTx.blockHeight
+      ? `Bitcoin payment confirmed on-chain (Block #${sufficientTx.blockHeight}).`
+      : "Bitcoin payment confirmed on-chain.";
+  } else if (settledSufficiently) {
+    status = "detected";
+    message =
+      "Incoming Bitcoin transaction detected in Mempool (awaiting block confirmation).";
+  }
+
+  return {
+    status,
+    address,
+    mempoolApiUrl: apiUrl,
+    expectedBtc: expectedNum.toFixed(8),
+    expectedSats,
+    receivedBtc: (totalReceivedSats / 1e8).toFixed(8),
+    receivedSats: totalReceivedSats,
+    txid: sufficientTx.txid,
+    confirmed: status === "confirmed",
+    blockHeight: sufficientTx.blockHeight,
+    txCount: txs.length,
+    checkedAt,
+    message,
+  };
+}
 
 function isValidCartId(value: unknown): value is string {
   return typeof value === "string" && /^[a-zA-Z0-9_-]{8,64}$/.test(value);
@@ -1241,6 +1462,16 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.locals.formatCurrency = formatCurrency;
   res.locals.cid = cid ?? "";
   res.locals.getArtistSlug = getArtistSlug;
+  res.locals.primaryNavLinks = [
+    { key: "All", label: "Shop All", href: "/" },
+    { key: "Painting", label: "Paintings", href: "/?category=Painting" },
+    { key: "Prints", label: "Prints", href: "/?category=Prints" },
+    { key: "Photography", label: "Photography", href: "/?category=Photography" },
+    { key: "Sculpture", label: "Sculpture", href: "/?category=Sculpture" },
+    { key: "Furniture", label: "Furniture", href: "/?category=Furniture" },
+    { key: "Artists", label: "Artists", href: "/artists" },
+  ];
+  res.locals.activeNav = "";
   next();
 });
 
@@ -1258,13 +1489,15 @@ app.get(["/", "/shop"], (req: Request, res: Response) => {
       (p) => p.artist.toLowerCase() === artistFilter.toLowerCase()
     );
   }
+  const activeCategory = categoryFilter || "All";
   res.render("index", {
     categories,
     products: filtered,
     all_products: products,
     featured_collection: featuredCollection,
-    active_category: categoryFilter || "All",
+    active_category: activeCategory,
     active_artist: artistFilter || "All",
+    activeNav: activeCategory,
   });
 });
 
@@ -1296,6 +1529,7 @@ app.get("/product/:product_id", (req: Request, res: Response) => {
   }
   res.render("product", {
     product,
+    activeNav: product.category,
     messages: consumeFlashes(req),
   });
 });
@@ -1321,6 +1555,7 @@ app.get("/search", (req: Request, res: Response) => {
     search_query: query,
     active_category: "All",
     active_artist: "All",
+    activeNav: "All",
   });
 });
 
@@ -1398,6 +1633,9 @@ app.get("/checkout", async (req: Request, res: Response) => {
     return;
   }
 
+  if (!req.session.btcCheckoutStartedAt) {
+    req.session.btcCheckoutStartedAt = Date.now();
+  }
   const { subtotal, shipping, total } = calculateTotals(cartItems);
   const prices = await getCryptoPrices();
   const cryptoOptions = await buildCryptoOptions(total, prices);
@@ -1503,6 +1741,63 @@ app.post("/checkout", async (req: Request, res: Response) => {
     );
   } else {
     const selected = cryptoOptions[rawMethod];
+    let verifiedBtcStatus: BitcoinListenerResult | null = null;
+
+    if (selected.key === "bitcoin") {
+      verifiedBtcStatus = await checkBitcoinPaymentStatus({
+        address: selected.walletAddress,
+        expectedBtc: selected.amount,
+        sinceMs: req.session.btcCheckoutStartedAt || Date.now(),
+        forceRefresh: true,
+      });
+
+      if (
+        verifiedBtcStatus.status !== "detected" &&
+        verifiedBtcStatus.status !== "confirmed"
+      ) {
+        let btcNotice: {
+          title: string;
+          body: string;
+          amount?: string;
+          address?: string;
+        };
+        if (verifiedBtcStatus.status === "partial") {
+          btcNotice = {
+            title: "Partial Bitcoin Transfer Received",
+            body: `We detected ${verifiedBtcStatus.receivedBtc} BTC so far. Please send the remaining balance below — your order confirmation slip will appear automatically once full payment arrives.`,
+            amount: selected.amount,
+            address: selected.walletAddress,
+          };
+        } else if (verifiedBtcStatus.status === "unavailable") {
+          btcNotice = {
+            title: "Verifying Network Connection",
+            body: "Unable to reach Mempool.space at this moment. Please wait a few seconds and try again.",
+          };
+        } else {
+          btcNotice = {
+            title: "Awaiting Your Bitcoin Transfer",
+            body: "No payment has arrived yet. Please send the exact amount shown below — your order confirmation slip will appear automatically as soon as your transfer is picked up.",
+            amount: selected.amount,
+            address: selected.walletAddress,
+          };
+        }
+        res.render("checkout", {
+          cart_items: cartItems,
+          subtotal: baseTotals.subtotal,
+          discount,
+          promo_code: promoApplied ? rawPromo : "",
+          shipping,
+          total,
+          selected_method: "bitcoin",
+          crypto_options: cryptoOptions,
+          form_values: formValues,
+          btc_notice: btcNotice,
+          messages: consumeFlashes(req),
+        });
+        return;
+      }
+    }
+
     const order: Order = {
       reference: crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase(),
       name,
@@ -1521,14 +1816,31 @@ app.post("/checkout", async (req: Request, res: Response) => {
       wallet_address: selected.walletAddress,
       qr_svg: selected.qrSvg,
       payment_status: "pending",
+      created_at_ms: Date.now(),
       subtotal: baseTotals.subtotal,
       discount,
       shipping,
       total,
       items: cartItems,
     };
+
+    if (verifiedBtcStatus) {
+      order.payment_status =
+        verifiedBtcStatus.status === "confirmed" ? "confirmed" : "mempool";
+      if (verifiedBtcStatus.txid) {
+        order.payment_txid = verifiedBtcStatus.txid;
+        order.payment_received_btc = verifiedBtcStatus.receivedBtc;
+        consumedBitcoinTxids.set(verifiedBtcStatus.txid, order.reference);
+        if (verifiedBtcStatus.blockHeight) {
+          order.payment_block_height = verifiedBtcStatus.blockHeight;
+        }
+      }
+      req.session.btcCheckoutStartedAt = undefined;
+    }
+
     req.session.order = order;
     orderStore.set(cid, order);
+    orderByReference.set(order.reference, order);
     saveCart(req, res, {});
     redirectWithSession(req, res, "/checkout-success", cid);
     return;
@@ -1548,14 +1860,107 @@ app.post("/checkout", async (req: Request, res: Response) => {
   });
 });
 
-app.get("/checkout-success", (req: Request, res: Response) => {
+app.get("/api/bitcoin/listen", async (req: Request, res: Response) => {
+  const ref = String(req.query.reference ?? "").trim().toUpperCase();
+  const forceRefresh = req.query.refresh === "1";
+  const cid = getRequestCartId(req);
+  const order = ref
+    ? orderByReference.get(ref) ||
+      (req.session.order?.reference === ref ? req.session.order : undefined)
+    : undefined;
+
+  const btcWallet = getCryptoWallets().bitcoin;
+  const expectedBtc =
+    order && order.payment_method === "bitcoin"
+      ? order.crypto_amount
+      : String(req.query.expected_btc ?? "0");
+  const address =
+    order && order.payment_method === "bitcoin"
+      ? order.wallet_address
+      : btcWallet;
+
+  const result = await checkBitcoinPaymentStatus({
+    address,
+    expectedBtc,
+    sinceMs: order
+      ? order.created_at_ms
+      : req.session.btcCheckoutStartedAt || Date.now(),
+    forceRefresh,
+    orderReference: order?.reference,
+  });
+
+  if (order && order.payment_method === "bitcoin") {
+    if (result.status === "confirmed") {
+      order.payment_status = "confirmed";
+    } else if (result.status === "detected") {
+      order.payment_status = "mempool";
+    } else if (result.status === "partial") {
+      order.payment_status = "partial";
+    }
+    if (result.txid) {
+      order.payment_txid = result.txid;
+      order.payment_received_btc = result.receivedBtc;
+      consumedBitcoinTxids.set(result.txid, order.reference);
+      if (result.blockHeight) {
+        order.payment_block_height = result.blockHeight;
+      }
+    }
+    orderByReference.set(order.reference, order);
+    if (cid) orderStore.set(cid, order);
+    if (req.session.order?.reference === order.reference) {
+      req.session.order = order;
+    }
+  }
+
+  res.setHeader("Cache-Control", "no-store");
+  res.json(result);
+});
+
+app.get("/checkout-success", async (req: Request, res: Response) => {
   const cid = getRequestCartId(req);
   const order = req.session.order || (cid ? orderStore.get(cid) : undefined);
   if (!order) {
     redirectWithSession(req, res, "/");
     return;
   }
-  res.render("checkout_success", { order });
+
+  let btcListener: BitcoinListenerResult | null = null;
+  if (order.payment_method === "bitcoin") {
+    btcListener = await checkBitcoinPaymentStatus({
+      address: order.wallet_address,
+      expectedBtc: order.crypto_amount,
+      sinceMs: order.created_at_ms,
+      forceRefresh: order.payment_status !== "confirmed",
+      orderReference: order.reference,
+    });
+    if (btcListener.status === "confirmed") {
+      order.payment_status = "confirmed";
+    } else if (btcListener.status === "detected") {
+      order.payment_status = "mempool";
+    }
+    if (btcListener.txid) {
+      order.payment_txid = btcListener.txid;
+      order.payment_received_btc = btcListener.receivedBtc;
+      consumedBitcoinTxids.set(btcListener.txid, order.reference);
+      if (btcListener.blockHeight) {
+        order.payment_block_height = btcListener.blockHeight;
+      }
+    }
+
+    if (
+      order.payment_status !== "mempool" &&
+      order.payment_status !== "confirmed"
+    ) {
+      pushFlash(
+        req,
+        `No Bitcoin transfer detected yet for ${order.crypto_amount} BTC. Please complete your BTC transfer before viewing your order confirmation slip.`
+      );
+      redirectWithSession(req, res, "/checkout", cid);
+      return;
+    }
+  }
+
+  res.render("checkout_success", { order, btcListener });
 });
 
 app.post("/clear-cart", (req: Request, res: Response) => {
@@ -2475,6 +2880,7 @@ app.get("/artists", (req: Request, res: Response) => {
 
   res.render("artists", {
     artists: enrichedArtists,
+    activeNav: "Artists",
   });
 });
 
@@ -2503,6 +2909,7 @@ app.get("/artists/:slug", (req: Request, res: Response) => {
     works,
     prevArtist: prevProfile ? { slug: prevProfile.slug, name: prevProfile.name } : null,
     nextArtist: nextProfile ? { slug: nextProfile.slug, name: nextProfile.name } : null,
+    activeNav: "Artists",
   });
 });
 

@@ -198,6 +198,19 @@
             gap: 20px;
         }
         .footer-links a:hover { color: #ffffff; }
+        .tx-receipt {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #047857;
+            font-weight: 600;
+        }
+        .tx-receipt a {
+            color: #047857;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            word-break: break-all;
+        }
+        .hidden { display: none !important; }
         @media (max-width: 680px) {
             .grid-2 { grid-template-columns: 1fr; }
             .settlement-box { flex-direction: column; align-items: flex-start; }
@@ -205,19 +218,32 @@
     </style>
 </head>
 <body data-cid="<%= cid %>">
-    <div class="topbar">Order Confirmation · Reference #<%= order.reference %></div>
-    <header class="header">
-        <div class="header-inner">
-            <a href="/" class="brand">ART STUDIO</a>
-        </div>
-    </header>
+    <%- include('partials/site-header', { topbarText: `Order Confirmation · Reference #${order.reference}` }) %>
 
     <main class="wrap">
-        <section class="card">
-            <div class="status-badge">✓ Order Confirmed · Awaiting On-Chain Settlement</div>
+        <section
+            class="card"
+            id="orderConfirmationCard"
+            data-reference="<%= order.reference %>"
+            data-payment-method="<%= order.payment_method %>"
+            data-payment-status="<%= order.payment_status %>"
+        >
+            <div class="status-badge" id="orderStatusBadge">
+                <% if (order.payment_status === 'confirmed') { %>
+                    ✓ Order Confirmed · Bitcoin Payment Confirmed
+                <% } else if (order.payment_status === 'mempool') { %>
+                    ✓ Order Confirmed · Bitcoin Payment Received
+                <% } else { %>
+                    ✓ Order Confirmation Slip
+                <% } %>
+            </div>
             <h1>Thank you, <%= order.name %>.</h1>
-            <p class="lead">
-                Your order <strong>#<%= order.reference %></strong> has been registered. Please complete your <strong><%= order.payment_symbol %></strong> transfer below so our fine art courier team can prepare your shipment.
+            <p class="lead" id="orderLead">
+                <% if (order.payment_status === 'confirmed' || order.payment_status === 'mempool') { %>
+                    Your Bitcoin payment for order <strong>#<%= order.reference %></strong> has been received. Your official order confirmation slip is below and our fine art courier team is preparing your shipment.
+                <% } else { %>
+                    Your order <strong>#<%= order.reference %></strong> has been registered. Please complete your <strong><%= order.payment_symbol %></strong> transfer below so our fine art courier team can prepare your shipment.
+                <% } %>
             </p>
 
             <div class="settlement-box">
@@ -236,6 +262,23 @@
                     </div>
                     <div style="font-size: 12px; color: #404040; word-break: break-all;" class="mono">
                         Deposit Address: <%= order.wallet_address %>
+                    </div>
+                    <div
+                        id="orderPaymentReceipt"
+                        class="tx-receipt <%= order.payment_txid ? '' : 'hidden' %> mono"
+                    >
+                        <% if (order.payment_txid) { %>
+                            Payment Received: <%= order.payment_received_btc || order.crypto_amount %> BTC ·
+                            <a
+                                id="orderReceiptTxLink"
+                                href="https://mempool.space/tx/<%= encodeURIComponent(order.payment_txid) %>"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >Tx <%= order.payment_txid %></a>
+                        <% } else { %>
+                            Payment Received: <span id="orderReceiptAmount"></span> BTC ·
+                            <a id="orderReceiptTxLink" href="#" target="_blank" rel="noopener noreferrer"></a>
+                        <% } %>
                     </div>
                 </div>
             </div>
@@ -299,6 +342,67 @@
             </nav>
         </div>
     </footer>
+    <script>
+        (() => {
+            const card = document.getElementById('orderConfirmationCard');
+            if (!card) return;
+            const method = card.dataset.paymentMethod || '';
+            const initialStatus = card.dataset.paymentStatus || '';
+            const ref = card.dataset.reference || '';
+            if (method !== 'bitcoin' || initialStatus === 'confirmed') return;
+
+            const badgeEl = document.getElementById('orderStatusBadge');
+            const leadEl = document.getElementById('orderLead');
+            const receiptEl = document.getElementById('orderPaymentReceipt');
+            const receiptAmountEl = document.getElementById('orderReceiptAmount');
+            const receiptLinkEl = document.getElementById('orderReceiptTxLink');
+            let pollHandle = null;
+
+            async function pollOrderBitcoinSilently() {
+                try {
+                    const activeCid = document.body?.dataset?.cid || '';
+                    const qs = new URLSearchParams({ reference: ref });
+                    if (activeCid) qs.set('cid', activeCid);
+                    const res = await fetch('/api/bitcoin/listen?' + qs.toString(), {
+                        credentials: 'include',
+                        cache: 'no-store'
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+
+                    if (data.status === 'detected' || data.status === 'confirmed') {
+                        if (badgeEl) {
+                            badgeEl.textContent = data.status === 'confirmed'
+                                ? '✓ Order Confirmed · Bitcoin Payment Confirmed'
+                                : '✓ Order Confirmed · Bitcoin Payment Received';
+                        }
+                        if (leadEl) {
+                            leadEl.innerHTML = 'Your Bitcoin payment for order <strong>#' + ref + '</strong> has been received. Your official order confirmation slip is below and our fine art courier team is preparing your shipment.';
+                        }
+                        if (receiptEl && data.txid) {
+                            if (receiptAmountEl) receiptAmountEl.textContent = data.receivedBtc || '';
+                            if (receiptLinkEl) {
+                                receiptLinkEl.href = 'https://mempool.space/tx/' + encodeURIComponent(data.txid);
+                                receiptLinkEl.textContent = 'Tx ' + data.txid;
+                            }
+                            receiptEl.classList.remove('hidden');
+                        }
+                        if (data.status === 'confirmed' && pollHandle) {
+                            clearInterval(pollHandle);
+                            pollHandle = null;
+                        }
+                    }
+                } catch {
+                    // Retry silently on next interval
+                }
+            }
+
+            pollOrderBitcoinSilently();
+            pollHandle = setInterval(() => {
+                if (!document.hidden) pollOrderBitcoinSilently();
+            }, 6000);
+        })();
+    </script>
     <script src="/static/js/cart-sync.js"></script>
 </body>
 </html>

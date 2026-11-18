@@ -387,14 +387,7 @@
     </style>
 </head>
 <body data-cid="<%= cid %>">
-    <div class="topbar">Insured Fine Art Courier Delivery · Pay Direct with BTC, ETH, or SOL</div>
-
-    <header class="header">
-        <div class="header-inner">
-            <a href="/" class="brand-mark">ART STUDIO</a>
-            <a href="/" class="back-link">← Continue Exploring Archive</a>
-        </div>
-    </header>
+    <%- include('partials/site-header') %>
 
     <main class="wrap">
         <div class="page-heading">
@@ -417,7 +410,7 @@
                             <img src="<%= item.image %>" alt="<%= item.title %>" referrerPolicy="no-referrer" />
                         </a>
                         <div>
-                            <div class="item-artist"><%= item.artist %></div>
+                            <div class="item-artist"><a href="/artists/<%= getArtistSlug(item.artist) %>" style="text-decoration: none;"><%= item.artist %></a></div>
                             <h2 class="item-title"><a href="/product/<%= item.id %>"><%= item.title %></a></h2>
                             <div class="item-details">
                                 <%= item.category %> · <%= item.size %>
@@ -485,6 +478,7 @@
         <div class="footer-inner">
             <span>© 2026 ART STUDIO. All rights reserved.</span>
             <nav class="footer-links" aria-label="Footer policies">
+                <a href="/artists">Meet the Artists</a>
                 <a href="/shipping">Shipping &amp; Delivery</a>
                 <a href="/authenticity">Authenticity</a>
                 <a href="/terms">Terms</a>

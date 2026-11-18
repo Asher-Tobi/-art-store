@@ -1221,72 +1221,7 @@
 </head>
 <body data-cid="<%= cid %>">
 
-    <div class="topbar">Insured Fine Art Courier Delivery · Pay Direct with BTC, ETH, or SOL</div>
-
-    <header class="header">
-        <div class="header-inner">
-            <div class="header-left">
-                <button type="button" class="mobile-toggle" id="menuToggle" aria-label="Toggle navigation menu">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
-                </button>
-                <a href="/" class="brand-mark">ART STUDIO</a>
-            </div>
-
-            <nav class="nav" aria-label="Primary navigation">
-                <a href="/" class="<%= active_category === 'All' ? 'active' : '' %>">Shop All</a>
-                <a href="/?category=Painting" class="<%= active_category === 'Painting' ? 'active' : '' %>">Paintings</a>
-                <a href="/?category=Prints" class="<%= active_category === 'Prints' ? 'active' : '' %>">Prints</a>
-                <a href="/?category=Photography" class="<%= active_category === 'Photography' ? 'active' : '' %>">Photography</a>
-                <a href="/?category=Sculpture" class="<%= active_category === 'Sculpture' ? 'active' : '' %>">Sculpture</a>
-                <a href="/?category=Furniture" class="<%= active_category === 'Furniture' ? 'active' : '' %>">Furniture</a>
-                <a href="/artists">Artists</a>
-            </nav>
-
-            <div class="header-actions">
-                <form class="header-search" action="/search" method="GET">
-                    <label for="header-search-bar" class="hidden">Search artworks</label>
-                    <input
-                        id="header-search-bar"
-                        type="search"
-                        name="q"
-                        value="<%= typeof search_query !== 'undefined' ? search_query : '' %>"
-                        placeholder="Search artworks..."
-                    />
-                    <button type="submit" aria-label="Submit search">
-                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </button>
-                </form>
-
-                <a href="/cart" class="bag-trigger" aria-label="Shopping Bag">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                    </svg>
-                    <span>Bag</span>
-                    <span class="bag-badge cart-count"><%= cart_count %></span>
-                </a>
-            </div>
-        </div>
-
-        <div class="mobile-drawer" id="mobileDrawer">
-            <div class="mobile-drawer-links">
-                <a href="/">Shop All</a>
-                <a href="/?category=Painting">Paintings</a>
-                <a href="/?category=Prints">Prints &amp; Etchings</a>
-                <a href="/?category=Photography">Photography</a>
-                <a href="/?category=Sculpture">Sculpture</a>
-                <a href="/?category=Furniture">Furniture</a>
-                <a href="/artists">Meet the Artists</a>
-                <a href="/shipping">Shipping &amp; Delivery</a>
-                <a href="/authenticity">Artwork Authenticity</a>
-                <a href="/contact">Contact &amp; Support</a>
-                <a href="/cart">Shopping Bag (<span class="cart-count"><%= cart_count %></span>)</a>
-            </div>
-        </div>
-    </header>
+    <%- include('partials/site-header') %>
 
     <main class="main-wrap">
         <!-- Archive Hero Header -->
@@ -1320,7 +1255,7 @@
             const disciplines = [
                 { key: 'All', label: 'All Disciplines' },
                 { key: 'Painting', label: 'Paintings' },
-                { key: 'Prints', label: 'Prints & Etchings' },
+                { key: 'Prints', label: 'Prints' },
                 { key: 'Photography', label: 'Photography' },
                 { key: 'Sculpture', label: 'Sculpture' },
                 { key: 'Furniture', label: 'Furniture' }
@@ -1612,12 +1547,9 @@
                 <div class="footer-col">
                     <h4>Collection</h4>
                     <ul>
-                        <li><a href="/">All Works</a></li>
-                        <li><a href="/?category=Painting">Paintings</a></li>
-                        <li><a href="/?category=Prints">Prints &amp; Etchings</a></li>
-                        <li><a href="/?category=Photography">Photography</a></li>
-                        <li><a href="/?category=Sculpture">Sculpture</a></li>
-                        <li><a href="/?category=Furniture">Furniture</a></li>
+                        <% (primaryNavLinks || []).filter((n) => n.key !== 'Artists').forEach((navItem) => { %>
+                            <li><a href="<%= navItem.href %>"><%= navItem.label %></a></li>
+                        <% }) %>
                     </ul>
                 </div>
 
@@ -1669,14 +1601,6 @@
     </footer>
 
     <script>
-        const menuToggle = document.getElementById('menuToggle');
-        const mobileDrawer = document.getElementById('mobileDrawer');
-        if (menuToggle && mobileDrawer) {
-            menuToggle.addEventListener('click', () => {
-                mobileDrawer.classList.toggle('open');
-            });
-        }
-
         const grid = document.getElementById('productGrid');
         const cards = grid ? Array.from(grid.querySelectorAll('.art-card')) : [];
         const visibleCountEl = document.getElementById('visibleCount');

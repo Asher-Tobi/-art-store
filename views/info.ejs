@@ -544,29 +544,7 @@
     </style>
 </head>
 <body data-cid="<%= cid %>">
-    <div class="topbar">Insured Fine Art Courier Delivery · Pay Direct with BTC, ETH, or SOL</div>
-
-    <header class="header">
-        <div class="header-inner">
-            <a href="/" class="brand-mark">ART STUDIO</a>
-            <nav class="nav">
-                <a href="/">Shop All</a>
-                <a href="/?category=Painting">Paintings</a>
-                <a href="/?category=Prints">Prints</a>
-                <a href="/?category=Photography">Photography</a>
-                <a href="/?category=Sculpture">Sculpture</a>
-                <a href="/?category=Furniture">Furniture</a>
-                <a href="/artists">Artists</a>
-            </nav>
-            <a href="/cart" class="bag-trigger" aria-label="Shopping Bag">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                </svg>
-                <span>Bag</span>
-                <span class="bag-badge cart-count"><%= cart_count %></span>
-            </a>
-        </div>
-    </header>
+    <%- include('partials/site-header') %>
 
     <main class="main-wrap">
         <nav class="breadcrumb" aria-label="Breadcrumb">
