@@ -3,178 +3,351 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Order Confirmed | ART STUDIO</title>
+    <title>Order Confirmation #<%= order.reference %> | ART STUDIO</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --ink: #0a0a0a;
+            --muted: #666666;
+            --border: #dcdcdc;
+            --surface: #ffffff;
+            --canvas: #fafafa;
+            --gold: #a3702b;
+            --green: #047857;
+            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-serif: "Playfair Display", Georgia, serif;
+            --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
         * { box-sizing: border-box; }
+
         body {
             margin: 0;
-            font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #fafafa;
-            color: #0f0f0f;
+            font-family: var(--font-sans);
+            background: var(--canvas);
+            color: var(--ink);
             -webkit-font-smoothing: antialiased;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
         }
+
         a { color: inherit; text-decoration: none; }
+        button { font: inherit; }
+
         .topbar {
-            background: #0f0f0f;
+            background: #111111;
             color: #ffffff;
             text-align: center;
-            padding: 10px 16px;
-            letter-spacing: 0.16em;
+            padding: 9px 16px;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
-            font-size: 10px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 500;
         }
+
         .header {
             background: #ffffff;
-            border-bottom: 1px solid #dcdcdc;
+            border-bottom: 1px solid var(--border);
         }
+
         .header-inner {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 16px 24px;
+            padding: 0 24px;
+            height: 64px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .brand {
-            font-family: "Playfair Display", Georgia, serif;
+
+        .brand-mark {
+            font-family: var(--font-serif);
             font-size: 26px;
             font-weight: 400;
             letter-spacing: 0.18em;
             text-transform: uppercase;
-            color: #0f0f0f;
+            color: var(--ink);
         }
+
         .wrap {
-            max-width: 780px;
-            margin: 48px auto 80px;
-            padding: 0 20px;
+            max-width: 920px;
+            width: 100%;
+            margin: 36px auto 80px;
+            padding: 0 24px;
+            flex: 1;
         }
-        .card {
+
+        .step-rail {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
             background: #ffffff;
-            border: 1px solid #dcdcdc;
-            padding: 36px 32px;
+            margin-bottom: 28px;
         }
-        .status-badge {
-            display: inline-flex;
+
+        .step-tab {
+            display: flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 12px;
-            background: rgba(16, 185, 129, 0.12);
-            color: #047857;
+            padding: 12px 10px;
+            border-right: 1px solid #ececec;
+            color: #525252;
             font-size: 11px;
-            font-weight: 700;
+        }
+
+        .step-tab:last-child { border-right: none; }
+
+        .step-tab.active {
+            background: #fcfaf6;
+            color: var(--ink);
+            font-weight: 600;
+        }
+
+        .step-num {
+            width: 22px;
+            height: 22px;
+            background: var(--ink);
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 36px 34px;
+        }
+
+        .confirm-kicker {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 16px;
+            letter-spacing: 0.14em;
+            color: var(--green);
+            margin-bottom: 10px;
         }
+
+        .confirm-kicker.amber {
+            color: var(--gold);
+        }
+
         h1 {
-            font-family: "Playfair Display", Georgia, serif;
+            font-family: var(--font-serif);
             margin: 0 0 10px;
-            font-size: 32px;
+            font-size: clamp(1.9rem, 3vw, 2.4rem);
             font-weight: 400;
+            letter-spacing: -0.01em;
         }
+
         .lead {
-            margin: 0 0 24px;
+            margin: 0 0 26px;
             font-size: 14px;
             color: #525252;
-            line-height: 1.6;
+            line-height: 1.65;
         }
+
+        .meta-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            padding: 18px;
+            border: 1px solid #e5e5e5;
+            background: #fcfaf6;
+            margin-bottom: 24px;
+        }
+
+        .meta-cell-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .meta-cell-value {
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .settlement-box {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            padding: 20px;
+            border: 1px solid #dcdcdc;
+            background: #fafafa;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .qr-frame {
+            background: #ffffff;
+            border: 1px solid #e5e5e5;
+            padding: 10px;
+            width: 132px;
+            height: 132px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-frame svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .settlement-info {
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .settlement-net {
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .settlement-amt {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .settlement-addr {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: #404040;
+            word-break: break-all;
+            line-height: 1.5;
+        }
+
+        .tx-receipt {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e5e5;
+            font-size: 12px;
+            color: #262626;
+        }
+
+        .tx-receipt a {
+            font-family: var(--font-mono);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            word-break: break-all;
+        }
+
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 18px;
-            margin-bottom: 22px;
+            margin-bottom: 24px;
         }
+
         .box {
             background: #fafafa;
             border: 1px solid #e5e5e5;
-            padding: 18px;
+            padding: 20px;
         }
+
         .box h3 {
             margin: 0 0 10px;
-            font-size: 11px;
+            font-size: 10.5px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: #525252;
+            letter-spacing: 0.12em;
+            color: var(--muted);
         }
+
         .box p {
             margin: 0;
             font-size: 13px;
             line-height: 1.7;
             color: #262626;
         }
-        .settlement-box {
-            background: #fafafa;
-            border: 1px solid #d4d4d4;
-            padding: 20px;
-            margin-bottom: 22px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .qr-frame {
-            width: 120px;
-            height: 120px;
-            background: #ffffff;
-            border: 1px solid #dcdcdc;
-            padding: 4px;
-            flex-shrink: 0;
-        }
-        .qr-frame svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        .mono {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        }
+
         .items-box {
-            border-top: 1px solid #e5e5e5;
-            padding-top: 18px;
-            margin-top: 18px;
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
+            margin-top: 8px;
         }
+
         .item-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 0;
-            border-bottom: 1px solid #f0eee9;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #efefef;
             font-size: 13px;
         }
+
+        .mono {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+        }
+
         .total-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding-top: 14px;
+            align-items: baseline;
+            padding-top: 16px;
             margin-top: 8px;
-            font-size: 15px;
+            border-top: 1px solid var(--border);
+            font-size: 16px;
             font-weight: 700;
         }
+
         .actions {
             margin-top: 28px;
             display: flex;
             gap: 12px;
-            justify-content: center;
+            justify-content: space-between;
             flex-wrap: wrap;
         }
+
         .btn {
             display: inline-block;
-            background: #0f0f0f;
+            background: #0a0a0a;
             color: #ffffff;
             padding: 15px 26px;
             text-transform: uppercase;
             letter-spacing: 0.14em;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
+            border: 1px solid #0a0a0a;
+            cursor: pointer;
         }
+
         .btn:hover { background: #262626; }
+
+        .btn-outline {
+            background: #ffffff;
+            color: #0a0a0a;
+        }
+
+        .btn-outline:hover { background: #f3f3f3; }
+
         .footer {
             background: #111111;
             color: #999999;
@@ -182,6 +355,7 @@
             padding: 36px 24px;
             margin-top: auto;
         }
+
         .footer-inner {
             max-width: 1280px;
             margin: 0 auto;
@@ -192,226 +366,259 @@
             gap: 16px;
             font-size: 12px;
         }
+
         .footer-links {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
         }
+
         .footer-links a:hover { color: #ffffff; }
-        .tx-receipt {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #047857;
-            font-weight: 600;
-        }
-        .tx-receipt a {
-            color: #047857;
-            text-decoration: underline;
-            text-underline-offset: 3px;
-            word-break: break-all;
-        }
-        .hidden { display: none !important; }
-        @media (max-width: 680px) {
+
+        @media (max-width: 780px) {
+            .step-rail { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .meta-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .grid-2 { grid-template-columns: 1fr; }
-            .settlement-box { flex-direction: column; align-items: flex-start; }
+            .card { padding: 24px 20px; }
+        }
+
+        @media print {
+            .topbar, .header, .step-rail, .actions, .footer { display: none !important; }
+            body { background: #ffffff; }
+            .card { border: none; padding: 0; }
         }
     </style>
 </head>
 <body data-cid="<%= cid %>">
     <%- include('partials/site-header', { topbarText: `Order Confirmation · Reference #${order.reference}` }) %>
 
+    <%
+        const isCrypto = order.payment_method === 'bitcoin' || order.payment_method === 'ethereum' || order.payment_method === 'solana';
+        const isBtc = order.payment_method === 'bitcoin';
+        const isConfirmed = order.payment_status === 'confirmed' || order.payment_status === 'paid';
+        const isMempool = order.payment_status === 'mempool';
+        const displayDate = order.order_date
+            ? new Date(order.order_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+            : new Date(order.created_at_ms || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        const statusLabel = isConfirmed
+            ? (isBtc ? 'Bitcoin Confirmed' : 'Paid (Verified)')
+            : isMempool
+            ? 'Detected (Mempool)'
+            : 'Pending On-Chain Transfer';
+        const statusColor = isConfirmed ? 'var(--green)' : 'var(--gold)';
+    %>
+
     <main class="wrap">
-        <section
-            class="card"
-            id="orderConfirmationCard"
-            data-reference="<%= order.reference %>"
-            data-payment-method="<%= order.payment_method %>"
-            data-payment-status="<%= order.payment_status %>"
-        >
-            <div class="status-badge" id="orderStatusBadge">
-                <% if (order.payment_status === 'confirmed') { %>
-                    ✓ Order Confirmed · Bitcoin Payment Confirmed
-                <% } else if (order.payment_status === 'mempool') { %>
-                    ✓ Order Confirmed · Bitcoin Payment Received
+        <nav class="step-rail" aria-label="Completed checkout steps">
+            <div class="step-tab"><span class="step-num">01</span><span>Customer</span></div>
+            <div class="step-tab"><span class="step-num">02</span><span>Delivery</span></div>
+            <div class="step-tab"><span class="step-num">03</span><span>Shipping</span></div>
+            <div class="step-tab"><span class="step-num">04</span><span>Review</span></div>
+            <div class="step-tab"><span class="step-num">05</span><span>Payment</span></div>
+            <div class="step-tab active"><span class="step-num">06</span><span>Confirmed</span></div>
+        </nav>
+
+        <section class="card">
+            <div class="confirm-kicker <%= isConfirmed ? '' : 'amber' %>" id="confirmKicker">
+                <% if (isBtc && isConfirmed) { %>
+                    Step 06 of 06 · Bitcoin Payment Confirmed
+                <% } else if (isBtc && isMempool) { %>
+                    Step 06 of 06 · Bitcoin Transfer Detected in Mempool
+                <% } else if (isCrypto) { %>
+                    Step 06 of 06 · Order Registered · Complete <%= order.payment_symbol %> Transfer
                 <% } else { %>
-                    ✓ Order Confirmation Slip
+                    Step 06 of 06 · Payment Verified &amp; Order Confirmed
                 <% } %>
             </div>
+
             <h1>Thank you, <%= order.name %>.</h1>
-            <p class="lead" id="orderLead">
-                <% if (order.payment_status === 'confirmed' || order.payment_status === 'mempool') { %>
-                    Your Bitcoin payment for order <strong>#<%= order.reference %></strong> has been received. Your official order confirmation slip is below and our fine art courier team is preparing your shipment.
+            <p class="lead" id="confirmLead">
+                <% if (isBtc && isConfirmed) { %>
+                    Your Bitcoin payment for order <strong>#<%= order.reference %></strong> is confirmed on the Bitcoin blockchain. Our curatorial and fine art logistics team has logged your acquisition and will email crating and courier tracking details to <strong><%= order.email %></strong>.
+                <% } else if (isBtc && isMempool) { %>
+                    Your Bitcoin transaction for order <strong>#<%= order.reference %></strong> has been detected on the Bitcoin network and is confirming in mempool. Your acquisition is secured and updates to <strong><%= order.email %></strong> will follow automatically.
+                <% } else if (isCrypto) { %>
+                    Your order <strong>#<%= order.reference %></strong> has been registered. Please complete your <strong><%= order.payment_symbol %></strong> transfer using the settlement coordinates below so our logistics desk can finalize dispatch to <strong><%= order.email %></strong>.
                 <% } else { %>
-                    Your order <strong>#<%= order.reference %></strong> has been registered. Please complete your <strong><%= order.payment_symbol %></strong> transfer below so our fine art courier team can prepare your shipment.
+                    Your payment for order <strong>#<%= order.reference %></strong> has been verified. Our curatorial and fine art logistics desk has logged your acquisition and will email crating and courier tracking details to <strong><%= order.email %></strong>.
                 <% } %>
             </p>
 
-            <div class="settlement-box">
-                <% if (order.qr_svg) { %>
-                <div class="qr-frame">
-                    <%- order.qr_svg %>
+            <div class="meta-strip">
+                <div>
+                    <span class="meta-cell-label">Order Number</span>
+                    <span class="meta-cell-value">#<%= order.reference %></span>
                 </div>
-                <% } %>
-                <div style="flex: 1; min-width: 0;">
-                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #525252; margin-bottom: 6px;">
-                        <%= order.payment_method.toUpperCase() %> (<%= order.payment_symbol %>) · <%= order.payment_network %>
-                    </div>
-                    <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px;" class="mono">
-                        <%= order.crypto_amount %> <%= order.payment_symbol %>
-                        <span style="font-size: 13px; color: #6b6b6b; font-weight: 500;">(≈ $<%= formatCurrency(order.total) %> USD)</span>
-                    </div>
-                    <div style="font-size: 12px; color: #404040; word-break: break-all;" class="mono">
-                        Deposit Address: <%= order.wallet_address %>
-                    </div>
-                    <div
-                        id="orderPaymentReceipt"
-                        class="tx-receipt <%= order.payment_txid ? '' : 'hidden' %> mono"
-                    >
-                        <% if (order.payment_txid) { %>
-                            Payment Received: <%= order.payment_received_btc || order.crypto_amount %> BTC ·
-                            <a
-                                id="orderReceiptTxLink"
-                                href="https://mempool.space/tx/<%= encodeURIComponent(order.payment_txid) %>"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >Tx <%= order.payment_txid %></a>
-                        <% } else { %>
-                            Payment Received: <span id="orderReceiptAmount"></span> BTC ·
-                            <a id="orderReceiptTxLink" href="#" target="_blank" rel="noopener noreferrer"></a>
-                        <% } %>
-                    </div>
+                <div>
+                    <span class="meta-cell-label">Order Date</span>
+                    <span class="meta-cell-value"><%= displayDate %></span>
+                </div>
+                <div>
+                    <span class="meta-cell-label">Payment Status</span>
+                    <span class="meta-cell-value" id="paymentStatusBadge" style="color: <%= statusColor %>;"><%= statusLabel %></span>
+                </div>
+                <div>
+                    <span class="meta-cell-label">Estimated Delivery</span>
+                    <span class="meta-cell-value"><%= order.estimated_delivery || '6–12 business days' %></span>
                 </div>
             </div>
 
+            <% if (isCrypto && order.wallet_address) { %>
+            <div class="settlement-box">
+                <% if (order.qr_svg) { %>
+                <div class="qr-frame" aria-label="<%= order.payment_symbol %> settlement QR">
+                    <%- order.qr_svg %>
+                </div>
+                <% } %>
+                <div class="settlement-info">
+                    <div class="settlement-net"><%= order.payment_provider_label || order.payment_symbol %> · <%= order.payment_network %></div>
+                    <div class="settlement-amt">
+                        <%= order.crypto_amount %> <%= order.payment_symbol %>
+                        <span style="font-family: var(--font-sans); font-size: 12px; font-weight: 500; color: var(--muted);">
+                            (≈ $<%= formatCurrency(order.total) %> USD)
+                        </span>
+                    </div>
+                    <div class="settlement-addr">
+                        Deposit Address: <%= order.wallet_address %>
+                    </div>
+                    <% if (order.payment_txid) { %>
+                    <div class="tx-receipt">
+                        Transaction:
+                        <a href="https://mempool.space/tx/<%= order.payment_txid %>" target="_blank" rel="noopener noreferrer"><%= order.payment_txid %></a>
+                        <% if (order.payment_received_btc) { %>
+                            · Received: <span class="mono"><%= order.payment_received_btc %> BTC</span>
+                        <% } %>
+                        <% if (order.payment_block_height) { %>
+                            · Block #<span class="mono"><%= order.payment_block_height %></span>
+                        <% } %>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+            <% } %>
+
             <div class="grid-2">
                 <div class="box">
-                    <h3>Contact Details</h3>
+                    <h3>Customer Information</h3>
                     <p>
-                        <strong><%= order.name %></strong><br>
-                        <%= order.email %><br>
-                        <%= order.phone %>
+                        <strong><%= order.name %></strong><br />
+                        <%= order.email %><br />
+                        <%= order.phone %><br />
+                        <span style="display:block; margin-top:6px; font-size:12px; color:#525252;">
+                            Payment Method: <%= order.payment_provider_label || order.payment_network || 'Authorized Gateway' %>
+                        </span>
                     </p>
                 </div>
+
                 <div class="box">
-                    <h3>Shipping Destination</h3>
+                    <h3>Delivery Destination</h3>
                     <p>
-                        <%= order.address %><% if (order.apartment) { %>, <%= order.apartment %><% } %><br>
-                        <%= order.city %>, <%= order.state %> <%= order.zip_code %><br>
+                        <%= order.address %><% if (order.apartment) { %>, <%= order.apartment %><% } %><br />
+                        <%= order.city %>, <%= order.state %> <%= order.zip_code %><br />
                         <%= order.country %>
-                        <span style="display: block; margin-top: 6px; font-size: 12px; color: #525252;">
-                            <%= order.shipping_method || 'Insured Fine Art Courier Delivery' %>
+                        <span style="display:block; margin-top:6px; font-size:12px; color:#525252;">
+                            Method: <%= order.shipping_method || 'Insured Fine Art Courier Delivery' %>
                         </span>
+                        <% if (order.delivery_instructions) { %>
+                        <span style="display:block; margin-top:4px; font-size:12px; color:#525252;">
+                            Instructions: <%= order.delivery_instructions %>
+                        </span>
+                        <% } %>
                     </p>
                 </div>
             </div>
 
             <div class="items-box">
-                <h3 style="margin: 0 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #525252;">Artworks Ordered</h3>
+                <h3 style="margin: 0 0 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted);">Order Summary &amp; Inventory Records</h3>
                 <% order.items.forEach((item) => { %>
                 <div class="item-row">
                     <div>
                         <strong><%= item.title %></strong>
-                        <span style="display: block; color: #6b6b6b; font-size: 12px;">Quantity: <%= item.quantity %> · <%= item.artist %></span>
+                        <span style="display: block; color: var(--muted); font-size: 12px; margin-top: 2px;">
+                            <%= item.artist %> · Quantity: <%= item.quantity %>
+                            <% if (item.inventory_id) { %>
+                                · <span class="mono">Inventory ID: <%= item.inventory_id %></span>
+                                · <a href="/certificate/<%= encodeURIComponent(item.inventory_id) %>" style="text-decoration: underline; text-underline-offset: 2px; color: var(--ink);">Artwork Documentation</a>
+                            <% } %>
+                        </span>
                     </div>
                     <span class="mono">$<%= formatCurrency(item.price * item.quantity) %></span>
                 </div>
                 <% }) %>
+
+                <div class="item-row" style="color: #525252;">
+                    <span>Subtotal</span>
+                    <span class="mono">$<%= formatCurrency(order.subtotal) %></span>
+                </div>
+
                 <% if (order.discount > 0) { %>
-                <div class="item-row" style="color: #047857;">
+                <div class="item-row" style="color: var(--green);">
                     <span>Collector Promotion (10% off)</span>
                     <span class="mono">-$<%= formatCurrency(order.discount) %></span>
                 </div>
                 <% } %>
-                <div class="item-row" style="<%= order.shipping === 0 ? 'color: #047857;' : '' %>">
+
+                <div class="item-row" style="<%= order.shipping === 0 ? 'color: var(--green);' : '' %>">
                     <span><%= order.shipping_method || 'Insured Fine Art Courier Delivery' %></span>
                     <span class="mono"><%= order.shipping === 0 ? 'COMPLIMENTARY' : '$' + formatCurrency(order.shipping) %></span>
                 </div>
+
+                <div class="item-row" style="color: #525252;">
+                    <span>Taxes &amp; Applicable Fees</span>
+                    <span class="mono">$<%= formatCurrency(order.tax || 0) %></span>
+                </div>
+
                 <div class="total-row">
-                    <span>Total</span>
+                    <span>Total <%= isConfirmed ? 'Paid' : 'Due' %></span>
                     <span class="mono">$<%= formatCurrency(order.total) %> USD</span>
                 </div>
             </div>
 
             <div class="actions">
-                <a href="/" class="btn">Continue Shopping</a>
+                <button type="button" class="btn btn-outline" onclick="window.print()">Print Confirmation</button>
+                <a href="/" class="btn">Return to Collection</a>
             </div>
         </section>
     </main>
+
     <footer class="footer">
         <div class="footer-inner">
             <span>© 2026 ART STUDIO. All rights reserved.</span>
             <nav class="footer-links" aria-label="Footer policies">
                 <a href="/artists">Meet the Artists</a>
+                <a href="/crypto-checkout">Crypto Checkout</a>
                 <a href="/shipping">Shipping &amp; Delivery</a>
                 <a href="/authenticity">Authenticity</a>
-                <a href="/crypto-checkout">Crypto Checkout</a>
                 <a href="/terms">Terms</a>
                 <a href="/privacy-policy">Privacy Policy</a>
                 <a href="/contact">Contact &amp; Support</a>
             </nav>
         </div>
     </footer>
+
+    <script src="/static/js/cart-sync.js"></script>
+    <% if (isBtc && order.payment_status !== 'confirmed') { %>
     <script>
         (() => {
-            const card = document.getElementById('orderConfirmationCard');
-            if (!card) return;
-            const method = card.dataset.paymentMethod || '';
-            const initialStatus = card.dataset.paymentStatus || '';
-            const ref = card.dataset.reference || '';
-            if (method !== 'bitcoin' || initialStatus === 'confirmed') return;
-
-            const badgeEl = document.getElementById('orderStatusBadge');
-            const leadEl = document.getElementById('orderLead');
-            const receiptEl = document.getElementById('orderPaymentReceipt');
-            const receiptAmountEl = document.getElementById('orderReceiptAmount');
-            const receiptLinkEl = document.getElementById('orderReceiptTxLink');
-            let pollHandle = null;
-
-            async function pollOrderBitcoinSilently() {
+            const ref = '<%= order.reference %>';
+            const pollTimer = window.setInterval(async () => {
                 try {
-                    const activeCid = document.body?.dataset?.cid || '';
-                    const qs = new URLSearchParams({ reference: ref });
-                    if (activeCid) qs.set('cid', activeCid);
-                    const res = await fetch('/api/bitcoin/listen?' + qs.toString(), {
+                    const res = await fetch('/api/bitcoin/listen?reference=' + encodeURIComponent(ref), {
                         credentials: 'include',
                         cache: 'no-store'
                     });
                     if (!res.ok) return;
                     const data = await res.json();
-
-                    if (data.status === 'detected' || data.status === 'confirmed') {
-                        if (badgeEl) {
-                            badgeEl.textContent = data.status === 'confirmed'
-                                ? '✓ Order Confirmed · Bitcoin Payment Confirmed'
-                                : '✓ Order Confirmed · Bitcoin Payment Received';
-                        }
-                        if (leadEl) {
-                            leadEl.innerHTML = 'Your Bitcoin payment for order <strong>#' + ref + '</strong> has been received. Your official order confirmation slip is below and our fine art courier team is preparing your shipment.';
-                        }
-                        if (receiptEl && data.txid) {
-                            if (receiptAmountEl) receiptAmountEl.textContent = data.receivedBtc || '';
-                            if (receiptLinkEl) {
-                                receiptLinkEl.href = 'https://mempool.space/tx/' + encodeURIComponent(data.txid);
-                                receiptLinkEl.textContent = 'Tx ' + data.txid;
-                            }
-                            receiptEl.classList.remove('hidden');
-                        }
-                        if (data.status === 'confirmed' && pollHandle) {
-                            clearInterval(pollHandle);
-                            pollHandle = null;
-                        }
+                    if (data.status === 'confirmed') {
+                        window.clearInterval(pollTimer);
+                        window.location.reload();
                     }
                 } catch {
-                    // Retry silently on next interval
+                    // Retry silently
                 }
-            }
-
-            pollOrderBitcoinSilently();
-            pollHandle = setInterval(() => {
-                if (!document.hidden) pollOrderBitcoinSilently();
-            }, 6000);
+            }, 8000);
         })();
     </script>
-    <script src="/static/js/cart-sync.js"></script>
+    <% } %>
 </body>
 </html>

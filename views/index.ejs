@@ -1317,7 +1317,8 @@
                         <a href="/product/<%= item.id %>" aria-label="View <%= item.title %>">
                             <img src="<%= item.image %>" alt="<%= item.title %> by <%= item.artist %>" loading="lazy" referrerPolicy="no-referrer" />
                         </a>
-                        <span class="status-tag">Original</span>
+                        <span class="status-tag"><%= item.status === 'sold' ? 'Acquired' : 'Original' %></span>
+                        <% if (item.status !== 'sold') { %>
                         <div class="quick-add-wrap">
                             <form action="/add-to-cart" method="POST">
                                 <input type="hidden" name="product_id" value="<%= item.id %>" />
@@ -1330,6 +1331,7 @@
                                 </button>
                             </form>
                         </div>
+                        <% } %>
                     </div>
 
                     <div class="art-body">
@@ -1341,6 +1343,7 @@
                                 <a href="/product/<%= item.id %>"><%= item.title %></a>
                             </h2>
                             <p class="art-dims"><%= item.category %> · <%= item.size %></p>
+                            <p style="font-family: var(--font-mono); font-size: 10.5px; color: #737373; margin: 4px 0 0; letter-spacing: 0.03em;"><%= item.inventory_id %></p>
                         </div>
                         <div class="art-price-row">
                             <span class="art-price">$<%= formatCurrency(item.price) %></span>
@@ -1359,7 +1362,7 @@
         <% } else { %>
         <section class="empty-state">
             <h2>No artworks found</h2>
-            <p>Try searching by another artwork title, artist name, or discipline.</p>
+            <p>Try searching by another artwork title, artist name, discipline, or Inventory ID (e.g. AS-PA-2026-001).</p>
             <a href="/" class="reset-btn">View Complete Archive</a>
         </section>
         <% } %>
@@ -1570,6 +1573,7 @@
                         <li><a href="/authenticity">Artwork Authenticity</a></li>
                         <li><a href="/terms">Terms &amp; Conditions</a></li>
                         <li><a href="/privacy-policy">Privacy Policy</a></li>
+                        <li><a href="/admin/inventory">Inventory Registry (Admin)</a></li>
                         <li><a href="/">Curated Vault Archive</a></li>
                     </ul>
                 </div>

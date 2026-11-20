@@ -867,12 +867,20 @@
 
                 <div class="pdp-price-row">
                     <span class="pdp-price">$<%= formatCurrency(product.price) %></span>
-                    <span class="pdp-avail">In Stock · Ready to Ship</span>
+                    <% if (product.status === 'sold') { %>
+                        <span class="pdp-avail" style="color: #525252;">Acquired · Sold Archive</span>
+                    <% } else { %>
+                        <span class="pdp-avail">In Stock · Ready to Ship</span>
+                    <% } %>
                 </div>
 
                 <p class="pdp-desc"><%= product.description %></p>
 
                 <div class="specs-grid">
+                    <div>
+                        <span class="spec-label">Inventory ID</span>
+                        <span class="spec-val" style="font-family: var(--font-mono); font-size: 12.5px;"><%= product.inventory_id %></span>
+                    </div>
                     <div>
                         <span class="spec-label">Discipline</span>
                         <span class="spec-val"><%= product.category %></span>
@@ -886,7 +894,7 @@
                         <span class="spec-label">Date / Period</span>
                         <span class="spec-val"><%= provenance.datePeriod %></span>
                     </div>
-                    <div>
+                    <div style="grid-column: 1 / -1;">
                         <span class="spec-label">Origin / Attribution</span>
                         <span class="spec-val"><%= provenance.originAttribution %></span>
                     </div>
@@ -897,9 +905,21 @@
                 <div class="provenance-dossier" aria-label="Authenticity and provenance dossier">
                     <div class="provenance-dossier-head">
                         <h2 class="provenance-dossier-title">Provenance &amp; Authenticity Dossier</h2>
-                        <a href="/authenticity" class="provenance-badge">COA Verified →</a>
+                        <a href="/certificate/<%= encodeURIComponent(product.inventory_id) %>" class="provenance-badge" style="<%= product.authenticity_status !== 'verified' ? 'color: #92400e;' : '' %>">
+                            <% if (product.authenticity_status === 'verified') { %>
+                                COA Verified →
+                            <% } else if (product.authenticity_status === 'unverified') { %>
+                                Unverified · View Record →
+                            <% } else { %>
+                                Auth Pending Review →
+                            <% } %>
+                        </a>
                     </div>
                     <div class="provenance-list">
+                        <div class="provenance-row">
+                            <span class="provenance-key">Inventory ID</span>
+                            <span style="font-family: var(--font-mono); font-size: 12px;"><%= product.inventory_id %></span>
+                        </div>
                         <div class="provenance-row">
                             <span class="provenance-key">Materials</span>
                             <span><%= provenance.materialsMedium %></span>
@@ -926,6 +946,14 @@
                     <% }) %>
                 <% } %>
 
+                <% if (product.status === 'sold') { %>
+                <div class="provenance-dossier" style="margin-bottom: 20px; border-color: #d4d4d4; background: #f8f7f4;">
+                    <p style="margin: 0 0 10px; font-size: 13px; color: #262626; line-height: 1.6;">
+                        This work has been acquired and remains cataloged under Inventory ID <strong style="font-family: var(--font-mono);"><%= product.inventory_id %></strong>.
+                    </p>
+                    <a href="/certificate/<%= encodeURIComponent(product.inventory_id) %>" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; text-decoration: underline; text-underline-offset: 4px;">View Artwork Documentation &amp; Certificate →</a>
+                </div>
+                <% } else { %>
                 <form class="add-cart-form" action="/add-to-cart" method="POST">
                     <input type="hidden" name="product_id" value="<%= product.id %>">
                     <div class="qty-field">
@@ -934,6 +962,7 @@
                     </div>
                     <button class="add-btn" type="submit">Add to Bag</button>
                 </form>
+                <% } %>
 
                 <div class="guarantees">
                     <div class="guarantee-line"><span>✓</span><span>Direct on-chain settlement via BTC, ETH, or SOL</span></div>
@@ -947,7 +976,12 @@
                             <% } %>
                         </a>
                     </div>
-                    <div class="guarantee-line"><span>✓</span><a href="/authenticity" style="text-decoration: underline; text-underline-offset: 3px;">Includes signed certificate of authenticity</a></div>
+                    <div class="guarantee-line">
+                        <span>✓</span>
+                        <a href="/certificate/<%= encodeURIComponent(product.inventory_id) %>" style="text-decoration: underline; text-underline-offset: 3px;">
+                            Artwork Documentation &amp; Certificate (<%= product.inventory_id %>)
+                        </a>
+                    </div>
                 </div>
 
                 <a class="back-link" href="/">← Return to Complete Archive</a>

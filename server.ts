@@ -5,56 +5,37 @@ import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import session from "express-session";
 import QRCode from "qrcode";
-
-interface Product {
-  id: number;
-  title: string;
-  artist: string;
-  category: string;
-  price: number;
-  price_display: string;
-  size: string;
-  image: string;
-  images?: string[];
-  description: string;
-}
+import {
+  InventoryStore,
+  VALID_CATEGORIES,
+  normalizeCategoryName,
+  getCategoryCode,
+  type Product,
+  type ProductProvenance,
+  type SeedProductInput,
+  type PersistedOrderRecord,
+  type AuthenticityStatus,
+  type InventoryStatus,
+} from "./inventory-store.ts";
 
 interface CartItem extends Product {
   quantity: number;
 }
 
-interface Order {
-  reference: string;
-  name: string;
-  email: string;
-  phone: string;
-  country: string;
-  address: string;
-  apartment: string;
-  city: string;
-  state: string;
-  zip_code: string;
-  payment_method: string;
-  payment_symbol: string;
-  payment_network: string;
-  crypto_amount: string;
-  wallet_address: string;
-  qr_svg: string;
-  payment_status: string;
-  payment_txid?: string;
-  payment_received_btc?: string;
-  payment_block_height?: number;
-  created_at_ms?: number;
-  subtotal: number;
-  discount: number;
-  shipping: number;
-  shipping_method?: string;
-  shipping_tier?: string;
-  is_international?: boolean;
-  has_furniture?: boolean;
-  total: number;
-  items: CartItem[];
+interface CheckoutOrder extends PersistedOrderRecord {
+  delivery_instructions?: string;
+  tax?: number;
+  tax_note?: string;
+  shipping_option?: string;
+  estimated_delivery?: string;
+  order_date?: string;
+  payment_provider?: string;
+  payment_provider_label?: string;
+  payment_session_id?: string;
+  verified_at?: string;
 }
+
+type Order = CheckoutOrder;
 
 declare module "express-session" {
   interface SessionData {
@@ -63,6 +44,7 @@ declare module "express-session" {
     cartId?: string;
     order?: Order;
     btcCheckoutStartedAt?: number;
+    checkoutTokens?: string[];
     flashes?: string[];
   }
 }
@@ -86,7 +68,21 @@ const SOL_USD_PRICE = Number(process.env.SOL_USD_PRICE || "69") || 69;
 const SECRET_KEY =
   process.env.SECRET_KEY || "local-development-key-change-before-deploy";
 
-const products: Product[] = [
+function getPaymentGatewayConfig() {
+  return {
+    stripeSecretKey: (process.env.STRIPE_SECRET_KEY || "").trim(),
+    stripeWebhookSecret: (process.env.STRIPE_WEBHOOK_SECRET || "").trim(),
+    paypalClientId: (process.env.PAYPAL_CLIENT_ID || "").trim(),
+    paypalClientSecret: (process.env.PAYPAL_CLIENT_SECRET || "").trim(),
+    paypalMode:
+      (process.env.PAYPAL_MODE || "sandbox").trim().toLowerCase() === "live"
+        ? "live"
+        : "sandbox",
+    appBaseUrl: (process.env.APP_BASE_URL || "").trim(),
+  };
+}
+
+const seedProducts: SeedProductInput[] = [
   {
     id: 4,
     title: "Biological Transformation",
@@ -675,21 +671,15 @@ const products: Product[] = [
   },
 ];
 
-const featuredCollection: Product[] = [];
-
-const allProducts: Product[] = [...products, ...featuredCollection];
-const productLookup = new Map<string, Product>(
-  allProducts.map((product) => [String(product.id), product])
-);
 const categories: string[] = [
   "Paintings",
+  "Prints",
   "Photography",
   "Sculpture",
   "Furniture",
-  "Drawings",
-  "Mixed Media",
 ];
 
+type PaymentProviderId = "stripe" | "paypal";
 type CryptoMethodKey = "bitcoin" | "ethereum" | "solana";
 
 interface CryptoOptionPayload {
@@ -859,17 +849,100 @@ async function buildCryptoOptions(
   };
 }
 
-function getProductById(productId: string | number): Product | undefined {
-  return productLookup.get(String(productId));
+interface PaymentProviderOption {
+  id: PaymentProviderId;
+  name: string;
+  subtitle: string;
+  configured: boolean;
+  requirementsNote: string;
 }
 
-interface ProductProvenance {
-  datePeriod: string;
-  originAttribution: string;
-  materialsMedium: string;
-  markingsEdition: string;
-  conditionNote: string;
-  provenanceRecord: string;
+function getPaymentProviders(): PaymentProviderOption[] {
+  const cfg = getPaymentGatewayConfig();
+  return [
+    {
+      id: "stripe",
+      name: "Credit or Debit Card (Stripe)",
+      subtitle: "Visa, Mastercard, American Express · Hosted Checkout",
+      configured: Boolean(cfg.stripeSecretKey),
+      requirementsNote:
+        "Pending merchant authorization and server-side STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET configuration.",
+    },
+    {
+      id: "paypal",
+      name: "PayPal Business Checkout",
+      subtitle: "PayPal Account & Verified Funding · Hosted Approval",
+      configured: Boolean(cfg.paypalClientId && cfg.paypalClientSecret),
+      requirementsNote:
+        "Pending merchant business authorization and server-side PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET configuration.",
+    },
+  ];
+}
+
+function hasMismatchedOrigin(req: Request): boolean {
+  const originHeader = String(req.headers.origin || "").trim();
+  if (!originHeader) return false;
+  const hostHeader = String(
+    req.headers["x-forwarded-host"] || req.headers.host || ""
+  )
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  if (!hostHeader) return false;
+  try {
+    const parsedOrigin = new URL(originHeader);
+    return parsedOrigin.host.toLowerCase() !== hostHeader;
+  } catch {
+    return true;
+  }
+}
+
+interface CheckoutTokenRecord {
+  cid: string;
+  createdAt: number;
+  status: "open" | "processing" | "completed";
+  orderReference?: string;
+}
+
+const checkoutIdempotencyStore = new Map<string, CheckoutTokenRecord>();
+
+function issueCheckoutToken(req: Request, cid: string): string {
+  const now = Date.now();
+  for (const [key, entry] of checkoutIdempotencyStore.entries()) {
+    if (now - entry.createdAt > 12 * 60 * 60 * 1000) {
+      checkoutIdempotencyStore.delete(key);
+    }
+  }
+  const token = crypto.randomUUID().replace(/-/g, "");
+  checkoutIdempotencyStore.set(token, {
+    cid,
+    createdAt: now,
+    status: "open",
+  });
+  const list = req.session.checkoutTokens ?? [];
+  req.session.checkoutTokens = [...list.slice(-9), token];
+  return token;
+}
+
+function getCheckoutTokenRecord(
+  token: string,
+  cid: string
+): CheckoutTokenRecord | undefined {
+  if (!token) return undefined;
+  const rec = checkoutIdempotencyStore.get(token);
+  if (!rec) return undefined;
+  if (rec.cid && cid && rec.cid !== cid) return undefined;
+  return rec;
+}
+
+const inventoryStore = new InventoryStore();
+
+function getAllProducts(): Product[] {
+  return inventoryStore.getAllProducts();
+}
+
+function getProductById(productId: string | number): Product | undefined {
+  return inventoryStore.getProductById(productId);
 }
 
 const curatedProvenanceById: Record<number, ProductProvenance> = {
@@ -1123,17 +1196,10 @@ const curatedProvenanceById: Record<number, ProductProvenance> = {
   },
 };
 
+inventoryStore.initialize(seedProducts, curatedProvenanceById);
+
 function getProductProvenance(product: Product): ProductProvenance {
-  return (
-    curatedProvenanceById[product.id] ?? {
-      datePeriod: "Curated Studio Work",
-      originAttribution: product.artist,
-      materialsMedium: product.category,
-      markingsEdition: "Authenticated Archive Piece",
-      conditionNote: "Inspected prior to museum-grade crating.",
-      provenanceRecord: "Accompanied by signed ART STUDIO Certificate of Authenticity.",
-    }
-  );
+  return inventoryStore.getProvenance(product);
 }
 
 interface StoredCartEntry {
@@ -1145,7 +1211,12 @@ const CART_COOKIE_NAME = "art_studio_cart";
 const cartStore = new Map<string, StoredCartEntry>();
 const orderStore = new Map<string, Order>();
 const orderByReference = new Map<string, Order>();
+const pendingOrdersByReference = new Map<string, { order: Order; cid: string; token: string }>();
 const flashStore = new Map<string, string[]>();
+
+for (const savedOrder of inventoryStore.getOrders()) {
+  orderByReference.set(savedOrder.reference, savedOrder);
+}
 
 const MEMPOOL_API_BASE =
   process.env.MEMPOOL_API_BASE || "https://mempool.space/api";
@@ -1187,7 +1258,9 @@ const mempoolTxCache = new Map<
   { txs: MempoolTx[]; fetchedAt: number }
 >();
 
-const consumedBitcoinTxids = new Map<string, string>();
+const consumedBitcoinTxids = new Map<string, string>(
+  Object.entries(inventoryStore.getConsumedTxids())
+);
 
 async function fetchMempoolAddressTxs(
   address: string,
@@ -1360,6 +1433,343 @@ async function checkBitcoinPaymentStatus(params: {
     checkedAt,
     message,
   };
+}
+
+function getRequestBaseUrl(req: Request): string {
+  const cfg = getPaymentGatewayConfig();
+  if (cfg.appBaseUrl) {
+    return cfg.appBaseUrl.replace(/\/+$/, "");
+  }
+  const proto =
+    String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim() ||
+    (req.secure ? "https" : "http");
+  const host =
+    String(req.headers["x-forwarded-host"] || req.headers.host || `localhost:${PORT}`)
+      .split(",")[0]
+      .trim();
+  return `${proto}://${host}`;
+}
+
+function finalizeVerifiedPaidOrder(
+  req: Request,
+  res: Response | null,
+  order: Order,
+  details: { provider: PaymentProviderId; sessionId: string; cid?: string; token?: string }
+): Order {
+  const existingPaid = orderByReference.get(order.reference);
+  if (existingPaid && existingPaid.payment_status === "paid") {
+    return existingPaid;
+  }
+
+  const nowIso = new Date().toISOString();
+  const finalized: Order = {
+    ...order,
+    payment_status: "paid",
+    payment_provider: details.provider,
+    payment_provider_label:
+      details.provider === "stripe"
+        ? "Stripe Hosted Checkout (Verified)"
+        : "PayPal Business Checkout (Verified)",
+    payment_session_id: details.sessionId,
+    verified_at: nowIso,
+    order_date: order.order_date || nowIso,
+  };
+
+  orderByReference.set(finalized.reference, finalized);
+  inventoryStore.saveOrder(finalized);
+  inventoryStore.markProductsSold(
+    finalized.items.map((item) => item.id),
+    finalized.reference
+  );
+
+  const cid = details.cid || getRequestCartId(req);
+  if (cid) {
+    orderStore.set(cid, finalized);
+  }
+  req.session.order = finalized;
+
+  if (details.token) {
+    const rec = checkoutIdempotencyStore.get(details.token);
+    if (rec) {
+      rec.status = "completed";
+      rec.orderReference = finalized.reference;
+    }
+  }
+  pendingOrdersByReference.delete(finalized.reference);
+
+  if (res) {
+    saveCart(req, res, {});
+  } else if (cid) {
+    cartStore.set(cid, { items: {}, updatedAt: Date.now() });
+  }
+
+  return finalized;
+}
+
+async function createStripeCheckoutSession(params: {
+  order: Order;
+  baseUrl: string;
+  cid: string;
+}): Promise<{ ok: boolean; url?: string; sessionId?: string; error?: string }> {
+  const { stripeSecretKey } = getPaymentGatewayConfig();
+  if (!stripeSecretKey) {
+    return { ok: false, error: "Stripe merchant key is not configured." };
+  }
+
+  const body = new URLSearchParams();
+  body.set("mode", "payment");
+  body.set("client_reference_id", params.order.reference);
+  body.set("customer_email", params.order.email);
+  body.set(
+    "success_url",
+    `${params.baseUrl}/api/payments/stripe/return?reference=${encodeURIComponent(params.order.reference)}&cid=${encodeURIComponent(params.cid)}&session_id={CHECKOUT_SESSION_ID}`
+  );
+  body.set(
+    "cancel_url",
+    `${params.baseUrl}/checkout?cid=${encodeURIComponent(params.cid)}&cancelled=1`
+  );
+  body.set("metadata[order_reference]", params.order.reference);
+
+  const discountFactor =
+    params.order.subtotal > 0 && params.order.discount > 0
+      ? Math.max(0, (params.order.subtotal - params.order.discount) / params.order.subtotal)
+      : 1;
+
+  params.order.items.forEach((item, idx) => {
+    const unitCents = Math.max(1, Math.round(item.price * discountFactor * 100));
+    body.set(`line_items[${idx}][price_data][currency]`, "usd");
+    body.set(
+      `line_items[${idx}][price_data][product_data][name]`,
+      `${item.title} (${item.inventory_id})`
+    );
+    body.set(`line_items[${idx}][price_data][unit_amount]`, String(unitCents));
+    body.set(`line_items[${idx}][quantity]`, String(item.quantity));
+  });
+
+  if (params.order.shipping > 0) {
+    const shipIdx = params.order.items.length;
+    body.set(`line_items[${shipIdx}][price_data][currency]`, "usd");
+    body.set(
+      `line_items[${shipIdx}][price_data][product_data][name]`,
+      params.order.shipping_method || "Fine Art Courier Shipping"
+    );
+    body.set(
+      `line_items[${shipIdx}][price_data][unit_amount]`,
+      String(Math.round(params.order.shipping * 100))
+    );
+    body.set(`line_items[${shipIdx}][quantity]`, "1");
+  }
+
+  try {
+    const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${stripeSecretKey}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Idempotency-Key": `art-studio-${params.order.reference}`,
+      },
+      body: body.toString(),
+      signal: AbortSignal.timeout(10000),
+    });
+    const data = (await response.json()) as {
+      id?: string;
+      url?: string;
+      error?: { message?: string };
+    };
+    if (!response.ok || !data?.url || !data?.id) {
+      return {
+        ok: false,
+        error: data?.error?.message || "Unable to initialize Stripe checkout session.",
+      };
+    }
+    return { ok: true, url: data.url, sessionId: data.id };
+  } catch {
+    return { ok: false, error: "Unable to reach Stripe payment gateway." };
+  }
+}
+
+async function retrieveStripeCheckoutSession(sessionId: string): Promise<{
+  ok: boolean;
+  paid?: boolean;
+  orderReference?: string;
+  amountTotal?: number;
+}> {
+  const { stripeSecretKey } = getPaymentGatewayConfig();
+  if (!stripeSecretKey || !sessionId) return { ok: false };
+  try {
+    const response = await fetch(
+      `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
+      {
+        headers: { Authorization: `Bearer ${stripeSecretKey}` },
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+    if (!response.ok) return { ok: false };
+    const data = (await response.json()) as {
+      payment_status?: string;
+      status?: string;
+      amount_total?: number;
+      client_reference_id?: string;
+      metadata?: { order_reference?: string };
+    };
+    const paid =
+      data.payment_status === "paid" &&
+      (data.status === "complete" || !data.status);
+    return {
+      ok: true,
+      paid,
+      amountTotal: typeof data.amount_total === "number" ? data.amount_total : undefined,
+      orderReference:
+        data.metadata?.order_reference || data.client_reference_id || "",
+    };
+  } catch {
+    return { ok: false };
+  }
+}
+
+function verifyStripeWebhookSignature(
+  rawBody: string,
+  sigHeader: string,
+  webhookSecret: string
+): boolean {
+  if (!rawBody || !sigHeader || !webhookSecret) return false;
+  const parts = sigHeader.split(",").map((p) => p.trim());
+  const timestamp = parts.find((p) => p.startsWith("t="))?.slice(2) || "";
+  const signatures = parts
+    .filter((p) => p.startsWith("v1="))
+    .map((p) => p.slice(3));
+  if (!timestamp || signatures.length === 0) return false;
+
+  const expected = crypto
+    .createHmac("sha256", webhookSecret)
+    .update(`${timestamp}.${rawBody}`)
+    .digest("hex");
+  const expectedBuf = Buffer.from(expected, "utf8");
+  return signatures.some((sig) => {
+    const sigBuf = Buffer.from(sig, "utf8");
+    return (
+      sigBuf.length === expectedBuf.length &&
+      crypto.timingSafeEqual(sigBuf, expectedBuf)
+    );
+  });
+}
+
+function getPayPalApiBase(): string {
+  return getPaymentGatewayConfig().paypalMode === "live"
+    ? "https://api-m.paypal.com"
+    : "https://api-m.sandbox.paypal.com";
+}
+
+async function getPayPalAccessToken(): Promise<string | null> {
+  const { paypalClientId, paypalClientSecret } = getPaymentGatewayConfig();
+  if (!paypalClientId || !paypalClientSecret) return null;
+  const auth = Buffer.from(`${paypalClientId}:${paypalClientSecret}`).toString(
+    "base64"
+  );
+  try {
+    const res = await fetch(`${getPayPalApiBase()}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { access_token?: string };
+    return data.access_token || null;
+  } catch {
+    return null;
+  }
+}
+
+async function createPayPalOrder(params: {
+  order: Order;
+  baseUrl: string;
+  cid: string;
+}): Promise<{ ok: boolean; approveUrl?: string; paypalOrderId?: string; error?: string }> {
+  const token = await getPayPalAccessToken();
+  if (!token) {
+    return { ok: false, error: "PayPal merchant credentials are not configured." };
+  }
+  try {
+    const res = await fetch(`${getPayPalApiBase()}/v2/checkout/orders`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "PayPal-Request-Id": `art-studio-${params.order.reference}`,
+      },
+      body: JSON.stringify({
+        intent: "CAPTURE",
+        purchase_units: [
+          {
+            reference_id: params.order.reference,
+            custom_id: params.order.reference,
+            amount: {
+              currency_code: "USD",
+              value: params.order.total.toFixed(2),
+            },
+          },
+        ],
+        payment_source: {
+          paypal: {
+            experience_context: {
+              brand_name: "ART STUDIO",
+              user_action: "PAY_NOW",
+              return_url: `${params.baseUrl}/api/payments/paypal/return?reference=${encodeURIComponent(params.order.reference)}&cid=${encodeURIComponent(params.cid)}`,
+              cancel_url: `${params.baseUrl}/checkout?cid=${encodeURIComponent(params.cid)}&cancelled=1`,
+            },
+          },
+        },
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const data = (await res.json()) as {
+      id?: string;
+      links?: Array<{ rel?: string; href?: string }>;
+      message?: string;
+    };
+    const approveLink = data.links?.find(
+      (l) => l.rel === "payer-action" || l.rel === "approve"
+    )?.href;
+    if (!res.ok || !data.id || !approveLink) {
+      return {
+        ok: false,
+        error: data?.message || "Unable to initialize PayPal checkout order.",
+      };
+    }
+    return { ok: true, approveUrl: approveLink, paypalOrderId: data.id };
+  } catch {
+    return { ok: false, error: "Unable to reach PayPal gateway." };
+  }
+}
+
+async function capturePayPalOrder(paypalOrderId: string): Promise<{
+  ok: boolean;
+  completed?: boolean;
+}> {
+  const token = await getPayPalAccessToken();
+  if (!token || !paypalOrderId) return { ok: false };
+  try {
+    const res = await fetch(
+      `${getPayPalApiBase()}/v2/checkout/orders/${encodeURIComponent(paypalOrderId)}/capture`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+    if (!res.ok) return { ok: false };
+    const data = (await res.json()) as { status?: string };
+    return { ok: true, completed: data.status === "COMPLETED" };
+  } catch {
+    return { ok: false };
+  }
 }
 
 function isValidCartId(value: unknown): value is string {
@@ -1600,11 +2010,26 @@ function getCartItems(req: Request): CartItem[] {
 const FREE_SHIPPING_THRESHOLD = 1500;
 const STANDARD_COURIER_FEE = 65;
 
+type ShippingOptionId = "standard_insured" | "priority_air";
+
+interface ShippingOptionItem {
+  id: ShippingOptionId;
+  title: string;
+  description: string;
+  cratingWindow: string;
+  transitWindow: string;
+  estimatedDelivery: string;
+  fee: number;
+  badgeText: string;
+}
+
 interface ShippingDetails {
   subtotal: number;
   discount: number;
   discountedSubtotal: number;
   shipping: number;
+  tax: number;
+  taxNote: string;
   total: number;
   freeShippingThreshold: number;
   amountForFreeShipping: number;
@@ -1613,10 +2038,14 @@ interface ShippingDetails {
   hasSculpture: boolean;
   isInternational: boolean;
   country: string;
+  shippingOption: ShippingOptionId;
+  shippingOptions: ShippingOptionItem[];
   methodTitle: string;
   methodDescription: string;
   cratingWindow: string;
   transitWindow: string;
+  estimatedDelivery: string;
+  customsNotice: string;
   tierLabel: string;
 }
 
@@ -1634,9 +2063,15 @@ function isDomesticCountry(country?: string): boolean {
   );
 }
 
+function normalizeShippingOption(raw?: string): ShippingOptionId {
+  return String(raw ?? "").trim().toLowerCase() === "priority_air"
+    ? "priority_air"
+    : "standard_insured";
+}
+
 function calculateShippingDetails(
   cartItems: CartItem[],
-  options?: { country?: string; discount?: number }
+  options?: { country?: string; discount?: number; shippingOption?: string }
 ): ShippingDetails {
   const subtotal = Number(
     cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)
@@ -1652,61 +2087,149 @@ function calculateShippingDetails(
     (item) => item.category.toLowerCase() === "sculpture"
   );
   const qualifiesForFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
-  const shipping =
+  const standardFee =
     subtotal <= 0 ? 0.0 : qualifiesForFreeShipping ? 0.0 : STANDARD_COURIER_FEE;
-  const total = Number((discountedSubtotal + shipping).toFixed(2));
+
+  let standardTitle = "Insured Fine Art Courier Delivery";
+  let standardDesc =
+    "Custom-crated artwork handling via dedicated art courier with declared-value transit coverage and signature verification upon arrival.";
+  let standardCrating = "2–4 business days archival crating";
+  let standardTransit = "4–8 business days courier transit";
+  let standardEstimate = "6–12 business days";
+
+  let priorityTitle = "Priority Express Fine Art Courier";
+  let priorityDesc =
+    "Expedited archival crating and priority scheduled courier routing with direct signature release.";
+  let priorityCrating = "1–2 business days priority crating";
+  let priorityTransit = "2–3 business days express courier";
+  let priorityEstimate = "3–5 business days";
+  const priorityFee = subtotal <= 0 ? 0.0 : hasFurniture ? 195.0 : 125.0;
+
+  if (hasFurniture && isInternational) {
+    standardTitle = "International White-Glove Furniture Freight (Insured)";
+    standardDesc =
+      "ISPM-15 heat-treated custom timber crating and blanket-wrapped white-glove freight via specialist fine art carrier with export customs documentation and room-of-choice placement.";
+    standardCrating = "3–5 business days ISPM-15 timber crating";
+    standardTransit = "10–18 business days international freight";
+    standardEstimate = "13–23 business days";
+
+    priorityTitle = "Priority Air Crated Furniture Dispatch";
+    priorityDesc =
+      "Expedited ISPM-15 export crating and dedicated air freight routing with priority customs brokerage and scheduled inside delivery.";
+    priorityCrating = "2–3 business days expedited crating";
+    priorityTransit = "5–9 business days priority air freight";
+    priorityEstimate = "7–12 business days";
+  } else if (hasFurniture) {
+    standardTitle = "White-Glove Furniture Delivery (Insured)";
+    standardDesc =
+      "Blanket-wrapped, custom-crated white-glove carrier delivery inside your room of choice with scheduled appointment and signature verification.";
+    standardCrating = "3–5 business days custom crating";
+    standardTransit = "5–10 business days domestic freight";
+    standardEstimate = "8–15 business days";
+
+    priorityTitle = "Expedited Dedicated White-Glove Courier";
+    priorityDesc =
+      "Priority crating and direct two-person dedicated climate-controlled van transport with scheduled room placement.";
+    priorityCrating = "1–3 business days expedited crating";
+    priorityTransit = "3–5 business days direct courier";
+    priorityEstimate = "4–8 business days";
+  } else if (isInternational && hasSculpture) {
+    standardTitle = "International Insured Sculpture Courier";
+    standardDesc =
+      "Custom foam-cavity timber crating via international specialist art air courier with airway bill tracking and export customs paperwork.";
+    standardCrating = "3–5 business days custom crating";
+    standardTransit = "7–14 business days international air transit";
+    standardEstimate = "10–19 business days";
+
+    priorityTitle = "Priority Air Sculpture Express";
+    priorityDesc =
+      "Expedited foam-cavity timber crating with priority air cargo uplift and dedicated customs clearance coordination.";
+    priorityCrating = "1–2 business days priority crating";
+    priorityTransit = "3–5 business days priority air transit";
+    priorityEstimate = "4–7 business days";
+  } else if (isInternational) {
+    standardTitle = "International Paintings & Prints Air Courier (Insured)";
+    standardDesc =
+      "Archival acid-free glassine wrapping inside rigid museum flat-pack or telescoping art cases via air courier with export customs paperwork.";
+    standardCrating = "2–4 business days museum flat-packing";
+    standardTransit = "5–10 business days international air";
+    standardEstimate = "7–14 business days";
+
+    priorityTitle = "Priority Air Museum Courier";
+    priorityDesc =
+      "Immediate archival flat-packing and priority international express air shuttle with full tracking and direct signature release.";
+    priorityCrating = "1–2 business days priority flat-packing";
+    priorityTransit = "3–5 business days express air";
+    priorityEstimate = "4–7 business days";
+  } else if (hasSculpture) {
+    standardTitle = "Insured Fine Art & Sculpture Courier";
+    standardDesc =
+      "Custom foam-cavity crated handling via dedicated art courier with declared-value coverage and signature verification upon arrival.";
+    standardCrating = "3–5 business days archival crating";
+    standardTransit = "4–9 business days courier transit";
+    standardEstimate = "7–14 business days";
+  }
+
+  const shippingOptions: ShippingOptionItem[] = [
+    {
+      id: "standard_insured",
+      title: standardTitle,
+      description: standardDesc,
+      cratingWindow: standardCrating,
+      transitWindow: standardTransit,
+      estimatedDelivery: standardEstimate,
+      fee: standardFee,
+      badgeText: qualifiesForFreeShipping
+        ? "Complimentary $1,500+"
+        : "Standard Insured",
+    },
+    {
+      id: "priority_air",
+      title: priorityTitle,
+      description: priorityDesc,
+      cratingWindow: priorityCrating,
+      transitWindow: priorityTransit,
+      estimatedDelivery: priorityEstimate,
+      fee: priorityFee,
+      badgeText: "Expedited Air Dispatch",
+    },
+  ];
+
+  const shippingOption = normalizeShippingOption(options?.shippingOption);
+  const selectedOption =
+    shippingOptions.find((opt) => opt.id === shippingOption) ||
+    shippingOptions[0];
+  const shipping = selectedOption.fee;
+
+  const tax = 0.0;
+  const taxNote = isInternational
+    ? "Destination import duties & VAT collected locally by customs carrier if applicable"
+    : "No gallery surcharge; applicable taxes assessed at final settlement";
+
+  const customsNotice = isInternational
+    ? "International shipments include export commercial invoices and fine art customs paperwork. Any local import duties, VAT, or destination customs clearance fees are determined by local authorities and settled by the recipient."
+    : "Domestic courier dispatch includes full crating and scheduled signature confirmation upon arrival.";
+
+  const total = Number((discountedSubtotal + shipping + tax).toFixed(2));
   const amountForFreeShipping =
     qualifiesForFreeShipping || subtotal <= 0
       ? 0
       : Number((FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2));
 
-  let methodTitle = "Insured Fine Art Courier Delivery";
-  let methodDescription =
-    "Custom-crated artwork handling via dedicated art courier. 100% declared-value transit insurance with signature verification upon arrival.";
-  let cratingWindow = "2–4 business days archival crating";
-  let transitWindow = "4–8 business days courier transit";
-
-  if (hasFurniture && isInternational) {
-    methodTitle = "International White-Glove Furniture Freight (Insured)";
-    methodDescription =
-      "ISPM-15 heat-treated custom timber crating and blanket-wrapped white-glove freight via international fine art carrier. Includes 100% declared-value insurance, export customs brokerage documentation, and scheduled room-of-choice placement.";
-    cratingWindow = "3–5 business days ISPM-15 timber crating";
-    transitWindow = "10–18 business days international freight";
-  } else if (hasFurniture) {
-    methodTitle = "White-Glove Furniture Delivery (Insured)";
-    methodDescription =
-      "Blanket-wrapped, custom-crated white-glove carrier delivery inside room of choice. 100% declared-value transit insurance with signature verification included.";
-    cratingWindow = "3–5 business days custom crating";
-    transitWindow = "5–10 business days domestic freight";
-  } else if (isInternational && hasSculpture) {
-    methodTitle = "International Insured Sculpture Courier";
-    methodDescription =
-      "Custom foam-cavity timber crating via international specialist fine art air courier. Includes 100% declared-value transit insurance, airway bill tracking, and export customs clearance paperwork.";
-    cratingWindow = "3–5 business days custom crating";
-    transitWindow = "7–14 business days international air transit";
-  } else if (isInternational) {
-    methodTitle = "International Paintings & Prints Air Courier (Insured)";
-    methodDescription =
-      "Archival acid-free glassine wrapping inside rigid museum flat-pack or telescoping fine art cases via priority air shuttle. Includes 100% declared-value transit insurance, airway bill tracking, and export customs paperwork.";
-    cratingWindow = "2–4 business days museum flat-packing";
-    transitWindow = "5–10 business days priority international air";
-  } else if (hasSculpture) {
-    methodTitle = "Insured Fine Art & Sculpture Courier";
-    methodDescription =
-      "Custom foam-cavity crated handling via dedicated art courier. 100% declared-value transit insurance with scheduled signature verification upon arrival.";
-    cratingWindow = "3–5 business days archival crating";
-    transitWindow = "4–9 business days courier transit";
-  }
-
-  const tierLabel = qualifiesForFreeShipping
-    ? "Complimentary ($1,500+)"
-    : "Standard Insured ($65.00)";
+  const tierLabel =
+    selectedOption.id === "priority_air"
+      ? `Expedited ($${formatCurrency(selectedOption.fee)})`
+      : qualifiesForFreeShipping
+      ? "Complimentary ($1,500+)"
+      : "Standard Insured ($65.00)";
 
   return {
     subtotal,
     discount,
     discountedSubtotal,
     shipping,
+    tax,
+    taxNote,
     total,
     freeShippingThreshold: FREE_SHIPPING_THRESHOLD,
     amountForFreeShipping,
@@ -1715,10 +2238,14 @@ function calculateShippingDetails(
     hasSculpture,
     isInternational,
     country,
-    methodTitle,
-    methodDescription,
-    cratingWindow,
-    transitWindow,
+    shippingOption: selectedOption.id,
+    shippingOptions,
+    methodTitle: selectedOption.title,
+    methodDescription: selectedOption.description,
+    cratingWindow: selectedOption.cratingWindow,
+    transitWindow: selectedOption.transitWindow,
+    estimatedDelivery: selectedOption.estimatedDelivery,
+    customsNotice,
     tierLabel,
   };
 }
@@ -1726,12 +2253,14 @@ function calculateShippingDetails(
 function calculateTotals(cartItems: CartItem[]): {
   subtotal: number;
   shipping: number;
+  tax: number;
   total: number;
 } {
   const details = calculateShippingDetails(cartItems);
   return {
     subtotal: details.subtotal,
     shipping: details.shipping,
+    tax: details.tax,
     total: details.total,
   };
 }
@@ -1795,7 +2324,13 @@ app.set("views", path.join(__dirname, "views"));
 app.use("/static", express.static(path.join(__dirname, "static")));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req, _res, buf) => {
+      (req as Request & { rawBody?: string }).rawBody = buf.toString("utf8");
+    },
+  })
+);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
   const forwardedProto = String(req.headers["x-forwarded-proto"] || "")
@@ -1881,7 +2416,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.get(["/", "/shop"], (req: Request, res: Response) => {
   const categoryFilter = String(req.query.category ?? "").trim();
   const artistFilter = String(req.query.artist ?? "").trim();
-  let filtered = products;
+  const catalog = getAllProducts();
+  let filtered = catalog;
   if (categoryFilter && categoryFilter.toLowerCase() !== "all") {
     filtered = filtered.filter(
       (p) => p.category.toLowerCase() === categoryFilter.toLowerCase()
@@ -1896,34 +2432,121 @@ app.get(["/", "/shop"], (req: Request, res: Response) => {
   res.render("index", {
     categories,
     products: filtered,
-    all_products: products,
-    featured_collection: featuredCollection,
+    all_products: catalog,
+    featured_collection: [],
     active_category: activeCategory,
     active_artist: artistFilter || "All",
     activeNav: activeCategory,
   });
 });
 
-app.get("/api/cart", (req: Request, res: Response) => {
+app.get("/api/cart", async (req: Request, res: Response) => {
   const cid = getRequestCartId(req) ?? "";
   const cartItems = getCartItems(req);
   const country = String(req.query.country ?? "").trim();
-  const details = calculateShippingDetails(cartItems, { country });
+  const shippingOption = String(req.query.shipping_option ?? "").trim();
+  const rawPromo = String(req.query.promo_code ?? "").trim().toUpperCase();
+  const baseTotals = calculateTotals(cartItems);
+  const promoApplied = rawPromo === "ART10" || rawPromo === "COLLECTOR10";
+  const discount = promoApplied ? Number((baseTotals.subtotal * 0.1).toFixed(2)) : 0;
+  const details = calculateShippingDetails(cartItems, {
+    country,
+    discount,
+    shippingOption,
+  });
+  const prices = await getCryptoPrices();
+  const cryptoQuotes = {
+    bitcoin: calculateCryptoAmount(details.total, prices.bitcoin, 8),
+    ethereum: calculateCryptoAmount(details.total, prices.ethereum, 6),
+    solana: calculateCryptoAmount(details.total, prices.solana, 4),
+  };
   res.setHeader("Cache-Control", "no-store");
   res.json({
     cid,
     cart_count: getCartCount(req),
     items: cartItems,
     subtotal: details.subtotal,
+    discount: details.discount,
     shipping: details.shipping,
+    tax: details.tax,
+    total: details.total,
+    shipping_details: details,
+    crypto_quotes: cryptoQuotes,
+    crypto_prices: prices,
+  });
+});
+
+app.post("/api/cart/update", (req: Request, res: Response) => {
+  if (hasMismatchedOrigin(req)) {
+    res.status(403).json({ ok: false, error: "Invalid request origin." });
+    return;
+  }
+  const productId = String(req.body?.product_id ?? "").trim();
+  const parsed = Number.parseInt(String(req.body?.quantity ?? "1"), 10);
+  const quantity = Number.isNaN(parsed) ? 1 : parsed;
+  const currentCart = getCart(req);
+
+  if (quantity <= 0) {
+    delete currentCart[productId];
+  } else if (quantity <= 20 && getProductById(productId)) {
+    currentCart[productId] = quantity;
+  } else {
+    res.status(400).json({
+      ok: false,
+      error: "Please choose a quantity between 1 and 20.",
+    });
+    return;
+  }
+
+  const cid = saveCart(req, res, currentCart);
+  const cartItems = getCartItems(req);
+  const details = calculateShippingDetails(cartItems);
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    cid,
+    cart_count: getCartCount(req),
+    items: cartItems,
+    subtotal: details.subtotal,
+    discount: details.discount,
+    shipping: details.shipping,
+    tax: details.tax,
+    total: details.total,
+    shipping_details: details,
+  });
+});
+
+app.post("/api/cart/remove", (req: Request, res: Response) => {
+  if (hasMismatchedOrigin(req)) {
+    res.status(403).json({ ok: false, error: "Invalid request origin." });
+    return;
+  }
+  const productId = String(req.body?.product_id ?? "").trim();
+  const currentCart = getCart(req);
+  delete currentCart[productId];
+  const cid = saveCart(req, res, currentCart);
+  const cartItems = getCartItems(req);
+  const details = calculateShippingDetails(cartItems);
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    cid,
+    cart_count: getCartCount(req),
+    items: cartItems,
+    subtotal: details.subtotal,
+    discount: details.discount,
+    shipping: details.shipping,
+    tax: details.tax,
     total: details.total,
     shipping_details: details,
   });
 });
 
 app.get("/product/:product_id", (req: Request, res: Response) => {
-  const rawId = String(req.params.product_id ?? "");
-  if (!/^\d+$/.test(rawId)) {
+  const rawId = String(req.params.product_id ?? "").trim();
+  const isNumericId = /^\d+$/.test(rawId);
+  const isInventoryId = /^AS-[A-Z]{2}-\d{4}-\d+$/i.test(rawId);
+  if (!isNumericId && !isInventoryId) {
     res.status(404).send("Not Found");
     return;
   }
@@ -1937,6 +2560,21 @@ app.get("/product/:product_id", (req: Request, res: Response) => {
     provenance: getProductProvenance(product),
     activeNav: product.category,
     messages: consumeFlashes(req),
+  });
+});
+
+app.get("/certificate/:identifier", (req: Request, res: Response) => {
+  const identifier = String(req.params.identifier ?? "").trim();
+  const product = getProductById(identifier);
+  if (!product) {
+    res.status(404).send("Artwork certificate record not found.");
+    return;
+  }
+  res.render("certificate", {
+    product,
+    provenance: getProductProvenance(product),
+    categoryCode: getCategoryCode(product.category),
+    activeNav: "",
   });
 });
 
@@ -1960,17 +2598,11 @@ app.get("/search", (req: Request, res: Response) => {
     res.redirect("/");
     return;
   }
-  const needle = query.toLowerCase();
-  const results = allProducts.filter(
-    (product) =>
-      product.title.toLowerCase().includes(needle) ||
-      product.artist.toLowerCase().includes(needle) ||
-      product.category.toLowerCase().includes(needle)
-  );
+  const results = inventoryStore.searchProducts(query);
   res.render("index", {
     categories,
     products: results,
-    all_products: products,
+    all_products: getAllProducts(),
     featured_collection: [],
     search_query: query,
     active_category: "All",
@@ -2025,6 +2657,15 @@ app.post("/add-to-cart", (req: Request, res: Response) => {
   }
 
   const cid = ensureCartId(req);
+  if (product.status === "sold") {
+    pushFlash(
+      req,
+      `${product.title} (${product.inventory_id}) has been acquired and is preserved in our sold archive.`
+    );
+    redirectWithSession(req, res, `/product/${product.id}`, cid);
+    return;
+  }
+
   const parsed = Number.parseInt(String(req.body.quantity ?? "1"), 10);
   const quantity = Number.isNaN(parsed) ? 1 : parsed;
 
@@ -2049,7 +2690,7 @@ app.post("/add-to-cart", (req: Request, res: Response) => {
 app.get("/checkout", async (req: Request, res: Response) => {
   const cartItems = getCartItems(req);
   if (cartItems.length === 0) {
-    pushFlash(req, "Your cart is empty.");
+    pushFlash(req, "Your shopping bag is empty.");
     redirectWithSession(req, res, "/cart");
     return;
   }
@@ -2057,126 +2698,282 @@ app.get("/checkout", async (req: Request, res: Response) => {
   if (!req.session.btcCheckoutStartedAt) {
     req.session.btcCheckoutStartedAt = Date.now();
   }
+
+  const cid = ensureCartId(req);
+  const checkoutToken = issueCheckoutToken(req, cid);
   const shippingDetails = calculateShippingDetails(cartItems);
   const prices = await getCryptoPrices();
   const cryptoOptions = await buildCryptoOptions(shippingDetails.total, prices);
+
   const requestedMethod = String(req.query.method ?? "").trim().toLowerCase();
-  const initialMethod: CryptoMethodKey | "" =
+  const initialMethod =
     requestedMethod === "bitcoin" ||
     requestedMethod === "ethereum" ||
-    requestedMethod === "solana"
+    requestedMethod === "solana" ||
+    requestedMethod === "stripe" ||
+    requestedMethod === "paypal"
       ? requestedMethod
-      : "";
+      : requestedMethod === "card"
+      ? "stripe"
+      : "bitcoin";
 
-  res.render("checkout", {
-    cart_items: cartItems,
-    subtotal: shippingDetails.subtotal,
-    discount: 0,
-    promo_code: "",
-    shipping: shippingDetails.shipping,
-    total: shippingDetails.total,
-    shipping_details: shippingDetails,
-    selected_method: initialMethod,
-    crypto_options: cryptoOptions,
-    form_values: {
-      name: "",
-      email: "",
-      phone: "",
-      country: "",
-      address: "",
-      apartment: "",
-      city: "",
-      state: "",
-      zip_code: "",
-    },
-    messages: consumeFlashes(req),
+  const messages = consumeFlashes(req);
+  if (String(req.query.cancelled ?? "") === "1") {
+    messages.push(
+      "Payment authorization was cancelled before completion. No charge was made and your bag remains intact."
+    );
+  }
+
+  req.session.save(() => {
+    res.render("checkout", {
+      cart_items: cartItems,
+      subtotal: shippingDetails.subtotal,
+      discount: 0,
+      promo_code: "",
+      shipping: shippingDetails.shipping,
+      tax: shippingDetails.tax,
+      total: shippingDetails.total,
+      shipping_details: shippingDetails,
+      shipping_option: shippingDetails.shippingOption,
+      payment_providers: getPaymentProviders(),
+      crypto_options: cryptoOptions,
+      selected_method: initialMethod,
+      selected_provider: initialMethod,
+      checkout_token: checkoutToken,
+      active_step: 1,
+      btc_notice: null,
+      form_values: {
+        name: "",
+        email: "",
+        phone: "",
+        country: "",
+        state: "",
+        city: "",
+        zip_code: "",
+        address: "",
+        apartment: "",
+        delivery_instructions: "",
+        review_confirmed: false,
+      },
+      messages,
+    });
   });
 });
 
 app.post("/checkout", async (req: Request, res: Response) => {
+  if (hasMismatchedOrigin(req)) {
+    res.status(403).send("Invalid request origin.");
+    return;
+  }
+
   const cartItems = getCartItems(req);
   const cid = ensureCartId(req);
   if (cartItems.length === 0) {
-    pushFlash(req, "Your cart is empty.");
+    pushFlash(req, "Your shopping bag is empty.");
     redirectWithSession(req, res, "/cart", cid);
     return;
   }
 
-  const country = String(req.body.country ?? "").trim();
-  const baseTotals = calculateTotals(cartItems);
-  const rawPromo = String(req.body.promo_code ?? "").trim().toUpperCase();
-  const promoApplied = rawPromo === "ART10" || rawPromo === "COLLECTOR10";
-  const discount = promoApplied ? Number((baseTotals.subtotal * 0.1).toFixed(2)) : 0;
-  const shippingDetails = calculateShippingDetails(cartItems, { country, discount });
-  const shipping = shippingDetails.shipping;
-  const total = shippingDetails.total;
-
-  const prices = await getCryptoPrices();
-  const cryptoOptions = await buildCryptoOptions(total, prices);
+  const submittedToken = String(req.body.checkout_token ?? "").trim();
+  const tokenRecord = getCheckoutTokenRecord(submittedToken, cid);
 
   const name = String(req.body.name ?? "").trim();
   const email = String(req.body.email ?? "").trim();
   const phone = String(req.body.phone ?? "").trim();
+  const country = String(req.body.country ?? "").trim();
+  const state = String(req.body.state ?? "").trim();
+  const city = String(req.body.city ?? "").trim();
+  const zipCode = String(req.body.zip_code ?? "").trim();
   const address = String(req.body.address ?? "").trim();
   const apartment = String(req.body.apartment ?? "").trim();
-  const city = String(req.body.city ?? "").trim();
-  const state = String(req.body.state ?? "").trim();
-  const zipCode = String(req.body.zip_code ?? "").trim();
-  const rawMethod = String(req.body.payment_method ?? "bitcoin");
-  const isSupportedMethod =
-    rawMethod === "bitcoin" ||
-    rawMethod === "ethereum" ||
-    rawMethod === "solana";
+  const deliveryInstructions = String(req.body.delivery_instructions ?? "")
+    .trim()
+    .slice(0, 400);
+  const shippingOption = normalizeShippingOption(
+    String(req.body.shipping_option ?? "standard_insured")
+  );
+  const reviewConfirmed =
+    String(req.body.review_confirmed ?? "") === "1" ||
+    String(req.body.review_confirmed ?? "") === "true";
+
+  const rawMethod = String(
+    req.body.payment_method || req.body.payment_provider || "bitcoin"
+  )
+    .trim()
+    .toLowerCase();
+  const normalizedMethod = rawMethod === "card" ? "stripe" : rawMethod;
+  const isCryptoMethod =
+    normalizedMethod === "bitcoin" ||
+    normalizedMethod === "ethereum" ||
+    normalizedMethod === "solana";
+  const isGatewayMethod =
+    normalizedMethod === "stripe" || normalizedMethod === "paypal";
+
+  const baseTotals = calculateTotals(cartItems);
+  const rawPromo = String(req.body.promo_code ?? "").trim().toUpperCase();
+  const promoApplied = rawPromo === "ART10" || rawPromo === "COLLECTOR10";
+  const discount = promoApplied
+    ? Number((baseTotals.subtotal * 0.1).toFixed(2))
+    : 0;
+  const shippingDetails = calculateShippingDetails(cartItems, {
+    country,
+    discount,
+    shippingOption,
+  });
+  const providers = getPaymentProviders();
+  const prices = await getCryptoPrices();
+  const cryptoOptions = await buildCryptoOptions(shippingDetails.total, prices);
 
   const formValues = {
     name,
     email,
     phone,
     country,
+    state,
+    city,
+    zip_code: zipCode,
     address,
     apartment,
-    city,
-    state,
-    zip_code: zipCode,
+    delivery_instructions: deliveryInstructions,
+    review_confirmed: reviewConfirmed,
   };
 
-  const phoneDigits = phone.replace(/\D/g, "");
-  const emailDomain = email.includes("@") ? email.split("@").pop() ?? "" : "";
-  if (name.length < 2 || !email.includes("@") || !emailDomain.includes(".")) {
-    pushFlash(req, "Please enter your full legal name and a valid email address.");
-  } else if (phoneDigits.length < 6) {
-    pushFlash(req, "Please enter a valid phone number.");
-  } else if (
-    country.length < 2 ||
-    address.length < 3 ||
-    city.length < 2 ||
-    state.length < 2 ||
-    zipCode.length < 2
-  ) {
-    pushFlash(
-      req,
-      "Please complete your country/region, street address, city, state, and ZIP/postal code."
-    );
-  } else if (rawMethod === "card" || rawMethod === "paypal") {
-    pushFlash(
-      req,
-      "Card and PayPal payment gateways are currently under maintenance. Please try another payment method above to complete your order."
-    );
-  } else if (!isSupportedMethod) {
-    pushFlash(req, "Please select a payment method (BTC, ETH, or SOL) to complete your order.");
-  } else if (!cryptoOptions[rawMethod].walletAddress) {
-    pushFlash(
-      req,
-      `${cryptoOptions[rawMethod].label} (${cryptoOptions[rawMethod].symbol}) wallet address is not configured yet.`
-    );
-  } else {
-    const selected = cryptoOptions[rawMethod];
-    let verifiedBtcStatus: BitcoinListenerResult | null = null;
+  const renderAtStep = (
+    step: number,
+    errorMessages: string[],
+    opts?: {
+      tokenToUse?: string;
+      btcNotice?: { title: string; body: string; amount?: string; address?: string } | null;
+    }
+  ) => {
+    const freshToken = opts?.tokenToUse || issueCheckoutToken(req, cid);
+    req.session.save(() => {
+      res.render("checkout", {
+        cart_items: cartItems,
+        subtotal: baseTotals.subtotal,
+        discount,
+        promo_code: promoApplied ? rawPromo : "",
+        shipping: shippingDetails.shipping,
+        tax: shippingDetails.tax,
+        total: shippingDetails.total,
+        shipping_details: shippingDetails,
+        shipping_option: shippingOption,
+        payment_providers: providers,
+        crypto_options: cryptoOptions,
+        selected_method: normalizedMethod,
+        selected_provider: normalizedMethod,
+        checkout_token: freshToken,
+        active_step: step,
+        btc_notice: opts?.btcNotice ?? null,
+        form_values: formValues,
+        messages: errorMessages,
+      });
+    });
+  };
 
-    if (selected.key === "bitcoin") {
+  if (!tokenRecord) {
+    renderAtStep(5, [
+      "Your checkout session token expired or was already used. Please review your details and submit once.",
+    ]);
+    return;
+  }
+
+  if (tokenRecord.status === "processing") {
+    renderAtStep(
+      5,
+      [
+        "A submission for this checkout session is already being processed. Please wait rather than submitting twice.",
+      ],
+      { tokenToUse: submittedToken }
+    );
+    return;
+  }
+
+  if (tokenRecord.status === "completed" && tokenRecord.orderReference) {
+    const existing = orderByReference.get(tokenRecord.orderReference);
+    if (
+      existing &&
+      (existing.payment_status === "paid" ||
+        existing.payment_status === "confirmed" ||
+        existing.payment_status === "mempool")
+    ) {
+      redirectWithSession(
+        req,
+        res,
+        `/checkout-success?reference=${encodeURIComponent(existing.reference)}`,
+        cid
+      );
+      return;
+    }
+    renderAtStep(5, [
+      "This checkout submission was already finalized. Please review your updated bag before starting another checkout.",
+    ]);
+    return;
+  }
+
+  const soldItems = cartItems.filter((item) => {
+    const latest = getProductById(item.id);
+    return !latest || latest.status === "sold";
+  });
+  if (soldItems.length > 0) {
+    renderAtStep(4, [
+      `The artwork "${soldItems[0].title}" (${soldItems[0].inventory_id}) is no longer available. Please remove it from your bag before continuing.`,
+    ]);
+    return;
+  }
+
+  const phoneDigits = phone.replace(/\D/g, "");
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+
+  if (name.length < 2 || !emailValid || phoneDigits.length < 7) {
+    renderAtStep(1, [
+      "Step 1 (Customer Information): Please enter your full name, a valid email address, and a valid phone number.",
+    ]);
+    return;
+  }
+
+  if (
+    country.length < 2 ||
+    state.length < 2 ||
+    city.length < 2 ||
+    zipCode.length < 2 ||
+    address.length < 4
+  ) {
+    renderAtStep(2, [
+      "Step 2 (Delivery Information): Please complete country, state or region, city, postal code, and street address.",
+    ]);
+    return;
+  }
+
+  if (!reviewConfirmed) {
+    renderAtStep(4, [
+      "Step 4 (Order Review): Please confirm that you have reviewed your selected works, shipping method, and delivery address before proceeding to payment.",
+    ]);
+    return;
+  }
+
+  if (!isCryptoMethod && !isGatewayMethod) {
+    renderAtStep(5, [
+      "Step 5 (Payment): Please select a payment method (BTC, ETH, SOL, Card via Stripe, or PayPal).",
+    ]);
+    return;
+  }
+
+  // Handle Direct Cryptocurrency Settlement (BTC with Mempool Listener, ETH, SOL)
+  if (isCryptoMethod) {
+    const selectedCrypto = cryptoOptions[normalizedMethod as CryptoMethodKey];
+    if (!selectedCrypto.walletAddress) {
+      renderAtStep(5, [
+        `${selectedCrypto.label} (${selectedCrypto.symbol}) wallet address is not configured yet.`,
+      ]);
+      return;
+    }
+
+    let verifiedBtcStatus: BitcoinListenerResult | null = null;
+    if (selectedCrypto.key === "bitcoin") {
       verifiedBtcStatus = await checkBitcoinPaymentStatus({
-        address: selected.walletAddress,
-        expectedBtc: selected.amount,
+        address: selectedCrypto.walletAddress,
+        expectedBtc: selectedCrypto.amount,
         sinceMs: req.session.btcCheckoutStartedAt || Date.now(),
         forceRefresh: true,
       });
@@ -2195,8 +2992,8 @@ app.post("/checkout", async (req: Request, res: Response) => {
           btcNotice = {
             title: "Partial Bitcoin Transfer Received",
             body: `We detected ${verifiedBtcStatus.receivedBtc} BTC so far. Please send the remaining balance below — your order confirmation slip will appear automatically once full payment arrives.`,
-            amount: selected.amount,
-            address: selected.walletAddress,
+            amount: selectedCrypto.amount,
+            address: selectedCrypto.walletAddress,
           };
         } else if (verifiedBtcStatus.status === "unavailable") {
           btcNotice = {
@@ -2206,29 +3003,18 @@ app.post("/checkout", async (req: Request, res: Response) => {
         } else {
           btcNotice = {
             title: "Awaiting Your Bitcoin Transfer",
-            body: "No payment has arrived yet. Please send the exact amount shown below — your order confirmation slip will appear automatically as soon as your transfer is picked up.",
-            amount: selected.amount,
-            address: selected.walletAddress,
+            body: "No Bitcoin transfer has been detected yet. Please send the exact amount shown below — your order confirmation slip will appear automatically once your transfer is confirmed.",
+            amount: selectedCrypto.amount,
+            address: selectedCrypto.walletAddress,
           };
         }
-        res.render("checkout", {
-          cart_items: cartItems,
-          subtotal: baseTotals.subtotal,
-          discount,
-          promo_code: promoApplied ? rawPromo : "",
-          shipping,
-          total,
-          shipping_details: shippingDetails,
-          selected_method: "bitcoin",
-          crypto_options: cryptoOptions,
-          form_values: formValues,
-          btc_notice: btcNotice,
-          messages: consumeFlashes(req),
-        });
+        renderAtStep(5, [], { btcNotice });
         return;
       }
     }
 
+    tokenRecord.status = "completed";
+    const nowIso = new Date().toISOString();
     const order: Order = {
       reference: crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase(),
       name,
@@ -2240,32 +3026,52 @@ app.post("/checkout", async (req: Request, res: Response) => {
       city,
       state,
       zip_code: zipCode,
-      payment_method: selected.key,
-      payment_symbol: selected.symbol,
-      payment_network: selected.network,
-      crypto_amount: selected.amount,
-      wallet_address: selected.walletAddress,
-      qr_svg: selected.qrSvg,
+      delivery_instructions: deliveryInstructions,
+      payment_method: selectedCrypto.key,
+      payment_symbol: selectedCrypto.symbol,
+      payment_network: selectedCrypto.network,
+      payment_provider: selectedCrypto.key,
+      payment_provider_label: `${selectedCrypto.label} (${selectedCrypto.symbol})`,
+      crypto_amount: selectedCrypto.amount,
+      wallet_address: selectedCrypto.walletAddress,
+      qr_svg: selectedCrypto.qrSvg,
       payment_status: "pending",
       created_at_ms: Date.now(),
+      order_date: nowIso,
       subtotal: baseTotals.subtotal,
       discount,
-      shipping,
+      shipping: shippingDetails.shipping,
+      tax: shippingDetails.tax,
+      tax_note: shippingDetails.taxNote,
+      shipping_option: shippingDetails.shippingOption,
       shipping_method: shippingDetails.methodTitle,
       shipping_tier: shippingDetails.tierLabel,
+      estimated_delivery: shippingDetails.estimatedDelivery,
       is_international: shippingDetails.isInternational,
       has_furniture: shippingDetails.hasFurniture,
-      total,
-      items: cartItems,
+      total: shippingDetails.total,
+      items: cartItems.map((item) => ({
+        id: item.id,
+        inventory_id: item.inventory_id,
+        title: item.title,
+        artist: item.artist,
+        category: item.category,
+        price: item.price,
+        size: item.size,
+        image: item.image,
+        quantity: item.quantity,
+      })),
     };
 
     if (verifiedBtcStatus) {
       order.payment_status =
         verifiedBtcStatus.status === "confirmed" ? "confirmed" : "mempool";
+      order.verified_at = nowIso;
       if (verifiedBtcStatus.txid) {
         order.payment_txid = verifiedBtcStatus.txid;
         order.payment_received_btc = verifiedBtcStatus.receivedBtc;
         consumedBitcoinTxids.set(verifiedBtcStatus.txid, order.reference);
+        inventoryStore.recordConsumedTxid(verifiedBtcStatus.txid, order.reference);
         if (verifiedBtcStatus.blockHeight) {
           order.payment_block_height = verifiedBtcStatus.blockHeight;
         }
@@ -2273,26 +3079,132 @@ app.post("/checkout", async (req: Request, res: Response) => {
       req.session.btcCheckoutStartedAt = undefined;
     }
 
+    tokenRecord.orderReference = order.reference;
     req.session.order = order;
     orderStore.set(cid, order);
     orderByReference.set(order.reference, order);
+    inventoryStore.saveOrder(order);
+    inventoryStore.markProductsSold(
+      cartItems.map((item) => item.id),
+      order.reference
+    );
     saveCart(req, res, {});
-    redirectWithSession(req, res, "/checkout-success", cid);
+    redirectWithSession(
+      req,
+      res,
+      `/checkout-success?reference=${encodeURIComponent(order.reference)}`,
+      cid
+    );
     return;
   }
 
-  res.render("checkout", {
-    cart_items: cartItems,
+  // Handle Hosted Payment Gateways (Stripe / PayPal)
+  const selectedProviderId = normalizedMethod as PaymentProviderId;
+  const chosenProvider = providers.find((p) => p.id === selectedProviderId)!;
+  if (!chosenProvider.configured) {
+    renderAtStep(5, [
+      `${chosenProvider.name} cannot process live charges yet because merchant credentials and business authorization are not configured on this server. No payment was taken, your order was not placed, and your shopping bag has been preserved.`,
+    ]);
+    return;
+  }
+
+  tokenRecord.status = "processing";
+
+  const nowIso = new Date().toISOString();
+  const draftOrder: Order = {
+    reference: crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase(),
+    name,
+    email,
+    phone,
+    country,
+    address,
+    apartment,
+    city,
+    state,
+    zip_code: zipCode,
+    delivery_instructions: deliveryInstructions,
+    payment_method: selectedProviderId,
+    payment_symbol: "USD",
+    payment_network: chosenProvider.name,
+    payment_provider: selectedProviderId,
+    payment_provider_label: chosenProvider.name,
+    crypto_amount: shippingDetails.total.toFixed(2),
+    wallet_address: "",
+    qr_svg: "",
+    payment_status: "awaiting_provider_verification",
+    created_at_ms: Date.now(),
+    order_date: nowIso,
     subtotal: baseTotals.subtotal,
     discount,
-    promo_code: promoApplied ? rawPromo : "",
-    shipping,
-    total,
-    shipping_details: shippingDetails,
-    selected_method: isSupportedMethod || rawMethod === "card" || rawMethod === "paypal" ? rawMethod : "",
-    crypto_options: cryptoOptions,
-    form_values: formValues,
-    messages: consumeFlashes(req),
+    shipping: shippingDetails.shipping,
+    tax: shippingDetails.tax,
+    tax_note: shippingDetails.taxNote,
+    shipping_option: shippingDetails.shippingOption,
+    shipping_method: shippingDetails.methodTitle,
+    shipping_tier: shippingDetails.tierLabel,
+    estimated_delivery: shippingDetails.estimatedDelivery,
+    is_international: shippingDetails.isInternational,
+    has_furniture: shippingDetails.hasFurniture,
+    total: shippingDetails.total,
+    items: cartItems.map((item) => ({
+      id: item.id,
+      inventory_id: item.inventory_id,
+      title: item.title,
+      artist: item.artist,
+      category: item.category,
+      price: item.price,
+      size: item.size,
+      image: item.image,
+      quantity: item.quantity,
+    })),
+  };
+
+  pendingOrdersByReference.set(draftOrder.reference, {
+    order: draftOrder,
+    cid,
+    token: submittedToken,
+  });
+
+  const baseUrl = getRequestBaseUrl(req);
+  if (selectedProviderId === "stripe") {
+    const stripeRes = await createStripeCheckoutSession({
+      order: draftOrder,
+      baseUrl,
+      cid,
+    });
+    if (!stripeRes.ok || !stripeRes.url) {
+      tokenRecord.status = "open";
+      pendingOrdersByReference.delete(draftOrder.reference);
+      renderAtStep(5, [
+        stripeRes.error ||
+          "Unable to initialize Stripe Checkout. No charge was made.",
+      ]);
+      return;
+    }
+    draftOrder.payment_session_id = stripeRes.sessionId;
+    req.session.save(() => {
+      res.redirect(303, stripeRes.url!);
+    });
+    return;
+  }
+
+  const paypalRes = await createPayPalOrder({
+    order: draftOrder,
+    baseUrl,
+    cid,
+  });
+  if (!paypalRes.ok || !paypalRes.approveUrl) {
+    tokenRecord.status = "open";
+    pendingOrdersByReference.delete(draftOrder.reference);
+    renderAtStep(5, [
+      paypalRes.error ||
+        "Unable to initialize PayPal Checkout. No charge was made.",
+    ]);
+    return;
+  }
+  draftOrder.payment_session_id = paypalRes.paypalOrderId;
+  req.session.save(() => {
+    res.redirect(303, paypalRes.approveUrl!);
   });
 });
 
@@ -2337,11 +3249,13 @@ app.get("/api/bitcoin/listen", async (req: Request, res: Response) => {
       order.payment_txid = result.txid;
       order.payment_received_btc = result.receivedBtc;
       consumedBitcoinTxids.set(result.txid, order.reference);
+      inventoryStore.recordConsumedTxid(result.txid, order.reference);
       if (result.blockHeight) {
         order.payment_block_height = result.blockHeight;
       }
     }
     orderByReference.set(order.reference, order);
+    inventoryStore.saveOrder(order);
     if (cid) orderStore.set(cid, order);
     if (req.session.order?.reference === order.reference) {
       req.session.order = order;
@@ -2352,9 +3266,171 @@ app.get("/api/bitcoin/listen", async (req: Request, res: Response) => {
   res.json(result);
 });
 
+app.get("/api/payments/stripe/return", async (req: Request, res: Response) => {
+  const reference = String(req.query.reference ?? "").trim().toUpperCase();
+  const sessionId = String(req.query.session_id ?? "").trim();
+  const cid = String(req.query.cid ?? getRequestCartId(req) ?? "").trim();
+
+  const existing = orderByReference.get(reference);
+  if (existing && existing.payment_status === "paid") {
+    redirectWithSession(
+      req,
+      res,
+      `/checkout-success?reference=${encodeURIComponent(existing.reference)}`,
+      cid
+    );
+    return;
+  }
+
+  const pending = pendingOrdersByReference.get(reference);
+  if (!pending || !sessionId) {
+    pushFlash(
+      req,
+      "Unable to locate an active payment verification session. Please review checkout before retrying."
+    );
+    redirectWithSession(req, res, "/checkout", cid);
+    return;
+  }
+
+  const verification = await retrieveStripeCheckoutSession(sessionId);
+  if (
+    verification.ok &&
+    verification.paid &&
+    verification.orderReference === reference
+  ) {
+    const paidOrder = finalizeVerifiedPaidOrder(req, res, pending.order, {
+      provider: "stripe",
+      sessionId,
+      cid: pending.cid || cid,
+      token: pending.token,
+    });
+    redirectWithSession(
+      req,
+      res,
+      `/checkout-success?reference=${encodeURIComponent(paidOrder.reference)}`,
+      pending.cid || cid
+    );
+    return;
+  }
+
+  pushFlash(
+    req,
+    "Stripe has not confirmed payment completion yet. Your order has not been marked paid."
+  );
+  redirectWithSession(req, res, "/checkout", cid);
+});
+
+app.post("/api/payments/stripe/webhook", (req: Request, res: Response) => {
+  const { stripeWebhookSecret } = getPaymentGatewayConfig();
+  if (!stripeWebhookSecret) {
+    res.status(503).json({ ok: false, error: "Webhook secret not configured." });
+    return;
+  }
+  const rawBody = (req as Request & { rawBody?: string }).rawBody || "";
+  const sigHeader = String(req.headers["stripe-signature"] || "");
+  if (!verifyStripeWebhookSignature(rawBody, sigHeader, stripeWebhookSecret)) {
+    res.status(400).json({ ok: false, error: "Invalid Stripe signature." });
+    return;
+  }
+
+  const event = req.body as {
+    type?: string;
+    data?: {
+      object?: {
+        id?: string;
+        payment_status?: string;
+        client_reference_id?: string;
+        metadata?: { order_reference?: string };
+      };
+    };
+  };
+
+  if (
+    event?.type === "checkout.session.completed" &&
+    event.data?.object?.payment_status === "paid"
+  ) {
+    const ref = String(
+      event.data.object.metadata?.order_reference ||
+        event.data.object.client_reference_id ||
+        ""
+    )
+      .trim()
+      .toUpperCase();
+    const pending = ref ? pendingOrdersByReference.get(ref) : undefined;
+    if (pending) {
+      finalizeVerifiedPaidOrder(req, null, pending.order, {
+        provider: "stripe",
+        sessionId: String(event.data.object.id || ""),
+        cid: pending.cid,
+        token: pending.token,
+      });
+    }
+  }
+
+  res.json({ received: true });
+});
+
+app.get("/api/payments/paypal/return", async (req: Request, res: Response) => {
+  const reference = String(req.query.reference ?? "").trim().toUpperCase();
+  const paypalToken = String(req.query.token ?? "").trim();
+  const cid = String(req.query.cid ?? getRequestCartId(req) ?? "").trim();
+
+  const existing = orderByReference.get(reference);
+  if (existing && existing.payment_status === "paid") {
+    redirectWithSession(
+      req,
+      res,
+      `/checkout-success?reference=${encodeURIComponent(existing.reference)}`,
+      cid
+    );
+    return;
+  }
+
+  const pending = pendingOrdersByReference.get(reference);
+  if (!pending || !paypalToken) {
+    pushFlash(
+      req,
+      "Unable to verify PayPal approval token. Your order has not been marked paid."
+    );
+    redirectWithSession(req, res, "/checkout", cid);
+    return;
+  }
+
+  const capture = await capturePayPalOrder(paypalToken);
+  if (capture.ok && capture.completed) {
+    const paidOrder = finalizeVerifiedPaidOrder(req, res, pending.order, {
+      provider: "paypal",
+      sessionId: paypalToken,
+      cid: pending.cid || cid,
+      token: pending.token,
+    });
+    redirectWithSession(
+      req,
+      res,
+      `/checkout-success?reference=${encodeURIComponent(paidOrder.reference)}`,
+      pending.cid || cid
+    );
+    return;
+  }
+
+  pushFlash(
+    req,
+    "PayPal did not confirm payment completion. Your order has not been marked paid."
+  );
+  redirectWithSession(req, res, "/checkout", cid);
+});
+
 app.get("/checkout-success", async (req: Request, res: Response) => {
   const cid = getRequestCartId(req);
-  const order = req.session.order || (cid ? orderStore.get(cid) : undefined);
+  const requestedRef = String(req.query.reference ?? "").trim().toUpperCase();
+  const order =
+    (requestedRef
+      ? orderByReference.get(requestedRef) ||
+        (inventoryStore.getOrderByReference(requestedRef) as Order | undefined)
+      : undefined) ||
+    req.session.order ||
+    (cid ? orderStore.get(cid) : undefined);
+
   if (!order) {
     redirectWithSession(req, res, "/");
     return;
@@ -2378,10 +3454,12 @@ app.get("/checkout-success", async (req: Request, res: Response) => {
       order.payment_txid = btcListener.txid;
       order.payment_received_btc = btcListener.receivedBtc;
       consumedBitcoinTxids.set(btcListener.txid, order.reference);
+      inventoryStore.recordConsumedTxid(btcListener.txid, order.reference);
       if (btcListener.blockHeight) {
         order.payment_block_height = btcListener.blockHeight;
       }
     }
+    inventoryStore.saveOrder(order);
 
     if (
       order.payment_status !== "mempool" &&
@@ -2394,6 +3472,17 @@ app.get("/checkout-success", async (req: Request, res: Response) => {
       redirectWithSession(req, res, "/checkout", cid);
       return;
     }
+  } else if (
+    (order.payment_method === "stripe" || order.payment_method === "paypal") &&
+    order.payment_status !== "paid"
+  ) {
+    pushFlash(
+      req,
+      "Order confirmation is only displayed after verified payment completion."
+    );
+    const hasCartItems = getCartItems(req).length > 0;
+    redirectWithSession(req, res, hasCartItems ? "/checkout" : "/cart", cid);
+    return;
   }
 
   res.render("checkout_success", { order, btcListener });
@@ -3337,8 +4426,9 @@ function getArtistSlug(artistName: string): string {
 }
 
 app.get("/artists", (req: Request, res: Response) => {
+  const catalog = getAllProducts();
   const enrichedArtists = artistProfiles.map((profile) => {
-    const artistWorks = products.filter(
+    const artistWorks = catalog.filter(
       (p) => p.artist.toLowerCase() === profile.name.toLowerCase()
     );
     const primaryWork = artistWorks[0];
@@ -3366,7 +4456,7 @@ app.get("/artists/:slug", (req: Request, res: Response) => {
   }
 
   const profile = artistProfiles[idx];
-  const works = products.filter(
+  const works = getAllProducts().filter(
     (p) => p.artist.toLowerCase() === profile.name.toLowerCase()
   );
   const primaryWork = works[0];
@@ -3384,6 +4474,235 @@ app.get("/artists/:slug", (req: Request, res: Response) => {
     nextArtist: nextProfile ? { slug: nextProfile.slug, name: nextProfile.name } : null,
     activeNav: "Artists",
   });
+});
+
+// Admin & Inventory Management System
+app.get("/admin/inventory", (req: Request, res: Response) => {
+  const q = String(req.query.q ?? "").trim();
+  const category = String(req.query.category ?? "all").trim();
+  const status = String(req.query.status ?? "all").trim();
+  const authenticity = String(req.query.authenticity ?? "all").trim();
+  const editParam = String(req.query.edit ?? "").trim();
+
+  const filteredProducts = inventoryStore.searchProducts(q, {
+    category,
+    status,
+    authenticity,
+  });
+  const editingProduct = editParam ? getProductById(editParam) : undefined;
+
+  res.render("admin_inventory", {
+    products: filteredProducts,
+    stats: inventoryStore.getStats(),
+    orders: inventoryStore.getOrders(),
+    categories: VALID_CATEGORIES,
+    filters: { q, category, status, authenticity },
+    editingProduct: editingProduct ?? null,
+    editingProvenance: editingProduct ? getProductProvenance(editingProduct) : null,
+    messages: consumeFlashes(req),
+    activeNav: "",
+  });
+});
+
+app.post("/admin/inventory/create", (req: Request, res: Response) => {
+  const title = String(req.body.title ?? "").trim();
+  const artist = String(req.body.artist ?? "").trim();
+  const category = normalizeCategoryName(String(req.body.category ?? "Painting"));
+  const price = Number.parseFloat(String(req.body.price ?? "0"));
+  const size = String(req.body.size ?? "").trim();
+  const description = String(req.body.description ?? "").trim();
+  const image = String(req.body.image ?? "").trim();
+  const yearRaw = Number.parseInt(String(req.body.year ?? ""), 10);
+  const year = Number.isFinite(yearRaw) && yearRaw >= 2000 && yearRaw <= 2100 ? yearRaw : undefined;
+  const rawAuth = String(req.body.authenticity_status ?? "pending_review").trim();
+  const authStatus: AuthenticityStatus =
+    rawAuth === "verified" || rawAuth === "unverified" ? rawAuth : "pending_review";
+  const authNote = String(req.body.authenticity_note ?? "").trim();
+
+  if (!title || !artist || !Number.isFinite(price) || price <= 0 || !size || !description) {
+    pushFlash(req, "Please provide title, artist, valid price, dimensions, and description.");
+    redirectWithSession(req, res, "/admin/inventory");
+    return;
+  }
+
+  const created = inventoryStore.createProduct({
+    title,
+    artist,
+    category,
+    price,
+    size,
+    image,
+    description,
+    year,
+    authenticity_status: authStatus,
+    authenticity_note: authNote,
+    provenance: {
+      datePeriod: String(req.body.date_period ?? "").trim() || undefined,
+      materialsMedium: String(req.body.materials_medium ?? "").trim() || undefined,
+      markingsEdition: String(req.body.markings_edition ?? "").trim() || undefined,
+      provenanceRecord: String(req.body.provenance_record ?? "").trim() || undefined,
+    },
+  });
+
+  pushFlash(
+    req,
+    `Cataloged "${created.title}" with permanent Inventory ID ${created.inventory_id}.`
+  );
+  redirectWithSession(
+    req,
+    res,
+    `/admin/inventory?q=${encodeURIComponent(created.inventory_id)}`
+  );
+});
+
+app.post("/admin/inventory/:identifier/edit", (req: Request, res: Response) => {
+  const identifier = String(req.params.identifier ?? "").trim();
+  const existing = getProductById(identifier);
+  if (!existing) {
+    res.status(404).send("Artwork not found in inventory.");
+    return;
+  }
+
+  const priceVal = Number.parseFloat(String(req.body.price ?? ""));
+  const rawStatus = String(req.body.status ?? existing.status).trim();
+  const statusVal: InventoryStatus = rawStatus === "sold" ? "sold" : "available";
+  const rawAuth = String(req.body.authenticity_status ?? existing.authenticity_status).trim();
+  const authStatus: AuthenticityStatus =
+    rawAuth === "verified" || rawAuth === "unverified" ? rawAuth : "pending_review";
+
+  const updated = inventoryStore.updateProduct(existing.id, {
+    title: String(req.body.title ?? existing.title),
+    artist: String(req.body.artist ?? existing.artist),
+    category: String(req.body.category ?? existing.category),
+    price: Number.isFinite(priceVal) && priceVal > 0 ? priceVal : existing.price,
+    size: String(req.body.size ?? existing.size),
+    image: String(req.body.image ?? existing.image),
+    description: String(req.body.description ?? existing.description),
+    status: statusVal,
+    authenticity_status: authStatus,
+    authenticity_note: String(req.body.authenticity_note ?? existing.authenticity_note),
+    provenance: {
+      datePeriod: String(req.body.date_period ?? "").trim() || undefined,
+      originAttribution: String(req.body.origin_attribution ?? "").trim() || undefined,
+      materialsMedium: String(req.body.materials_medium ?? "").trim() || undefined,
+      markingsEdition: String(req.body.markings_edition ?? "").trim() || undefined,
+      conditionNote: String(req.body.condition_note ?? "").trim() || undefined,
+      provenanceRecord: String(req.body.provenance_record ?? "").trim() || undefined,
+    },
+  });
+
+  if (updated) {
+    pushFlash(
+      req,
+      `Saved updates to "${updated.title}". Permanent Inventory ID ${updated.inventory_id} preserved.`
+    );
+    redirectWithSession(
+      req,
+      res,
+      `/admin/inventory?edit=${encodeURIComponent(updated.inventory_id)}`
+    );
+    return;
+  }
+  redirectWithSession(req, res, "/admin/inventory");
+});
+
+app.get("/api/inventory", (req: Request, res: Response) => {
+  const q = String(req.query.q ?? "").trim();
+  const category = String(req.query.category ?? "all").trim();
+  const status = String(req.query.status ?? "all").trim();
+  const authenticity = String(req.query.authenticity ?? "all").trim();
+  const results = inventoryStore.searchProducts(q, { category, status, authenticity });
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    stats: inventoryStore.getStats(),
+    count: results.length,
+    products: results,
+    orders: inventoryStore.getOrders(),
+  });
+});
+
+app.get("/api/inventory/:identifier", (req: Request, res: Response) => {
+  const product = getProductById(String(req.params.identifier ?? ""));
+  if (!product) {
+    res.status(404).json({ ok: false, error: "Not Found" });
+    return;
+  }
+  res.setHeader("Cache-Control", "no-store");
+  res.json({
+    ok: true,
+    product,
+    provenance: getProductProvenance(product),
+  });
+});
+
+app.post("/api/inventory", (req: Request, res: Response) => {
+  const title = String(req.body?.title ?? "").trim();
+  const artist = String(req.body?.artist ?? "").trim();
+  const category = normalizeCategoryName(String(req.body?.category ?? "Painting"));
+  const price = Number(req.body?.price);
+  const size = String(req.body?.size ?? "").trim();
+  const description = String(req.body?.description ?? "").trim();
+  const image = String(req.body?.image ?? "").trim();
+  const rawYear = Number(req.body?.year);
+  const year = Number.isFinite(rawYear) && rawYear >= 2000 && rawYear <= 2100 ? rawYear : undefined;
+  const rawAuth = String(req.body?.authenticity_status ?? "pending_review").trim();
+  const authStatus: AuthenticityStatus =
+    rawAuth === "verified" || rawAuth === "unverified" ? rawAuth : "pending_review";
+
+  if (!title || !artist || !Number.isFinite(price) || price <= 0 || !size || !description) {
+    res.status(400).json({
+      ok: false,
+      error: "Missing or invalid required artwork fields (title, artist, price, size, description).",
+    });
+    return;
+  }
+
+  const created = inventoryStore.createProduct({
+    title,
+    artist,
+    category,
+    price,
+    size,
+    image,
+    description,
+    year,
+    authenticity_status: authStatus,
+    authenticity_note: String(req.body?.authenticity_note ?? "").trim(),
+  });
+
+  res.status(201).json({ ok: true, product: created });
+});
+
+app.patch("/api/inventory/:identifier", (req: Request, res: Response) => {
+  const existing = getProductById(String(req.params.identifier ?? ""));
+  if (!existing) {
+    res.status(404).json({ ok: false, error: "Not Found" });
+    return;
+  }
+
+  const rawPrice = req.body?.price !== undefined ? Number(req.body.price) : undefined;
+  const rawStatus = req.body?.status;
+  const rawAuth = req.body?.authenticity_status;
+
+  const updated = inventoryStore.updateProduct(existing.id, {
+    title: typeof req.body?.title === "string" ? req.body.title : undefined,
+    artist: typeof req.body?.artist === "string" ? req.body.artist : undefined,
+    category: typeof req.body?.category === "string" ? req.body.category : undefined,
+    price: rawPrice !== undefined && Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice : undefined,
+    size: typeof req.body?.size === "string" ? req.body.size : undefined,
+    image: typeof req.body?.image === "string" ? req.body.image : undefined,
+    description: typeof req.body?.description === "string" ? req.body.description : undefined,
+    status: rawStatus === "sold" || rawStatus === "available" ? rawStatus : undefined,
+    authenticity_status:
+      rawAuth === "verified" || rawAuth === "pending_review" || rawAuth === "unverified"
+        ? rawAuth
+        : undefined,
+    authenticity_note:
+      typeof req.body?.authenticity_note === "string" ? req.body.authenticity_note : undefined,
+  });
+
+  res.json({ ok: true, product: updated });
 });
 
 app.get("/healthz", (_req: Request, res: Response) => {

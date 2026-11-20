@@ -309,7 +309,7 @@
                     type="search"
                     name="q"
                     value="<%= typeof search_query !== 'undefined' ? search_query : '' %>"
-                    placeholder="Search artworks..."
+                    placeholder="Search art or ID..."
                 />
                 <button type="submit" aria-label="Submit search">
                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -336,7 +336,7 @@
                 type="search"
                 name="q"
                 value="<%= typeof search_query !== 'undefined' ? search_query : '' %>"
-                placeholder="Search artworks or artists..."
+                placeholder="Search artworks, artists, or Inventory ID..."
             />
             <button type="submit" aria-label="Search">
                 <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -355,6 +355,7 @@
             <div class="site-mobile-divider" aria-hidden="true"></div>
             <a href="/shipping">Shipping &amp; Delivery</a>
             <a href="/authenticity">Artwork Authenticity</a>
+            <a href="/admin/inventory">Inventory Registry</a>
             <a href="/contact">Contact &amp; Support</a>
             <a href="/cart">Shopping Bag (<span class="cart-count"><%= cart_count %></span>)</a>
         </nav>

@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory Management Ledger | ART STUDIO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --canvas: #ffffff;
+            --surface: #fafafa;
+            --ink: #0a0a0a;
+            --muted: #6b6b6b;
+            --border: #dcdcdc;
+            --card-border: #ececec;
+            --gold: #8a6d3b;
+            --green: #047857;
+            --amber: #92400e;
+            --red: #b91c1c;
+            --font-serif: "Playfair Display", Georgia, serif;
+            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: var(--font-sans);
+            background: var(--canvas);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        .admin-wrap {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 36px 24px 80px;
+        }
+
+        .admin-hero {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .kicker {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .admin-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.75rem, 3vw, 2.5rem);
+            font-weight: 400;
+            margin: 0 0 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .admin-lead {
+            margin: 0;
+            font-size: 13.5px;
+            color: var(--muted);
+            max-width: 64ch;
+            line-height: 1.6;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-dark {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 18px;
+            background: var(--ink);
+            color: #ffffff;
+            border: 1px solid var(--ink);
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            cursor: pointer;
+        }
+
+        .btn-dark:hover { background: #262626; }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 18px;
+            background: #ffffff;
+            color: var(--ink);
+            border: 1px solid #cccccc;
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            cursor: pointer;
+        }
+
+        .btn-outline:hover { border-color: var(--ink); }
+
+        .flash {
+            margin: 20px 0 0;
+            padding: 13px 16px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            font-size: 13px;
+            border-radius: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            margin: 24px 0;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--card-border);
+            padding: 16px 18px;
+            border-radius: 2px;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: #737373;
+            margin-bottom: 6px;
+        }
+
+        .stat-val {
+            font-family: var(--font-mono);
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .seq-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 24px;
+            padding: 12px 16px;
+            background: #fcfaf6;
+            border: 1px solid #ece6da;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: #404040;
+            align-items: center;
+        }
+
+        .seq-item {
+            padding: 4px 10px;
+            background: #ffffff;
+            border: 1px solid #e5dfd3;
+        }
+
+        .panel-box {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 24px;
+            margin-bottom: 28px;
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .panel-title {
+            margin: 0;
+            font-family: var(--font-serif);
+            font-size: 20px;
+            font-weight: 400;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-field.span-2 { grid-column: span 2; }
+        .form-field.span-3 { grid-column: 1 / -1; }
+
+        .form-field label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #404040;
+        }
+
+        .form-field input,
+        .form-field select,
+        .form-field textarea {
+            padding: 10px 12px;
+            border: 1px solid #cccccc;
+            background: #fafafa;
+            font-family: var(--font-sans);
+            font-size: 13px;
+            color: var(--ink);
+            border-radius: 2px;
+        }
+
+        .form-field input[readonly] {
+            background: #f3f3f1;
+            color: #525252;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            cursor: not-allowed;
+        }
+
+        .form-field textarea {
+            min-height: 76px;
+            resize: vertical;
+        }
+
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            padding: 16px;
+            background: var(--surface);
+            border: 1px solid var(--card-border);
+            margin-bottom: 20px;
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            padding: 9px 12px;
+            border: 1px solid #cccccc;
+            background: #ffffff;
+            font-family: var(--font-sans);
+            font-size: 12.5px;
+            border-radius: 2px;
+        }
+
+        .filter-bar input[type="search"] {
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .table-scroll {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            margin-bottom: 36px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 880px;
+            font-size: 13px;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 12px 14px;
+            background: #f7f7f6;
+            border-bottom: 1px solid var(--border);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #525252;
+        }
+
+        tbody td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f0f0ee;
+            vertical-align: middle;
+        }
+
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #fcfcfb; }
+
+        .art-row-thumb {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .art-row-thumb img {
+            width: 44px;
+            height: 54px;
+            object-fit: cover;
+            border: 1px solid var(--card-border);
+            background: #f5f5f5;
+            flex-shrink: 0;
+        }
+
+        .id-code {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            color: var(--ink);
+            white-space: nowrap;
+        }
+
+        .status-tag {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 4px 8px;
+            border-radius: 2px;
+            border: 1px solid;
+            white-space: nowrap;
+        }
+
+        .status-available {
+            color: var(--green);
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+        }
+
+        .status-sold {
+            color: #404040;
+            background: #f4f4f5;
+            border-color: #d4d4d8;
+        }
+
+        .auth-verified {
+            color: var(--green);
+            background: #ffffff;
+            border-color: #a7f3d0;
+        }
+
+        .auth-pending_review {
+            color: var(--amber);
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+
+        .auth-unverified {
+            color: var(--red);
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .mini-link {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 5px 9px;
+            border: 1px solid #d4d4d4;
+            border-radius: 2px;
+            background: #ffffff;
+        }
+
+        .mini-link:hover {
+            border-color: var(--ink);
+            background: #0a0a0a;
+            color: #ffffff;
+        }
+
+        .hidden { display: none !important; }
+
+        .footer {
+            background: #111111;
+            color: #999999;
+            border-top: 1px solid #262626;
+            padding: 36px 24px;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 12px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-links a:hover { color: #ffffff; }
+
+        @media (max-width: 960px) {
+            .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-field.span-2 { grid-column: 1; }
+        }
+    </style>
+</head>
+<body data-cid="<%= cid %>">
+    <%- include('partials/site-header', { topbarText: 'ART STUDIO Administration · Artwork Inventory Identification Registry' }) %>
+
+    <main class="admin-wrap">
+        <div class="admin-hero">
+            <div>
+                <span class="kicker">Curatorial Administration</span>
+                <h1 class="admin-title">Artwork Inventory Registry</h1>
+                <p class="admin-lead">
+                    Permanent ART STUDIO Inventory IDs are assigned automatically by category and year, remain immutable across edits, and stay linked through orders, invoices, and documentation certificates after sale.
+                </p>
+            </div>
+            <div class="hero-actions">
+                <button type="button" class="btn-dark" id="toggleCreateBtn">+ Catalog New Artwork</button>
+                <a href="/" class="btn-outline">View Storefront</a>
+            </div>
+        </div>
+
+        <% if (messages && messages.length) { %>
+            <% messages.forEach((msg) => { %>
+                <div class="flash" role="status"><%= msg %></div>
+            <% }) %>
+        <% } %>
+
+        <section class="stats-grid" aria-label="Inventory summary">
+            <div class="stat-card">
+                <span class="stat-label">Total Cataloged</span>
+                <span class="stat-val"><%= stats.total %></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Available</span>
+                <span class="stat-val"><%= stats.available %></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Sold · Archived</span>
+                <span class="stat-val"><%= stats.sold %></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Verified COA</span>
+                <span class="stat-val"><%= stats.verified %></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Pending Auth Review</span>
+                <span class="stat-val"><%= stats.pendingReview %></span>
+            </div>
+        </section>
+
+        <div class="seq-strip" aria-label="Next automatic Inventory IDs">
+            <span style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Next Auto-IDs:</span>
+            <span class="seq-item">Painting → AS-PA-2026-<%= String((stats.sequences['PA-2026'] || 0) + 1).padStart(3, '0') %></span>
+            <span class="seq-item">Prints → AS-PR-2026-<%= String((stats.sequences['PR-2026'] || 0) + 1).padStart(3, '0') %></span>
+            <span class="seq-item">Photography → AS-PH-2026-<%= String((stats.sequences['PH-2026'] || 0) + 1).padStart(3, '0') %></span>
+            <span class="seq-item">Sculpture → AS-SC-2026-<%= String((stats.sequences['SC-2026'] || 0) + 1).padStart(3, '0') %></span>
+            <span class="seq-item">Furniture → AS-FU-2026-<%= String((stats.sequences['FU-2026'] || 0) + 1).padStart(3, '0') %></span>
+        </div>
+
+        <% if (editingProduct) { %>
+        <section class="panel-box" id="editArtworkPanel" aria-labelledby="editPanelHeading">
+            <div class="panel-head">
+                <h2 class="panel-title" id="editPanelHeading">Edit Artwork · <span class="id-code"><%= editingProduct.inventory_id %></span></h2>
+                <a href="/admin/inventory" class="mini-link">Close Editor</a>
+            </div>
+            <form action="/admin/inventory/<%= encodeURIComponent(editingProduct.inventory_id) %>/edit" method="POST">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="editInventoryId">Permanent Inventory ID (Immutable)</label>
+                        <input id="editInventoryId" type="text" value="<%= editingProduct.inventory_id %>" readonly />
+                    </div>
+                    <div class="form-field">
+                        <label for="editTitle">Title</label>
+                        <input id="editTitle" type="text" name="title" value="<%= editingProduct.title %>" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="editArtist">Artist / Maker</label>
+                        <input id="editArtist" type="text" name="artist" value="<%= editingProduct.artist %>" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="editCategory">Category (ID Never Changes)</label>
+                        <select id="editCategory" name="category">
+                            <% categories.forEach((cat) => { %>
+                                <option value="<%= cat %>" <%= editingProduct.category === cat ? 'selected' : '' %>><%= cat %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="editPrice">Price (USD)</label>
+                        <input id="editPrice" type="number" step="0.01" min="1" name="price" value="<%= editingProduct.price %>" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="editSize">Dimensions</label>
+                        <input id="editSize" type="text" name="size" value="<%= editingProduct.size %>" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="editStatus">Availability Status</label>
+                        <select id="editStatus" name="status">
+                            <option value="available" <%= editingProduct.status === 'available' ? 'selected' : '' %>>Available</option>
+                            <option value="sold" <%= editingProduct.status === 'sold' ? 'selected' : '' %>>Sold (Retain Inventory ID)</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="editAuthStatus">Authenticity Verification Status</label>
+                        <select id="editAuthStatus" name="authenticity_status">
+                            <option value="verified" <%= editingProduct.authenticity_status === 'verified' ? 'selected' : '' %>>Verified COA</option>
+                            <option value="pending_review" <%= editingProduct.authenticity_status === 'pending_review' ? 'selected' : '' %>>Pending Curatorial Review</option>
+                            <option value="unverified" <%= editingProduct.authenticity_status === 'unverified' ? 'selected' : '' %>>Unverified</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="editImage">Primary Image URL</label>
+                        <input id="editImage" type="text" name="image" value="<%= editingProduct.image %>" />
+                    </div>
+                    <div class="form-field span-3">
+                        <label for="editAuthNote">Authenticity Verification Note</label>
+                        <input id="editAuthNote" type="text" name="authenticity_note" value="<%= editingProduct.authenticity_note %>" />
+                    </div>
+                    <div class="form-field span-3">
+                        <label for="editDescription">Description</label>
+                        <textarea id="editDescription" name="description" required><%= editingProduct.description %></textarea>
+                    </div>
+                    <% if (editingProvenance) { %>
+                    <div class="form-field">
+                        <label for="editDatePeriod">Date / Period</label>
+                        <input id="editDatePeriod" type="text" name="date_period" value="<%= editingProvenance.datePeriod %>" />
+                    </div>
+                    <div class="form-field">
+                        <label for="editMaterials">Materials / Medium</label>
+                        <input id="editMaterials" type="text" name="materials_medium" value="<%= editingProvenance.materialsMedium %>" />
+                    </div>
+                    <div class="form-field">
+                        <label for="editMarkings">Markings / Edition</label>
+                        <input id="editMarkings" type="text" name="markings_edition" value="<%= editingProvenance.markingsEdition %>" />
+                    </div>
+                    <div class="form-field span-3">
+                        <label for="editProvenanceRecord">Provenance Record</label>
+                        <input id="editProvenanceRecord" type="text" name="provenance_record" value="<%= editingProvenance.provenanceRecord %>" />
+                    </div>
+                    <% } %>
+                </div>
+                <div style="margin-top: 18px; display: flex; gap: 12px; align-items: center;">
+                    <button type="submit" class="btn-dark">Save Changes (Preserve <%= editingProduct.inventory_id %>)</button>
+                    <a href="/certificate/<%= encodeURIComponent(editingProduct.inventory_id) %>" class="btn-outline">Open Certificate</a>
+                </div>
+            </form>
+        </section>
+        <% } %>
+
+        <section class="panel-box hidden" id="createArtworkPanel" aria-labelledby="createPanelHeading">
+            <div class="panel-head">
+                <h2 class="panel-title" id="createPanelHeading">Catalog New Artwork (Auto-Assigns Inventory ID)</h2>
+                <button type="button" class="mini-link" id="closeCreateBtn">Cancel</button>
+            </div>
+            <form action="/admin/inventory/create" method="POST">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="createTitle">Title</label>
+                        <input id="createTitle" type="text" name="title" placeholder="e.g., Study in Ochre & Stone" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="createArtist">Artist / Maker</label>
+                        <input id="createArtist" type="text" name="artist" placeholder="e.g., Elena Vance" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="createCategory">Category (Determines ID Prefix)</label>
+                        <select id="createCategory" name="category">
+                            <% categories.forEach((cat) => { %>
+                                <option value="<%= cat %>"><%= cat %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label for="createPrice">Price (USD)</label>
+                        <input id="createPrice" type="number" step="0.01" min="1" name="price" placeholder="2400" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="createSize">Dimensions</label>
+                        <input id="createSize" type="text" name="size" placeholder="24 x 36 in" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="createAuthStatus">Initial Authenticity Status</label>
+                        <select id="createAuthStatus" name="authenticity_status">
+                            <option value="pending_review" selected>Pending Curatorial Review (Default)</option>
+                            <option value="verified">Verified COA Documentation</option>
+                            <option value="unverified">Unverified</option>
+                        </select>
+                    </div>
+                    <div class="form-field span-2">
+                        <label for="createImage">Image Path or URL (optional)</label>
+                        <input id="createImage" type="text" name="image" placeholder="/static/images/london-gallery-1.jpg" />
+                    </div>
+                    <div class="form-field">
+                        <label for="createYear">Catalog Year</label>
+                        <input id="createYear" type="number" name="year" value="2026" min="2020" max="2035" />
+                    </div>
+                    <div class="form-field span-3">
+                        <label for="createDescription">Curatorial Description</label>
+                        <textarea id="createDescription" name="description" placeholder="Medium, composition, exhibition context..." required></textarea>
+                    </div>
+                </div>
+                <div style="margin-top: 18px;">
+                    <button type="submit" class="btn-dark">Create Work &amp; Generate Inventory ID</button>
+                </div>
+            </form>
+        </section>
+
+        <form class="filter-bar" action="/admin/inventory" method="GET" role="search">
+            <input
+                type="search"
+                name="q"
+                value="<%= filters.q %>"
+                placeholder="Search by Inventory ID (e.g. AS-PA-2026-001), title, or artist..."
+                aria-label="Search inventory by ID, title, or artist"
+            />
+            <select name="category" aria-label="Filter by category">
+                <option value="all" <%= filters.category === 'all' ? 'selected' : '' %>>All Categories</option>
+                <% categories.forEach((cat) => { %>
+                    <option value="<%= cat %>" <%= filters.category.toLowerCase() === cat.toLowerCase() ? 'selected' : '' %>><%= cat %></option>
+                <% }) %>
+            </select>
+            <select name="status" aria-label="Filter by availability status">
+                <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>All Statuses</option>
+                <option value="available" <%= filters.status === 'available' ? 'selected' : '' %>>Available</option>
+                <option value="sold" <%= filters.status === 'sold' ? 'selected' : '' %>>Sold Archive</option>
+            </select>
+            <select name="authenticity" aria-label="Filter by authenticity status">
+                <option value="all" <%= filters.authenticity === 'all' ? 'selected' : '' %>>All Authenticity</option>
+                <option value="verified" <%= filters.authenticity === 'verified' ? 'selected' : '' %>>Verified COA</option>
+                <option value="pending_review" <%= filters.authenticity === 'pending_review' ? 'selected' : '' %>>Pending Review</option>
+                <option value="unverified" <%= filters.authenticity === 'unverified' ? 'selected' : '' %>>Unverified</option>
+            </select>
+            <button type="submit" class="btn-dark">Filter</button>
+            <a href="/admin/inventory" class="btn-outline">Reset</a>
+        </form>
+
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Inventory ID</th>
+                        <th>Artwork</th>
+                        <th>Category</th>
+                        <th>Valuation</th>
+                        <th>Status</th>
+                        <th>Authenticity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (products && products.length) { %>
+                        <% products.forEach((p) => { %>
+                        <tr>
+                            <td><span class="id-code"><%= p.inventory_id %></span></td>
+                            <td>
+                                <div class="art-row-thumb">
+                                    <img src="<%= p.image %>" alt="<%= p.title %>" loading="lazy" referrerPolicy="no-referrer" />
+                                    <div>
+                                        <div style="font-weight: 600;"><%= p.title %></div>
+                                        <div style="font-size: 12px; color: #6b6b6b;"><%= p.artist %> · <%= p.size %></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><%= p.category %></td>
+                            <td style="font-family: var(--font-mono); font-weight: 600;">$<%= formatCurrency(p.price) %></td>
+                            <td>
+                                <span class="status-tag status-<%= p.status %>">
+                                    <%= p.status === 'sold' ? 'Sold' : 'Available' %>
+                                </span>
+                                <% if (p.sold_order_reference) { %>
+                                    <div style="font-family: var(--font-mono); font-size: 10px; color: #737373; margin-top: 4px;">
+                                        Order #<%= p.sold_order_reference %>
+                                    </div>
+                                <% } %>
+                            </td>
+                            <td>
+                                <span class="status-tag auth-<%= p.authenticity_status %>">
+                                    <%= p.authenticity_status === 'verified' ? 'Verified COA' : (p.authenticity_status === 'unverified' ? 'Unverified' : 'Pending Review') %>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="row-actions">
+                                    <a href="/admin/inventory?edit=<%= encodeURIComponent(p.inventory_id) %>" class="mini-link">Edit</a>
+                                    <a href="/certificate/<%= encodeURIComponent(p.inventory_id) %>" class="mini-link">Certificate</a>
+                                    <a href="/product/<%= p.id %>" class="mini-link">Page</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 36px; color: #737373;">
+                                No artworks matched your Inventory ID or filter criteria.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <section aria-labelledby="ordersLedgerHeading">
+            <div class="panel-head" style="border-bottom: none; margin-bottom: 10px;">
+                <h2 class="panel-title" id="ordersLedgerHeading">Persisted Orders &amp; Invoice Inventory Records (<%= orders.length %>)</h2>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order Ref</th>
+                            <th>Collector</th>
+                            <th>Catalog Inventory IDs</th>
+                            <th>Total</th>
+                            <th>Settlement</th>
+                            <th>Invoice</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (orders && orders.length) { %>
+                            <% orders.forEach((o) => { %>
+                            <tr>
+                                <td><span class="id-code">#<%= o.reference %></span></td>
+                                <td>
+                                    <div style="font-weight: 600;"><%= o.name %></div>
+                                    <div style="font-size: 12px; color: #6b6b6b;"><%= o.email %> · <%= o.country %></div>
+                                </td>
+                                <td>
+                                    <% (o.items || []).forEach((it) => { %>
+                                        <div style="margin-bottom: 4px;">
+                                            <span class="id-code"><%= it.inventory_id || ('ID-' + it.id) %></span>
+                                            <span style="color: #525252; font-size: 12px;"> — <%= it.title %> (×<%= it.quantity %>)</span>
+                                        </div>
+                                    <% }) %>
+                                </td>
+                                <td style="font-family: var(--font-mono); font-weight: 600;">$<%= formatCurrency(o.total) %></td>
+                                <td>
+                                    <span class="id-code"><%= o.payment_symbol %></span>
+                                    <span style="font-size: 11px; color: #525252; text-transform: uppercase;">(<%= o.payment_status %>)</span>
+                                </td>
+                                <td>
+                                    <a href="/checkout-success?reference=<%= encodeURIComponent(o.reference) %>" class="mini-link">Slip</a>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 28px; color: #737373;">
+                                    No completed acquisitions recorded yet. Purchased items retain their permanent Inventory ID here and in their archive record.
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <span>© 2026 ART STUDIO. All rights reserved.</span>
+            <nav class="footer-links" aria-label="Footer policies">
+                <a href="/">Archive</a>
+                <a href="/shipping">Shipping &amp; Delivery</a>
+                <a href="/authenticity">Authenticity</a>
+                <a href="/crypto-checkout">Crypto Checkout</a>
+                <a href="/admin/inventory">Inventory Ledger</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+        (() => {
+            const toggleBtn = document.getElementById('toggleCreateBtn');
+            const closeBtn = document.getElementById('closeCreateBtn');
+            const panel = document.getElementById('createArtworkPanel');
+            if (!toggleBtn || !panel) return;
+            toggleBtn.addEventListener('click', () => {
+                panel.classList.toggle('hidden');
+            });
+            closeBtn?.addEventListener('click', () => {
+                panel.classList.add('hidden');
+            });
+        })();
+    </script>
+    <script src="/static/js/cart-sync.js"></script>
+</body>
+</html>

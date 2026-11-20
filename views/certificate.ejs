@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Artwork Documentation · <%= product.inventory_id %> | ART STUDIO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --canvas: #f8f7f4;
+            --surface: #ffffff;
+            --ink: #0a0a0a;
+            --muted: #525252;
+            --border: #dcdad3;
+            --gold: #8a6d3b;
+            --green: #047857;
+            --amber: #92400e;
+            --red: #991b1b;
+            --font-serif: "Playfair Display", Georgia, serif;
+            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: var(--font-sans);
+            background: var(--canvas);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        .cert-wrap {
+            max-width: 980px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 36px 24px 80px;
+        }
+
+        .cert-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .cert-toolbar-links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .cert-toolbar-links a:hover {
+            color: var(--ink);
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .print-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background: var(--ink);
+            color: #ffffff;
+            border: 1px solid var(--ink);
+            border-radius: 2px;
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            cursor: pointer;
+        }
+
+        .print-btn:hover { background: #262626; }
+
+        .folio {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 44px;
+            position: relative;
+        }
+
+        .folio-inner-frame {
+            border: 1px solid #eceae2;
+            padding: 36px;
+        }
+
+        .folio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+            padding-bottom: 28px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .folio-kicker {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .folio-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.75rem, 3vw, 2.35rem);
+            font-weight: 400;
+            margin: 0 0 8px;
+            line-height: 1.15;
+        }
+
+        .folio-sub {
+            margin: 0;
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.6;
+            max-width: 58ch;
+        }
+
+        .registry-seal {
+            text-align: right;
+            background: #faf9f6;
+            border: 1px solid var(--border);
+            padding: 14px 18px;
+            min-width: 220px;
+        }
+
+        .registry-seal-label {
+            display: block;
+            font-size: 9.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: #737373;
+            margin-bottom: 4px;
+        }
+
+        .registry-seal-id {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--ink);
+            letter-spacing: 0.04em;
+        }
+
+        .registry-seal-status {
+            display: block;
+            margin-top: 6px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .auth-notice {
+            margin: 24px 0;
+            padding: 18px 20px;
+            border: 1px solid;
+            border-radius: 2px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .auth-notice.verified {
+            background: #f4fbf8;
+            border-color: #a7f3d0;
+        }
+
+        .auth-notice.pending_review {
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+
+        .auth-notice.unverified {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .auth-notice-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 5px;
+        }
+
+        .auth-notice.verified .auth-notice-label { color: var(--green); }
+        .auth-notice.pending_review .auth-notice-label { color: var(--amber); }
+        .auth-notice.unverified .auth-notice-label { color: var(--red); }
+
+        .auth-notice-heading {
+            margin: 0 0 6px;
+            font-family: var(--font-serif);
+            font-size: 19px;
+            font-weight: 400;
+        }
+
+        .auth-notice-copy {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #3f3f46;
+        }
+
+        .auth-pill {
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 8px 14px;
+            border: 1px solid currentColor;
+            white-space: nowrap;
+        }
+
+        .auth-notice.verified .auth-pill { color: var(--green); background: #ffffff; }
+        .auth-notice.pending_review .auth-pill { color: var(--amber); background: #ffffff; }
+        .auth-notice.unverified .auth-pill { color: var(--red); background: #ffffff; }
+
+        .distinction-note {
+            margin: 0 0 28px;
+            padding: 12px 16px;
+            background: #fafafa;
+            border-left: 3px solid var(--ink);
+            font-size: 12px;
+            line-height: 1.6;
+            color: #404040;
+        }
+
+        .artwork-overview {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 32px;
+            align-items: start;
+            padding-bottom: 28px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .artwork-plate {
+            background: #f5f5f4;
+            border: 1px solid var(--border);
+            padding: 12px;
+        }
+
+        .artwork-plate img {
+            width: 100%;
+            aspect-ratio: 4 / 5;
+            object-fit: cover;
+            display: block;
+        }
+
+        .artwork-plate-caption {
+            margin-top: 10px;
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .meta-section-title {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: #737373;
+            margin: 0 0 14px;
+        }
+
+        .spec-table {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 24px;
+            margin-bottom: 24px;
+        }
+
+        .spec-cell {
+            padding-bottom: 10px;
+            border-bottom: 1px solid #efede7;
+        }
+
+        .spec-k {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #737373;
+            margin-bottom: 4px;
+        }
+
+        .spec-v {
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--ink);
+            line-height: 1.45;
+        }
+
+        .spec-v.mono {
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+        }
+
+        .provenance-grid {
+            padding-top: 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px 28px;
+        }
+
+        .provenance-block h3 {
+            margin: 0 0 6px;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #737373;
+        }
+
+        .provenance-block p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.65;
+            color: #262626;
+        }
+
+        .folio-footer {
+            margin-top: 32px;
+            padding-top: 22px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 11.5px;
+            color: var(--muted);
+        }
+
+        .signature-line {
+            min-width: 240px;
+            border-top: 1px solid #a3a3a3;
+            padding-top: 6px;
+            font-size: 11px;
+            color: #404040;
+        }
+
+        .footer {
+            background: #111111;
+            color: #999999;
+            border-top: 1px solid #262626;
+            padding: 36px 24px;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 12px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-links a:hover { color: #ffffff; }
+
+        @media (max-width: 780px) {
+            .folio { padding: 20px; }
+            .folio-inner-frame { padding: 20px; }
+            .registry-seal { text-align: left; width: 100%; }
+            .auth-notice { grid-template-columns: 1fr; }
+            .artwork-overview { grid-template-columns: 1fr; }
+            .spec-table, .provenance-grid { grid-template-columns: 1fr; }
+        }
+
+        @media print {
+            .site-topbar, .site-header, .cert-toolbar, .footer {
+                display: none !important;
+            }
+            body {
+                background: #ffffff;
+            }
+            .cert-wrap {
+                padding: 0;
+                max-width: 100%;
+            }
+            .folio {
+                border: none;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body data-cid="<%= cid %>">
+    <%- include('partials/site-header', { topbarText: `Artwork Documentation · Inventory ID ${product.inventory_id}` }) %>
+
+    <main class="cert-wrap">
+        <div class="cert-toolbar">
+            <div class="cert-toolbar-links">
+                <a href="/product/<%= product.id %>">← Back to Artwork Page</a>
+                <a href="/admin/inventory?q=<%= encodeURIComponent(product.inventory_id) %>">View in Inventory Ledger</a>
+            </div>
+            <button type="button" class="print-btn" id="printCertificateBtn">Print Documentation</button>
+        </div>
+
+        <article class="folio">
+            <div class="folio-inner-frame">
+                <header class="folio-header">
+                    <div>
+                        <span class="folio-kicker">ART STUDIO · Catalog &amp; Documentation Dossier</span>
+                        <h1 class="folio-title">
+                            <%= product.authenticity_status === 'verified' ? 'Certificate of Authenticity & Archive Record' : 'Artwork Inventory & Documentation Record' %>
+                        </h1>
+                        <p class="folio-sub">
+                            Permanent catalog entry linking this work's internal ART STUDIO Inventory ID with its physical specifications, archive status, and curatorial authenticity review state.
+                        </p>
+                    </div>
+                    <div class="registry-seal">
+                        <span class="registry-seal-label">ART STUDIO Inventory ID</span>
+                        <span class="registry-seal-id"><%= product.inventory_id %></span>
+                        <span class="registry-seal-status">
+                            Archive State:
+                            <strong><%= product.status === 'sold' ? 'Acquired · Sold Archive' : 'Available' %></strong>
+                            <% if (product.sold_order_reference) { %>
+                                · Order #<%= product.sold_order_reference %>
+                            <% } %>
+                        </span>
+                    </div>
+                </header>
+
+                <section class="auth-notice <%= product.authenticity_status %>" aria-label="Authenticity Verification Status">
+                    <div>
+                        <span class="auth-notice-label">
+                            <% if (product.authenticity_status === 'verified') { %>
+                                Verified Authenticity Documentation
+                            <% } else if (product.authenticity_status === 'unverified') { %>
+                                Authenticity Unverified
+                            <% } else { %>
+                                Inventory Tracked Only · Authenticity Review Pending
+                            <% } %>
+                        </span>
+                        <h2 class="auth-notice-heading">
+                            <% if (product.authenticity_status === 'verified') { %>
+                                Curatorial Attribution &amp; Provenance Verified
+                            <% } else if (product.authenticity_status === 'unverified') { %>
+                                Assigned Inventory ID Without Verified Authenticity
+                            <% } else { %>
+                                Assigned Inventory ID Pending Authenticity Verification
+                            <% } %>
+                        </h2>
+                        <p class="auth-notice-copy">
+                            <%= product.authenticity_note %>
+                        </p>
+                    </div>
+                    <div class="auth-pill">
+                        <% if (product.authenticity_status === 'verified') { %>
+                            Verified COA
+                        <% } else if (product.authenticity_status === 'unverified') { %>
+                            Unverified
+                        <% } else { %>
+                            Pending Review
+                        <% } %>
+                    </div>
+                </section>
+
+                <p class="distinction-note">
+                    <strong>Archive Policy Notice:</strong> An ART STUDIO Inventory ID (<code><%= product.inventory_id %></code>) provides unique permanent catalog and chain-of-custody tracking across our collection and orders. <strong>An Inventory ID by itself does not establish or certify authenticity.</strong> Authenticity is granted separately only when curatorial provenance documentation is marked <em>Verified</em>.
+                </p>
+
+                <section class="artwork-overview">
+                    <div class="artwork-plate">
+                        <img src="<%= product.image %>" alt="<%= product.title %> by <%= product.artist %>" referrerPolicy="no-referrer" />
+                        <div class="artwork-plate-caption">
+                            <span><%= product.inventory_id %></span>
+                            <span>Ref #<%= product.id %></span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 class="meta-section-title">1. Permanent Inventory Identification</h2>
+                        <div class="spec-table">
+                            <div class="spec-cell">
+                                <span class="spec-k">Inventory ID</span>
+                                <span class="spec-v mono"><%= product.inventory_id %></span>
+                            </div>
+                            <div class="spec-cell">
+                                <span class="spec-k">Title</span>
+                                <span class="spec-v"><%= product.title %></span>
+                            </div>
+                            <div class="spec-cell">
+                                <span class="spec-k">Artist / Maker</span>
+                                <span class="spec-v"><%= product.artist %></span>
+                            </div>
+                            <div class="spec-cell">
+                                <span class="spec-k">Category / Discipline</span>
+                                <span class="spec-v"><%= product.category %> (<%= categoryCode %>)</span>
+                            </div>
+                            <div class="spec-cell">
+                                <span class="spec-k">Dimensions</span>
+                                <span class="spec-v"><%= product.size %></span>
+                            </div>
+                            <div class="spec-cell">
+                                <span class="spec-k">Catalog Valuation</span>
+                                <span class="spec-v mono">$<%= formatCurrency(product.price) %> USD</span>
+                            </div>
+                            <div class="spec-cell">
+                                <span class="spec-k">Date / Period</span>
+                                <span class="spec-v"><%= provenance.datePeriod %></span>
+                            </div>
+                            <div class="spec-cell">
+                                <span class="spec-k">Catalog Status</span>
+                                <span class="spec-v">
+                                    <%= product.status === 'sold' ? 'Sold · Retained in Permanent Archive' : 'Available for Acquisition' %>
+                                </span>
+                            </div>
+                        </div>
+
+                        <p style="margin: 0; font-size: 13px; line-height: 1.65; color: #404040;">
+                            <%= product.description %>
+                        </p>
+                    </div>
+                </section>
+
+                <section aria-label="Verified Provenance and Material Record" style="padding-top: 24px;">
+                    <h2 class="meta-section-title" style="margin-bottom: 4px;">2. Material, Markings &amp; Authenticity Dossier</h2>
+                    <div class="provenance-grid">
+                        <div class="provenance-block">
+                            <h3>Origin &amp; Attribution</h3>
+                            <p><%= provenance.originAttribution %></p>
+                        </div>
+                        <div class="provenance-block">
+                            <h3>Medium &amp; Materials</h3>
+                            <p><%= provenance.materialsMedium %></p>
+                        </div>
+                        <div class="provenance-block">
+                            <h3>Markings / Edition</h3>
+                            <p><%= provenance.markingsEdition %></p>
+                        </div>
+                        <div class="provenance-block">
+                            <h3>Condition Assessment</h3>
+                            <p><%= provenance.conditionNote %></p>
+                        </div>
+                        <div class="provenance-block" style="grid-column: 1 / -1;">
+                            <h3>Provenance &amp; Curatorial Record</h3>
+                            <p><%= provenance.provenanceRecord %></p>
+                        </div>
+                    </div>
+                </section>
+
+                <footer class="folio-footer">
+                    <div>
+                        <div><strong>Cataloged:</strong> <span class="mono"><%= product.created_at.slice(0, 10) %></span></div>
+                        <div><strong>Inventory Reference:</strong> <span class="mono"><%= product.inventory_id %></span></div>
+                        <% if (product.sold_order_reference) { %>
+                        <div><strong>Acquisition Order:</strong> <span class="mono">#<%= product.sold_order_reference %></span></div>
+                        <% } %>
+                    </div>
+                    <div class="signature-line">
+                        <% if (product.authenticity_status === 'verified') { %>
+                            Curatorial Registry Authorization · ART STUDIO Archive
+                        <% } else { %>
+                            Catalog Registration Only (Pending Authenticity Sign-off)
+                        <% } %>
+                    </div>
+                </footer>
+            </div>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <span>© 2026 ART STUDIO. All rights reserved.</span>
+            <nav class="footer-links" aria-label="Footer policies">
+                <a href="/shipping">Shipping &amp; Delivery</a>
+                <a href="/authenticity">Authenticity</a>
+                <a href="/crypto-checkout">Crypto Checkout</a>
+                <a href="/admin/inventory">Inventory Ledger</a>
+                <a href="/contact">Contact &amp; Support</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('printCertificateBtn')?.addEventListener('click', () => {
+            window.print();
+        });
+    </script>
+    <script src="/static/js/cart-sync.js"></script>
+</body>
+</html>

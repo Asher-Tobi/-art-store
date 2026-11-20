@@ -4,21 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Checkout | ART STUDIO</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         :root {
-            --ink: #0f0f0f;
-            --muted: #6b6b6b;
+            --ink: #0a0a0a;
+            --ink-soft: #404040;
+            --muted: #666666;
             --border: #dcdcdc;
             --input-border: #cccccc;
-            --input-bg: #f7f7f7;
-            --panel-bg: #ffffff;
-            --page-bg: #fafafa;
+            --input-bg: #fafafa;
+            --surface: #ffffff;
+            --canvas: #fafafa;
             --gold: #a3702b;
             --green: #047857;
-            --green-dot: #10b981;
+            --danger: #991b1b;
             --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             --font-serif: "Playfair Display", Georgia, serif;
             --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -29,22 +32,26 @@
         body {
             margin: 0;
             font-family: var(--font-sans);
-            background: var(--page-bg);
+            background: var(--canvas);
             color: var(--ink);
             -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         a { color: inherit; text-decoration: none; }
+        button { font: inherit; }
 
         .topbar {
-            background: var(--ink);
+            background: #111111;
             color: #ffffff;
             text-align: center;
-            padding: 10px 16px;
-            letter-spacing: 0.16em;
+            padding: 9px 16px;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
-            font-size: 10px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 500;
         }
 
         .header {
@@ -52,135 +59,247 @@
             border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
-            z-index: 20;
+            z-index: 40;
         }
 
         .header-inner {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 16px 24px;
+            padding: 0 24px;
+            height: 64px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 16px;
         }
 
-        .brand {
+        .brand-mark {
             font-family: var(--font-serif);
             font-size: 26px;
             font-weight: 400;
             letter-spacing: 0.18em;
             text-transform: uppercase;
             color: var(--ink);
+            white-space: nowrap;
         }
 
-        .header-back {
+        .wrap {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 32px 24px 80px;
+            flex: 1;
+        }
+
+        .checkout-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .checkout-title {
+            font-family: var(--font-serif);
+            font-size: clamp(1.85rem, 3.2vw, 2.4rem);
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+
+        .return-bag-link {
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.12em;
-            color: #444;
+            color: #404040;
+            text-decoration: underline;
+            text-underline-offset: 4px;
         }
 
-        .header-back:hover { color: var(--ink); }
+        .return-bag-link:hover { color: var(--ink); }
 
-        .wrap {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 32px 24px 80px;
-        }
-
-        .breadcrumb-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-            padding-bottom: 20px;
-            margin-bottom: 28px;
+        /* 6-Step Horizontal Rail */
+        .step-rail {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            border-top: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
+            background: #ffffff;
+            margin-bottom: 32px;
         }
 
-        .breadcrumb {
+        .step-tab {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 12px;
+            gap: 10px;
+            padding: 14px 12px;
+            background: transparent;
+            border: none;
+            border-right: 1px solid #ececec;
+            text-align: left;
+            cursor: default;
+            color: #8a8a8a;
+            position: relative;
+        }
+
+        .step-tab:last-child { border-right: none; }
+
+        .step-tab.reachable {
+            cursor: pointer;
+            color: #404040;
+        }
+
+        .step-tab.reachable:hover {
+            background: #fafafa;
+            color: var(--ink);
+        }
+
+        .step-tab.active {
+            color: var(--ink);
+            background: #fcfaf6;
+        }
+
+        .step-tab.active::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -1px;
+            height: 2px;
+            background: var(--ink);
+        }
+
+        .step-tab.done .step-num {
+            background: var(--ink);
+            color: #ffffff;
+            border-color: var(--ink);
+        }
+
+        .step-tab.active .step-num {
+            border-color: var(--ink);
+            color: var(--ink);
+        }
+
+        .step-num {
+            width: 24px;
+            height: 24px;
+            border: 1px solid #cccccc;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-label-group {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .step-kicker {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
             color: var(--muted);
         }
 
-        .breadcrumb a:hover { color: var(--ink); }
-        .breadcrumb .current { color: var(--ink); font-weight: 600; }
-
-        .delivery-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 11px;
+        .step-name {
+            font-size: 12px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--green);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .delivery-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--green-dot);
-            display: inline-block;
+        /* Mobile collapsible summary */
+        .mobile-summary-toggle {
+            display: none;
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .mobile-summary-toggle .mono {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
         }
 
         .checkout-grid {
             display: grid;
             grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-            gap: 40px;
+            gap: 36px;
             align-items: start;
         }
 
-        .form-stack {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
         .card {
-            background: var(--panel-bg);
+            background: var(--surface);
             border: 1px solid var(--border);
-            padding: 28px;
+            padding: 30px;
         }
 
         .card-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 18px;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .card-kicker {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--gold);
+            display: block;
+            margin-bottom: 4px;
         }
 
         .card-title {
             margin: 0;
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+            font-family: var(--font-serif);
+            font-size: 24px;
+            font-weight: 400;
             color: var(--ink);
         }
 
-        .card-tag {
-            font-size: 12px;
-            color: var(--muted);
+        .card-subtitle {
+            margin: 0 0 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #525252;
         }
 
-        .card-tag.mono {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 11px;
+        .flash-error {
+            padding: 14px 16px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: var(--danger);
+            font-size: 13px;
+            line-height: 1.55;
+            margin-bottom: 20px;
         }
 
         .field-stack {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 18px;
         }
 
         .row-2 {
@@ -189,9 +308,9 @@
             gap: 16px;
         }
 
-        .row-6 {
+        .row-3 {
             display: grid;
-            grid-template-columns: 3fr 1fr 2fr;
+            grid-template-columns: 2fr 1.2fr 1.2fr;
             gap: 16px;
         }
 
@@ -200,252 +319,432 @@
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.1em;
             color: #404040;
             margin-bottom: 6px;
         }
 
-        .req { color: #dc2626; }
-        .opt { color: #888; font-weight: 400; text-transform: lowercase; }
+        .req { color: #b91c1c; }
+        .opt { color: #737373; font-weight: 400; text-transform: lowercase; }
 
         input[type="text"],
         input[type="email"],
         input[type="tel"],
+        textarea,
         select {
             width: 100%;
             padding: 12px 14px;
             background: var(--input-bg);
             border: 1px solid var(--input-border);
+            font-family: var(--font-sans);
             font-size: 14px;
             color: var(--ink);
             border-radius: 0;
             transition: border-color 0.15s ease, background-color 0.15s ease;
         }
 
-        input:focus, select:focus {
+        textarea {
+            resize: vertical;
+            min-height: 78px;
+        }
+
+        input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--ink);
             background: #ffffff;
         }
 
-        .helper-text {
-            margin: 6px 0 0;
+        .field-error {
+            margin: 5px 0 0;
             font-size: 11px;
-            color: var(--muted);
-            line-height: 1.5;
+            color: var(--danger);
+            display: none;
         }
+
+        .field-error.visible { display: block; }
+
+        /* Step 3 Shipping Options */
+        .shipping-options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .shipping-option-card {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px;
+            border: 1px solid var(--input-border);
+            background: #ffffff;
+            cursor: pointer;
+            transition: border-color 0.15s ease, background-color 0.15s ease;
+        }
+
+        .shipping-option-card:hover { border-color: #737373; }
+
+        .shipping-option-card.selected {
+            border-color: var(--ink);
+            background: #fcfaf6;
+            box-shadow: inset 0 0 0 1px var(--ink);
+        }
+
+        .shipping-radio-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .shipping-radio-row input[type="radio"] {
+            margin-top: 3px;
+            accent-color: var(--ink);
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
+        .shipping-opt-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .shipping-opt-meta {
+            display: block;
+            margin-top: 4px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--gold);
+        }
+
+        .shipping-opt-desc {
+            margin: 8px 0 0;
+            font-size: 12px;
+            color: #525252;
+            line-height: 1.55;
+        }
+
+        .shipping-opt-price {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .customs-box {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border: 1px solid #e5e5e5;
+            background: #fafafa;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #404040;
+        }
+
+        /* Step 4 Review Dossier */
+        .review-blocks {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .review-box {
+            border: 1px solid #e5e5e5;
+            background: #fafafa;
+            padding: 16px;
+        }
+
+        .review-box.full {
+            grid-column: 1 / -1;
+        }
+
+        .review-box-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .review-box-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+        }
+
+        .edit-step-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--ink);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            cursor: pointer;
+        }
+
+        .review-box p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #262626;
+        }
+
+        .review-items {
+            border-top: 1px solid #ececec;
+            border-bottom: 1px solid #ececec;
+            margin-bottom: 18px;
+        }
+
+        .review-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 0;
+            border-bottom: 1px solid #f2f2f2;
+            font-size: 13px;
+        }
+
+        .review-item-row:last-child { border-bottom: none; }
 
         .checkbox-row {
             display: flex;
             align-items: flex-start;
-            gap: 8px;
-            padding-top: 4px;
+            gap: 10px;
+            padding: 14px 16px;
+            border: 1px solid #dcdcdc;
+            background: #fcfaf6;
+            margin-bottom: 6px;
         }
 
         .checkbox-row input[type="checkbox"] {
             margin-top: 2px;
-            width: 14px;
-            height: 14px;
+            width: 15px;
+            height: 15px;
             accent-color: var(--ink);
             cursor: pointer;
         }
 
         .checkbox-row label {
-            font-size: 12px;
-            color: #525252;
+            font-size: 12.5px;
+            color: #262626;
+            line-height: 1.5;
             cursor: pointer;
-            line-height: 1.4;
         }
 
-        .shipping-method-box {
-            padding: 16px;
-            border: 2px solid var(--ink);
-            background: #fafafa;
+        /* Step 5 Payment Selection (BTC, ETH, SOL + Card/PayPal) */
+        .payment-group-label {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .shipping-method-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .shipping-method-title strong {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .pill-included {
-            font-size: 10px;
+            align-items: baseline;
+            margin: 0 0 10px;
+            font-size: 10.5px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            background: rgba(16, 185, 129, 0.14);
-            color: var(--green);
-            padding: 2px 8px;
+            letter-spacing: 0.14em;
+            color: var(--muted);
         }
 
-        .shipping-method-desc {
-            margin: 6px 0 0;
-            font-size: 12px;
-            color: #555;
-            line-height: 1.5;
-        }
-
-        .shipping-price {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 14px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .crypto-intro {
-            font-size: 12px;
-            color: #525252;
-            margin: 0 0 18px;
-            line-height: 1.6;
-        }
-
-        .crypto-grid {
+        .crypto-selector-grid {
             display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 10px;
-            margin-bottom: 16px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
-        .crypto-btn {
-            padding: 16px 12px;
+        .provider-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .payment-option-card {
             border: 1px solid var(--input-border);
             background: #ffffff;
-            text-align: center;
+            padding: 16px;
+            text-align: left;
             cursor: pointer;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s ease;
+            gap: 5px;
+            min-height: 88px;
+            transition: border-color 0.15s ease, background-color 0.15s ease;
         }
 
-        .crypto-btn:hover {
-            border-color: #777;
-        }
+        .payment-option-card:hover { border-color: #737373; }
 
-        .crypto-btn.active {
+        .payment-option-card.active {
             border-color: var(--ink);
-            background: #fafafa;
-            box-shadow: 0 0 0 1px var(--ink);
+            background: #fcfaf6;
+            box-shadow: inset 0 0 0 1px var(--ink);
         }
 
-        .crypto-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            color: #ffffff;
-            font-weight: 700;
-            font-size: 14px;
+        .pay-opt-head {
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin-bottom: 8px;
+            gap: 8px;
         }
 
-        .crypto-name {
+        .pay-opt-mark {
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             font-size: 12px;
+            font-weight: 700;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .pay-opt-title {
+            font-size: 13.5px;
             font-weight: 600;
             color: var(--ink);
         }
 
-        .crypto-sym {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--muted);
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        .pay-opt-amount {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 11.5px;
+            color: var(--ink-soft);
             margin-top: 2px;
         }
 
-        .crypto-amt {
-            font-size: 12px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        .pay-opt-sub {
+            font-size: 11.5px;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .pay-opt-state {
+            margin-top: 2px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gold);
+        }
+
+        .pay-opt-state.ready { color: var(--green); }
+
+        /* Deposit Details Box for BTC/ETH/SOL */
+        .crypto-details-panel {
+            border: 1px solid var(--border);
+            background: #fafafa;
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
+        .crypto-details-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .crypto-send-info {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .crypto-network-kicker {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .crypto-send-amount {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 20px;
             font-weight: 700;
             color: var(--ink);
-            margin-top: 6px;
+            margin: 0 0 4px;
         }
 
-        .card-unavail-panel {
-            border: 1px solid #f59e0b;
-            background: #fffbeb;
-            padding: 20px;
+        .usd-equiv {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--muted);
+            margin-left: 6px;
+        }
+
+        .address-box {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+        }
+
+        .address-label-row {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
         }
 
-        .card-unavail-title {
-            margin: 0;
-            font-size: 13px;
+        .address-label {
+            font-size: 10px;
             font-weight: 700;
-            color: #92400e;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
         }
 
-        .card-unavail-desc {
-            margin: 0;
-            font-size: 13px;
-            line-height: 1.6;
-            color: #78350f;
-        }
-
-        .switch-crypto-row {
+        .copy-actions {
             display: flex;
-            flex-wrap: wrap;
             gap: 8px;
         }
 
-        .switch-crypto-btn {
-            background: var(--ink);
-            color: #ffffff;
-            border: none;
-            padding: 10px 14px;
-            font-size: 11px;
+        .copy-mini-btn {
+            background: #ffffff;
+            border: 1px solid var(--input-border);
+            padding: 4px 10px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.08em;
+            color: var(--ink);
             cursor: pointer;
         }
 
-        .switch-crypto-btn:hover { background: #262626; }
-
-        .payment-prompt-box {
-            border: 1px dashed #d4d4d4;
-            background: #fafafa;
-            padding: 18px;
-            font-size: 13px;
-            color: #525252;
-            text-align: center;
+        .copy-mini-btn:hover {
+            border-color: var(--ink);
+            background: #fcfaf6;
         }
 
-        .deposit-panel {
-            border: 1px solid #d4d4d4;
-            background: #fafafa;
-            padding: 20px;
-        }
-
-        .deposit-flex {
-            display: flex;
-            align-items: center;
-            gap: 22px;
+        .wallet-address-text {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--ink);
+            word-break: break-all;
+            line-height: 1.5;
         }
 
         .qr-frame {
-            width: 144px;
-            height: 144px;
             background: #ffffff;
             border: 1px solid var(--border);
-            padding: 4px;
+            padding: 10px;
+            width: 150px;
+            height: 150px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -458,220 +757,119 @@
             display: block;
         }
 
-        .deposit-fields {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .deposit-field-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 4px;
-        }
-
-        .deposit-field-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--muted);
-        }
-
-        .copy-link {
-            background: none;
-            border: none;
-            padding: 0;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--gold);
-            cursor: pointer;
-        }
-
-        .copy-link:hover { text-decoration: underline; }
-
-        .deposit-value-box {
-            padding: 10px 12px;
-            background: #ffffff;
-            border: 1px solid var(--input-border);
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 12px;
-            color: var(--ink);
-            word-break: break-all;
-            user-select: all;
-        }
-
-        .amount-box {
-            padding: 10px 12px;
-            background: #ffffff;
-            border: 1px solid var(--input-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .amount-box strong {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 14px;
-        }
-
-        .amount-box span {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        .wallet-pending {
-            padding: 14px;
-            background: #fffbeb;
-            border: 1px dashed #d97706;
-            color: #92400e;
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        .deposit-footer {
+        .crypto-status-note {
             margin-top: 14px;
             padding-top: 12px;
-            border-top: 1px solid var(--border);
-            font-size: 11px;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        .btc-shipping-prompt {
-            margin-top: 14px;
-            padding: 12px 14px;
-            background: #ecfdf5;
-            border: 1px solid #a7f3d0;
-            color: #065f46;
-            font-size: 12.5px;
-            line-height: 1.5;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 18px 24px;
-            background: var(--ink);
-            color: #ffffff;
-            border: none;
+            border-top: 1px solid #e5e5e5;
             font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.14em;
-            cursor: pointer;
-            transition: background-color 0.15s ease;
+            line-height: 1.6;
+            color: #404040;
         }
 
-        .submit-btn:hover { background: #262626; }
-        .submit-btn:disabled { background: #737373; cursor: not-allowed; }
-
-        .submit-footnote {
-            margin: 10px 0 0;
-            text-align: center;
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        .flash {
-            padding: 14px 16px;
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            color: #b91c1c;
-            font-size: 13px;
-            line-height: 1.55;
-        }
-
+        /* Beautified Bitcoin Transfer Awaiting Notice (hairline border, zero thick left stripe, zero pills/dots) */
         .btc-notice-card {
-            margin-bottom: 16px;
+            margin-top: 16px;
             padding: 18px 20px;
+            border: 1px solid #d6c5a3;
             background: #fcfaf6;
-            border: 1px solid #e6dcc8;
-            border-left: 3px solid var(--gold);
             color: var(--ink);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .btc-notice-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btc-notice-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #f7931a;
-            color: #ffffff;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            font-weight: 700;
-            flex-shrink: 0;
         }
 
         .btc-notice-title {
-            margin: 0;
-            font-family: Georgia, "Times New Roman", serif;
-            font-size: 16px;
+            margin: 0 0 6px;
+            font-family: var(--font-serif);
+            font-size: 18px;
             font-weight: 400;
             color: var(--ink);
-            letter-spacing: -0.01em;
         }
 
         .btc-notice-body {
             margin: 0;
             font-size: 13px;
-            line-height: 1.6;
-            color: #525252;
+            line-height: 1.65;
+            color: #404040;
         }
 
         .btc-notice-meta {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e8dfd0;
             display: grid;
             grid-template-columns: auto 1fr;
-            gap: 8px 16px;
-            padding: 12px 14px;
-            background: #ffffff;
-            border: 1px solid #ece6da;
+            gap: 6px 14px;
             font-size: 12px;
-            align-items: baseline;
         }
 
-        .btc-notice-label {
+        .btc-notice-meta dt {
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             color: var(--muted);
-            white-space: nowrap;
+            align-self: center;
         }
 
-        .btc-notice-value {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 12px;
-            color: var(--ink);
+        .btc-notice-meta dd {
+            margin: 0;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
             word-break: break-all;
+            color: var(--ink);
         }
 
-        @media (max-width: 540px) {
-            .btc-notice-meta {
-                grid-template-columns: 1fr;
-                gap: 4px;
-            }
+        .gateway-notice {
+            padding: 16px 18px;
+            border: 1px solid #e2ddd3;
+            background: #fcfaf6;
+            font-size: 12.5px;
+            line-height: 1.65;
+            color: #404040;
+            margin-bottom: 18px;
         }
 
-        /* Summary Column */
+        .gateway-notice strong { color: var(--ink); }
+
+        .step-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            padding: 15px 22px;
+            background: #ffffff;
+            color: var(--ink);
+            border: 1px solid var(--ink);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover { background: #f3f3f3; }
+
+        .btn-primary {
+            padding: 16px 28px;
+            background: var(--ink);
+            color: #ffffff;
+            border: none;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            cursor: pointer;
+            margin-left: auto;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-primary:hover { background: #262626; }
+        .btn-primary:disabled { background: #737373; cursor: not-allowed; }
+
+        /* Sticky Right Order Summary */
         .summary-sticky {
             position: sticky;
             top: 88px;
@@ -680,37 +878,40 @@
         .summary-card {
             background: #ffffff;
             border: 1px solid var(--border);
-            padding: 28px;
+            padding: 26px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 18px;
         }
 
         .summary-title {
             margin: 0;
             padding-bottom: 14px;
             border-bottom: 1px solid var(--border);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.12em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .summary-items {
             display: flex;
             flex-direction: column;
             gap: 14px;
-            max-height: 360px;
+            max-height: 320px;
             overflow-y: auto;
             padding-right: 4px;
         }
 
         .summary-item {
             display: flex;
-            align-items: center;
-            gap: 14px;
+            align-items: flex-start;
+            gap: 12px;
             padding-bottom: 14px;
-            border-bottom: 1px solid #ececec;
+            border-bottom: 1px solid #efefef;
         }
 
         .summary-item:last-child {
@@ -720,8 +921,8 @@
 
         .thumb-wrap {
             position: relative;
-            width: 64px;
-            height: 76px;
+            width: 58px;
+            height: 72px;
             border: 1px solid #e5e5e5;
             background: #f5f5f5;
             flex-shrink: 0;
@@ -734,23 +935,6 @@
             display: block;
         }
 
-        .thumb-qty {
-            position: absolute;
-            top: -7px;
-            right: -7px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--ink);
-            color: #ffffff;
-            font-size: 10px;
-            font-weight: 700;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
         .summary-item-info {
             flex: 1;
             min-width: 0;
@@ -761,9 +945,7 @@
             font-size: 13px;
             font-weight: 600;
             color: var(--ink);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            line-height: 1.35;
         }
 
         .summary-item-meta {
@@ -773,8 +955,17 @@
             color: var(--muted);
         }
 
+        .summary-item-inv {
+            display: block;
+            margin-top: 2px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: #404040;
+        }
+
         .summary-item-price {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
             font-size: 13px;
             font-weight: 600;
             white-space: nowrap;
@@ -793,7 +984,7 @@
 
         .promo-apply-btn {
             padding: 0 16px;
-            background: #e5e5e5;
+            background: #f2f2f2;
             border: 1px solid var(--input-border);
             color: #262626;
             font-size: 11px;
@@ -803,7 +994,7 @@
             cursor: pointer;
         }
 
-        .promo-apply-btn:hover { background: #d4d4d4; }
+        .promo-apply-btn:hover { background: #e5e5e5; }
 
         .promo-status {
             margin-top: 6px;
@@ -813,7 +1004,7 @@
         }
 
         .promo-status.ok { color: var(--green); }
-        .promo-status.err { color: #b91c1c; }
+        .promo-status.err { color: var(--danger); }
 
         .totals-list {
             padding-top: 16px;
@@ -821,24 +1012,22 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            font-size: 12px;
+            font-size: 12.5px;
         }
 
         .totals-line {
             display: flex;
             justify-content: space-between;
+            gap: 10px;
             color: #525252;
         }
 
         .totals-line .mono {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
             color: var(--ink);
             font-weight: 600;
-        }
-
-        .totals-line.free .free-val {
-            color: var(--green);
-            font-weight: 700;
+            white-space: nowrap;
         }
 
         .totals-line.discount { color: var(--green); }
@@ -857,24 +1046,25 @@
             font-weight: 700;
         }
 
-        .totals-grand-values {
+        .totals-grand-right {
             text-align: right;
         }
 
         .totals-grand-usd {
-            display: block;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
             font-size: 20px;
             font-weight: 700;
+            display: block;
         }
 
         .totals-grand-crypto {
             display: block;
-            margin-top: 2px;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--gold);
+            margin-top: 3px;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 11.5px;
+            color: var(--muted);
         }
 
         .trust-list {
@@ -885,106 +1075,222 @@
             gap: 8px;
             font-size: 11px;
             color: #525252;
+            line-height: 1.5;
         }
 
-        .trust-item {
+        .trust-list a {
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            color: var(--ink);
+        }
+
+        .footer {
+            background: #111111;
+            color: #999999;
+            border-top: 1px solid #262626;
+            padding: 36px 24px;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 12px;
         }
 
-        .trust-check {
-            color: var(--green);
-            font-weight: 700;
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
         }
 
-        .hidden { display: none; }
+        .footer-links a:hover { color: #ffffff; }
+
+        .hidden { display: none !important; }
 
         @media (max-width: 960px) {
+            .step-rail { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .step-tab { border-bottom: 1px solid #ececec; }
+            .mobile-summary-toggle { display: flex; }
             .checkout-grid { grid-template-columns: 1fr; }
-            .summary-sticky { position: static; }
+            .summary-sticky {
+                position: static;
+                display: none;
+            }
+            .summary-sticky.mobile-open { display: block; }
         }
 
-        @media (max-width: 780px) {
-            .crypto-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @media (max-width: 720px) {
+            .crypto-selector-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 640px) {
             .wrap { padding: 20px 16px 60px; }
             .card, .summary-card { padding: 20px; }
-            .row-2, .row-6 { grid-template-columns: 1fr; }
-            .deposit-flex { flex-direction: column; align-items: flex-start; }
+            .row-2, .row-3, .review-blocks, .provider-grid { grid-template-columns: 1fr; }
+            .step-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .step-actions { flex-direction: column-reverse; align-items: stretch; }
+            .btn-primary { margin-left: 0; width: 100%; }
+            .btn-secondary { width: 100%; text-align: center; }
         }
     </style>
 </head>
-<body data-subtotal="<%= subtotal %>" data-cid="<%= cid %>" data-has-furniture="<%= (typeof shipping_details !== 'undefined' && shipping_details.hasFurniture) ? 'true' : 'false' %>" data-has-sculpture="<%= (typeof shipping_details !== 'undefined' && shipping_details.hasSculpture) ? 'true' : 'false' %>">
-    <%- include('partials/site-header') %>
+<body
+    data-subtotal="<%= subtotal %>"
+    data-cid="<%= cid %>"
+    data-initial-step="<%= active_step || 1 %>"
+>
+    <%- include('partials/site-header', { topbarText: 'Collector Checkout · Complimentary Insured Shipping $1,500+' }) %>
 
     <main class="wrap">
-        <div class="breadcrumb-bar">
-            <nav class="breadcrumb" aria-label="Checkout steps">
-                <a href="/cart">Bag</a>
-                <span>/</span>
-                <span class="current">Information &amp; Shipping</span>
-                <span>/</span>
-                <span>Payment</span>
-            </nav>
-            <span class="delivery-badge">
-                <span class="delivery-dot"></span>
-                Insured Worldwide Fine Art Delivery
-            </span>
+        <div class="checkout-top-row">
+            <h1 class="checkout-title">Collector Checkout</h1>
+            <a href="/cart" class="return-bag-link">Return to Shopping Bag</a>
         </div>
+
+        <!-- 6-Step Progress Rail -->
+        <nav class="step-rail" aria-label="Checkout progress">
+            <button type="button" class="step-tab active reachable" data-step-tab="1">
+                <span class="step-num">01</span>
+                <span class="step-label-group">
+                    <span class="step-kicker">Step 1</span>
+                    <span class="step-name">Customer</span>
+                </span>
+            </button>
+            <button type="button" class="step-tab" data-step-tab="2">
+                <span class="step-num">02</span>
+                <span class="step-label-group">
+                    <span class="step-kicker">Step 2</span>
+                    <span class="step-name">Delivery</span>
+                </span>
+            </button>
+            <button type="button" class="step-tab" data-step-tab="3">
+                <span class="step-num">03</span>
+                <span class="step-label-group">
+                    <span class="step-kicker">Step 3</span>
+                    <span class="step-name">Shipping</span>
+                </span>
+            </button>
+            <button type="button" class="step-tab" data-step-tab="4">
+                <span class="step-num">04</span>
+                <span class="step-label-group">
+                    <span class="step-kicker">Step 4</span>
+                    <span class="step-name">Order Review</span>
+                </span>
+            </button>
+            <button type="button" class="step-tab" data-step-tab="5">
+                <span class="step-num">05</span>
+                <span class="step-label-group">
+                    <span class="step-kicker">Step 5</span>
+                    <span class="step-name">Payment</span>
+                </span>
+            </button>
+            <div class="step-tab" aria-disabled="true">
+                <span class="step-num">06</span>
+                <span class="step-label-group">
+                    <span class="step-kicker">Step 6</span>
+                    <span class="step-name">Confirmation</span>
+                </span>
+            </div>
+        </nav>
+
+        <button type="button" class="mobile-summary-toggle" id="mobileSummaryToggle" aria-expanded="false">
+            <span id="mobileSummaryToggleLabel">Show Order Summary (<%= cart_items.reduce((s, i) => s + i.quantity, 0) %> works)</span>
+            <span class="mono" id="mobileSummaryTotal">$<%= formatCurrency(total) %> USD</span>
+        </button>
 
         <div class="checkout-grid">
             <div>
-                <form method="post" action="/checkout" id="checkoutForm" class="form-stack">
-                    <% if (messages && messages.length) { %>
-                        <% messages.forEach((message) => { %>
-                            <div class="flash" role="alert"><%= message %></div>
-                        <% }) %>
-                    <% } %>
+                <% if (messages && messages.length) { %>
+                    <% messages.forEach((message) => { %>
+                        <div class="flash-error" role="alert"><%= message %></div>
+                    <% }) %>
+                <% } %>
+                <div class="flash-error hidden" id="clientValidationBanner" role="alert"></div>
 
-                    <!-- 1. Contact Information -->
-                    <section class="card">
+                <%
+                    const activeMethod = selected_method || 'bitcoin';
+                    const cryptoKeys = ['bitcoin', 'ethereum', 'solana'];
+                    const activeIsCrypto = cryptoKeys.includes(activeMethod);
+                %>
+
+                <form method="post" action="/checkout" id="checkoutForm" novalidate>
+                    <input type="hidden" name="checkout_token" value="<%= checkout_token %>" />
+                    <input type="hidden" id="promoCodeHidden" name="promo_code" value="<%= promo_code || '' %>" />
+                    <input type="hidden" id="paymentMethodInput" name="payment_method" value="<%= activeMethod %>" />
+                    <input type="hidden" id="paymentProviderInput" name="payment_provider" value="<%= activeMethod %>" />
+
+                    <!-- STEP 1: CUSTOMER INFORMATION -->
+                    <section class="card step-panel" data-step-panel="1">
                         <div class="card-header">
-                            <h2 class="card-title">Contact Information</h2>
-                            <span class="card-tag">Guest Checkout</span>
+                            <div>
+                                <span class="card-kicker">Step 01 of 06</span>
+                                <h2 class="card-title">Customer Information</h2>
+                            </div>
                         </div>
+                        <p class="card-subtitle">
+                            Enter your contact information for order updates, crating coordination, and courier dispatch notifications.
+                        </p>
+
                         <div class="field-stack">
                             <div>
-                                <label class="field-label" for="email">Email Address <span class="req">*</span></label>
-                                <input id="email" name="email" type="email" autocomplete="email" placeholder="name@example.com" value="<%= (form_values && form_values.email) || '' %>" required>
-                                <p class="helper-text">Your order invoice and fine art courier tracking coordinates will be sent here.</p>
+                                <label class="field-label" for="name">Full Name <span class="req">*</span></label>
+                                <input id="name" name="name" type="text" autocomplete="name" placeholder="Full legal name" value="<%= (form_values && form_values.name) || '' %>" required />
+                                <p class="field-error" id="err-name">Please enter your full name (at least 2 characters).</p>
                             </div>
-                            <div class="checkbox-row">
-                                <input type="checkbox" id="marketingConsent" checked>
-                                <label for="marketingConsent">Email me about new gallery releases and private collector acquisitions.</label>
+
+                            <div class="row-2">
+                                <div>
+                                    <label class="field-label" for="email">Email Address <span class="req">*</span></label>
+                                    <input id="email" name="email" type="email" autocomplete="email" placeholder="collector@example.com" value="<%= (form_values && form_values.email) || '' %>" required />
+                                    <p class="field-error" id="err-email">Please enter a valid email address.</p>
+                                </div>
+                                <div>
+                                    <label class="field-label" for="phone">Phone Number <span class="req">*</span></label>
+                                    <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+1 (555) 019-2834" value="<%= (form_values && form_values.phone) || '' %>" required />
+                                    <p class="field-error" id="err-phone">Please enter a valid phone number for courier scheduling.</p>
+                                </div>
                             </div>
+                        </div>
+
+                        <div class="step-actions">
+                            <a href="/cart" class="btn-secondary">Back to Bag</a>
+                            <button type="button" class="btn-primary" data-next-step="2">Continue to Delivery</button>
                         </div>
                     </section>
 
-                    <!-- 2. Shipping Address -->
-                    <section class="card">
+                    <!-- STEP 2: DELIVERY INFORMATION -->
+                    <section class="card step-panel hidden" data-step-panel="2">
                         <div class="card-header">
-                            <h2 class="card-title">Shipping Address</h2>
+                            <div>
+                                <span class="card-kicker">Step 02 of 06</span>
+                                <h2 class="card-title">Delivery Information</h2>
+                            </div>
                         </div>
+                        <p class="card-subtitle">
+                            Provide your destination address. International destinations automatically update fine art crating and customs guidance in Step 3.
+                        </p>
+
                         <div class="field-stack">
                             <div>
-                                <label class="field-label" for="country">Country / Region <span class="req">*</span></label>
-                                <input id="country" name="country" type="text" list="countryOptions" autocomplete="country-name" placeholder="Select or enter country / region" value="<%= (form_values && form_values.country) || '' %>" required>
+                                <label class="field-label" for="country">Country <span class="req">*</span></label>
+                                <input id="country" name="country" type="text" list="countryOptions" autocomplete="country-name" placeholder="Select or type country" value="<%= (form_values && form_values.country) || '' %>" required />
                                 <datalist id="countryOptions">
                                     <option value="United States"></option>
                                     <option value="United Kingdom"></option>
                                     <option value="Canada"></option>
-                                    <option value="Australia"></option>
-                                    <option value="Germany"></option>
                                     <option value="France"></option>
+                                    <option value="Germany"></option>
                                     <option value="Italy"></option>
                                     <option value="Spain"></option>
                                     <option value="Netherlands"></option>
                                     <option value="Switzerland"></option>
-                                    <option value="Sweden"></option>
-                                    <option value="Norway"></option>
+                                    <option value="Australia"></option>
                                     <option value="Japan"></option>
                                     <option value="Singapore"></option>
                                     <option value="United Arab Emirates"></option>
@@ -993,261 +1299,386 @@
                                     <option value="Brazil"></option>
                                     <option value="Mexico"></option>
                                 </datalist>
-                            </div>
-
-                            <div class="row-2">
-                                <div>
-                                    <label class="field-label" for="name">Full Legal Name <span class="req">*</span></label>
-                                    <input id="name" name="name" type="text" autocomplete="name" placeholder="e.g. Alexander Wright" value="<%= (form_values && form_values.name) || '' %>" required>
-                                </div>
-                                <div>
-                                    <label class="field-label" for="phone">Phone Number <span class="req">*</span></label>
-                                    <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="e.g. +1 (555) 019-2834" value="<%= (form_values && form_values.phone) || '' %>" required>
-                                </div>
+                                <p class="field-error" id="err-country">Please enter your destination country.</p>
                             </div>
 
                             <div>
                                 <label class="field-label" for="address">Street Address <span class="req">*</span></label>
-                                <input id="address" name="address" type="text" autocomplete="shipping street-address" placeholder="House number and street name" value="<%= (form_values && form_values.address) || '' %>" required>
+                                <input id="address" name="address" type="text" autocomplete="shipping street-address" placeholder="Street number and street name" value="<%= (form_values && form_values.address) || '' %>" required />
+                                <p class="field-error" id="err-address">Please enter your street address.</p>
                             </div>
 
                             <div>
-                                <label class="field-label" for="apartment">Apartment, Suite, Unit <span class="opt">(optional)</span></label>
-                                <input id="apartment" name="apartment" type="text" autocomplete="shipping address-line2" placeholder="Apartment, suite, unit, etc." value="<%= (form_values && form_values.apartment) || '' %>">
+                                <label class="field-label" for="apartment">Apartment, Suite, or Unit <span class="opt">(optional)</span></label>
+                                <input id="apartment" name="apartment" type="text" autocomplete="shipping address-line2" placeholder="Apartment, floor, building access, or suite" value="<%= (form_values && form_values.apartment) || '' %>" />
                             </div>
 
-                            <div class="row-6">
+                            <div class="row-3">
                                 <div>
                                     <label class="field-label" for="city">City <span class="req">*</span></label>
-                                    <input id="city" name="city" type="text" autocomplete="shipping address-level2" placeholder="e.g. New York" value="<%= (form_values && form_values.city) || '' %>" required>
+                                    <input id="city" name="city" type="text" autocomplete="shipping address-level2" placeholder="City" value="<%= (form_values && form_values.city) || '' %>" required />
+                                    <p class="field-error" id="err-city">Please enter your city.</p>
                                 </div>
                                 <div>
-                                    <label class="field-label" for="state">State <span class="req">*</span></label>
-                                    <input id="state" name="state" type="text" autocomplete="shipping address-level1" placeholder="NY" value="<%= (form_values && form_values.state) || '' %>" required>
+                                    <label class="field-label" for="state">State / Region <span class="req">*</span></label>
+                                    <input id="state" name="state" type="text" autocomplete="shipping address-level1" placeholder="State / Province" value="<%= (form_values && form_values.state) || '' %>" required />
+                                    <p class="field-error" id="err-state">Please enter your state or region.</p>
                                 </div>
                                 <div>
-                                    <label class="field-label" for="zip_code">ZIP Code <span class="req">*</span></label>
-                                    <input id="zip_code" name="zip_code" type="text" autocomplete="shipping postal-code" placeholder="10021" value="<%= (form_values && form_values.zip_code) || '' %>" required>
+                                    <label class="field-label" for="zip_code">Postal Code <span class="req">*</span></label>
+                                    <input id="zip_code" name="zip_code" type="text" autocomplete="shipping postal-code" placeholder="Postal / ZIP" value="<%= (form_values && form_values.zip_code) || '' %>" required />
+                                    <p class="field-error" id="err-zip_code">Please enter your postal code.</p>
                                 </div>
                             </div>
-                        </div>
-                    </section>
 
-                    <!-- 3. Shipping Method -->
-                    <section class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Shipping Method</h2>
-                        </div>
-                        <div class="shipping-method-box">
                             <div>
-                                <div class="shipping-method-title">
-                                    <strong id="shippingMethodTitle"><%= (typeof shipping_details !== 'undefined' && shipping_details.methodTitle) ? shipping_details.methodTitle : 'Insured Fine Art Courier Delivery' %></strong>
-                                    <span class="pill-included" id="shippingMethodBadge"><%= (typeof shipping_details !== 'undefined' && shipping_details.qualifiesForFreeShipping) ? 'Complimentary $1,500+' : 'Insured Courier' %></span>
-                                </div>
-                                <p class="shipping-method-desc" id="shippingMethodDesc">
-                                    <%= (typeof shipping_details !== 'undefined' && shipping_details.methodDescription) ? shipping_details.methodDescription : 'Custom-crated artwork handling via dedicated art courier. Fully insured declared value with signature verification upon arrival.' %>
-                                    <span id="shippingMethodWindow" style="display: block; margin-top: 4px; color: #404040; font-weight: 500;">
-                                        <%= (typeof shipping_details !== 'undefined') ? `${shipping_details.cratingWindow} · ${shipping_details.transitWindow}` : '' %>
-                                    </span>
-                                </p>
+                                <label class="field-label" for="delivery_instructions">Delivery Instructions <span class="opt">(optional)</span></label>
+                                <textarea id="delivery_instructions" name="delivery_instructions" placeholder="Gate access code, freight elevator hours, concierge desk instructions, or preferred delivery windows"><%= (form_values && form_values.delivery_instructions) || '' %></textarea>
                             </div>
-                            <span class="shipping-price" id="shippingMethodPrice">
-                                <% if (shipping === 0) { %>
-                                    <span style="color: var(--green);">FREE</span>
-                                <% } else { %>
-                                    $<%= formatCurrency(shipping) %>
-                                <% } %>
-                            </span>
+                        </div>
+
+                        <div class="step-actions">
+                            <button type="button" class="btn-secondary" data-prev-step="1">Back to Customer</button>
+                            <button type="button" class="btn-primary" data-next-step="3">Continue to Shipping</button>
                         </div>
                     </section>
 
-                    <!-- 4. Payment Method -->
-                    <section class="card">
+                    <!-- STEP 3: SHIPPING -->
+                    <section class="card step-panel hidden" data-step-panel="3">
                         <div class="card-header">
-                            <h2 class="card-title">Payment Method</h2>
-                            <span class="card-tag mono">Secure Checkout</span>
+                            <div>
+                                <span class="card-kicker">Step 03 of 06</span>
+                                <h2 class="card-title">Shipping &amp; Crating</h2>
+                            </div>
                         </div>
-                        <p class="crypto-intro">
-                            Select your preferred payment method below to complete your acquisition:
+                        <p class="card-subtitle">
+                            Select your preferred fine art transit method. Orders of $1,500 or more qualify for complimentary standard insured worldwide courier delivery.
                         </p>
 
-                        <input type="hidden" id="paymentMethodInput" name="payment_method" value="<%= selected_method || '' %>" />
-                        <input type="hidden" id="promoCodeHidden" name="promo_code" value="<%= promo_code || '' %>" />
-
-                        <div class="crypto-grid" role="radiogroup" aria-label="Payment method">
-                            <button
-                                type="button"
-                                class="crypto-btn <%= selected_method === 'card' ? 'active' : '' %>"
-                                data-method="card"
-                                aria-pressed="<%= selected_method === 'card' ? 'true' : 'false' %>"
-                            >
-                                <span class="crypto-icon" style="background-color: #171717;">
-                                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                        <rect x="2" y="5" width="20" height="14" rx="2" stroke-width="2" />
-                                        <path d="M2 10h20" stroke-width="2" />
-                                    </svg>
+                        <div class="shipping-options-list" id="shippingOptionsList">
+                            <% shipping_details.shippingOptions.forEach((opt) => { %>
+                            <label class="shipping-option-card <%= shipping_option === opt.id ? 'selected' : '' %>" data-ship-card="<%= opt.id %>">
+                                <div class="shipping-radio-row">
+                                    <input
+                                        type="radio"
+                                        name="shipping_option"
+                                        value="<%= opt.id %>"
+                                        <%= shipping_option === opt.id ? 'checked' : '' %>
+                                    />
+                                    <div>
+                                        <span class="shipping-opt-title" data-ship-title="<%= opt.id %>"><%= opt.title %></span>
+                                        <span class="shipping-opt-meta" data-ship-meta="<%= opt.id %>">
+                                            <%= opt.badgeText %> · <%= opt.cratingWindow %> · <%= opt.transitWindow %>
+                                        </span>
+                                        <p class="shipping-opt-desc" data-ship-desc="<%= opt.id %>"><%= opt.description %></p>
+                                    </div>
+                                </div>
+                                <span class="shipping-opt-price" data-ship-fee="<%= opt.id %>" style="<%= opt.fee === 0 ? 'color: var(--green);' : '' %>">
+                                    <%= opt.fee === 0 ? 'FREE' : '$' + formatCurrency(opt.fee) %>
                                 </span>
-                                <span class="crypto-name">Card Payment</span>
-                                <span class="crypto-sym">VISA · MC · AMEX</span>
-                                <span class="crypto-amt" style="color: #525252; font-weight: 500;">Credit / Debit</span>
-                            </button>
+                            </label>
+                            <% }) %>
+                        </div>
 
+                        <div class="customs-box" id="customsDisclosureBox">
+                            <strong>Customs &amp; Transit Information:</strong>
+                            <span id="customsDisclosureText"><%= shipping_details.customsNotice %></span>
+                        </div>
+
+                        <div class="step-actions">
+                            <button type="button" class="btn-secondary" data-prev-step="2">Back to Delivery</button>
+                            <button type="button" class="btn-primary" data-next-step="4">Continue to Order Review</button>
+                        </div>
+                    </section>
+
+                    <!-- STEP 4: ORDER REVIEW -->
+                    <section class="card step-panel hidden" data-step-panel="4">
+                        <div class="card-header">
+                            <div>
+                                <span class="card-kicker">Step 04 of 06</span>
+                                <h2 class="card-title">Order Review</h2>
+                            </div>
+                        </div>
+                        <p class="card-subtitle">
+                            Verify your customer details, delivery coordinates, selected artworks, Inventory IDs, and charges before proceeding to payment.
+                        </p>
+
+                        <div class="review-blocks">
+                            <div class="review-box">
+                                <div class="review-box-head">
+                                    <span class="review-box-label">Customer Information</span>
+                                    <button type="button" class="edit-step-btn" data-jump-step="1">Edit</button>
+                                </div>
+                                <p id="reviewCustomerText">
+                                    <%= form_values.name || '—' %><br />
+                                    <%= form_values.email || '—' %><br />
+                                    <%= form_values.phone || '—' %>
+                                </p>
+                            </div>
+
+                            <div class="review-box">
+                                <div class="review-box-head">
+                                    <span class="review-box-label">Delivery Address</span>
+                                    <button type="button" class="edit-step-btn" data-jump-step="2">Edit</button>
+                                </div>
+                                <p id="reviewDeliveryText">
+                                    <%= form_values.address || '—' %><% if (form_values.apartment) { %>, <%= form_values.apartment %><% } %><br />
+                                    <%= form_values.city || '' %>, <%= form_values.state || '' %> <%= form_values.zip_code || '' %><br />
+                                    <%= form_values.country || '' %>
+                                </p>
+                            </div>
+
+                            <div class="review-box full">
+                                <div class="review-box-head">
+                                    <span class="review-box-label">Shipping Method &amp; Instructions</span>
+                                    <button type="button" class="edit-step-btn" data-jump-step="3">Edit</button>
+                                </div>
+                                <p id="reviewShippingText">
+                                    <strong><%= shipping_details.methodTitle %></strong> — Est. <%= shipping_details.estimatedDelivery %>
+                                    <% if (form_values.delivery_instructions) { %>
+                                        <span style="display:block; margin-top:4px; color:#525252;">Instructions: <%= form_values.delivery_instructions %></span>
+                                    <% } %>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="review-items">
+                            <% cart_items.forEach((item) => { %>
+                            <div class="review-item-row">
+                                <div>
+                                    <strong><%= item.title %></strong>
+                                    <span style="display:block; font-size:12px; color:var(--muted);">
+                                        <%= item.artist %> · Qty <%= item.quantity %> ·
+                                        <span style="font-family:var(--font-mono);">Inventory ID: <%= item.inventory_id %></span>
+                                    </span>
+                                </div>
+                                <span style="font-family:var(--font-mono); font-weight:600; font-variant-numeric:tabular-nums;">
+                                    $<%= formatCurrency(item.price * item.quantity) %>
+                                </span>
+                            </div>
+                            <% }) %>
+                        </div>
+
+                        <div class="checkbox-row">
+                            <input
+                                type="checkbox"
+                                id="reviewConfirmed"
+                                name="review_confirmed"
+                                value="1"
+                                <%= form_values && form_values.review_confirmed ? 'checked' : '' %>
+                            />
+                            <label for="reviewConfirmed">
+                                I confirm my delivery details, selected shipping tier, and <a href="/terms" style="text-decoration:underline; text-underline-offset:2px;">Terms of Acquisition</a> are accurate before proceeding to payment.
+                            </label>
+                        </div>
+                        <p class="field-error" id="err-review">Please confirm you have reviewed your order details above.</p>
+
+                        <div class="step-actions">
+                            <button type="button" class="btn-secondary" data-prev-step="3">Back to Shipping</button>
+                            <button type="button" class="btn-primary" data-next-step="5">Continue to Payment</button>
+                        </div>
+                    </section>
+
+                    <!-- STEP 5: PAYMENT SELECTION (BTC, ETH, SOL + Stripe / PayPal) -->
+                    <section class="card step-panel hidden" data-step-panel="5">
+                        <div class="card-header">
+                            <div>
+                                <span class="card-kicker">Step 05 of 06</span>
+                                <h2 class="card-title">Payment Selection</h2>
+                            </div>
+                        </div>
+                        <p class="card-subtitle">
+                            Complete settlement via direct cryptocurrency transfer (Bitcoin with automatic live Mempool detection, Ethereum, or Solana) or select an authorized card or PayPal gateway.
+                        </p>
+
+                        <!-- Group A: Direct Cryptocurrency Settlement -->
+                        <div class="payment-group-label">
+                            <span>Direct Cryptocurrency Settlement</span>
+                            <span style="font-family: var(--font-mono); font-weight: 500; color: var(--gold);">BTC · ETH · SOL</span>
+                        </div>
+
+                        <div class="crypto-selector-grid" role="radiogroup" aria-label="Cryptocurrency options">
+                            <% cryptoKeys.forEach((key) => { const opt = crypto_options[key]; %>
                             <button
                                 type="button"
-                                class="crypto-btn <%= selected_method === 'paypal' ? 'active' : '' %>"
-                                data-method="paypal"
-                                aria-pressed="<%= selected_method === 'paypal' ? 'true' : 'false' %>"
-                            >
-                                <span class="crypto-icon" style="background-color: #003087; font-family: Georgia, serif; font-style: italic;">P</span>
-                                <span class="crypto-name">PayPal</span>
-                                <span class="crypto-sym">PAYPAL EXPRESS</span>
-                                <span class="crypto-amt" style="color: #525252; font-weight: 500;">Express Pay</span>
-                            </button>
-
-                            <% ['bitcoin', 'ethereum', 'solana'].forEach((key) => { const opt = crypto_options[key]; %>
-                            <button
-                                type="button"
-                                class="crypto-btn <%= selected_method === key ? 'active' : '' %>"
-                                data-method="<%= key %>"
+                                class="payment-option-card <%= activeMethod === key ? 'active' : '' %>"
+                                data-method-id="<%= key %>"
+                                data-method-type="crypto"
                                 data-symbol="<%= opt.symbol %>"
-                                data-rate="<%= opt.usdPrice %>"
-                                data-decimals="<%= opt.decimals %>"
-                                aria-pressed="<%= selected_method === key ? 'true' : 'false' %>"
+                                data-wallet-configured="<%= opt.walletAddress ? 'true' : 'false' %>"
+                                aria-pressed="<%= activeMethod === key ? 'true' : 'false' %>"
                             >
-                                <span class="crypto-icon" style="background-color: <%= opt.accentColor %>;"><%= opt.icon %></span>
-                                <span class="crypto-name"><%= opt.label %></span>
-                                <span class="crypto-sym"><%= opt.symbol %></span>
-                                <span class="crypto-amt" id="btn-amt-<%= key %>"><%= opt.amount %> <%= opt.symbol %></span>
+                                <span class="pay-opt-head">
+                                    <span class="pay-opt-mark" style="background: <%= opt.accentColor %>;"><%= opt.icon %></span>
+                                    <span class="pay-opt-title"><%= opt.label %> (<%= opt.symbol %>)</span>
+                                </span>
+                                <span class="pay-opt-amount" id="btn-amt-<%= key %>"><%= opt.amount %> <%= opt.symbol %></span>
+                                <span class="pay-opt-state <%= opt.key === 'bitcoin' ? 'ready' : '' %>">
+                                    <%= opt.key === 'bitcoin' ? 'Live Mempool Listener' : (opt.walletAddress ? 'On-Chain Transfer' : 'Address Pending') %>
+                                </span>
                             </button>
                             <% }) %>
                         </div>
 
-                        <div id="details-empty" class="payment-prompt-box <%= !selected_method ? '' : 'hidden' %>">
-                            Select a payment option above to proceed with checkout.
+                        <!-- Group B: Authorized Card & PayPal Gateways -->
+                        <div class="payment-group-label">
+                            <span>Card &amp; Digital Wallet Gateways</span>
+                            <span style="font-family: var(--font-mono); font-weight: 500;">Hosted Checkout</span>
                         </div>
 
-                        <% ['bitcoin', 'ethereum', 'solana'].forEach((key) => { const opt = crypto_options[key]; %>
-                        <div
-                            id="details-<%= key %>"
-                            class="deposit-panel <%= selected_method === key ? '' : 'hidden' %>"
-                            data-has-wallet="<%= opt.walletAddress ? 'true' : 'false' %>"
-                        >
+                        <div class="provider-grid" role="radiogroup" aria-label="Payment gateway options">
+                            <% payment_providers.forEach((provider) => { %>
+                            <button
+                                type="button"
+                                class="payment-option-card <%= activeMethod === provider.id ? 'active' : '' %>"
+                                data-method-id="<%= provider.id %>"
+                                data-method-type="gateway"
+                                data-provider-name="<%= provider.name %>"
+                                data-provider-configured="<%= provider.configured ? 'true' : 'false' %>"
+                                data-provider-note="<%= provider.requirementsNote %>"
+                                aria-pressed="<%= activeMethod === provider.id ? 'true' : 'false' %>"
+                            >
+                                <span class="pay-opt-title"><%= provider.name %></span>
+                                <span class="pay-opt-sub"><%= provider.subtitle %></span>
+                                <span class="pay-opt-state <%= provider.configured ? 'ready' : '' %>">
+                                    <%= provider.configured ? 'Gateway Configured · Hosted Redirect' : 'Authorization Required on Server' %>
+                                </span>
+                            </button>
+                            <% }) %>
+                        </div>
+
+                        <!-- Crypto Details Panels (BTC / ETH / SOL) -->
+                        <% cryptoKeys.forEach((key) => { const opt = crypto_options[key]; %>
+                        <div class="crypto-details-panel <%= activeMethod === key ? '' : 'hidden' %>" id="details-<%= key %>">
                             <% if (opt.walletAddress) { %>
-                            <div class="deposit-flex">
-                                <% if (opt.qrSvg) { %>
-                                <div class="qr-frame" aria-label="<%= opt.label %> deposit QR code">
-                                    <%- opt.qrSvg %>
+                                <div class="crypto-details-top">
+                                    <div class="crypto-send-info">
+                                        <span class="crypto-network-kicker"><%= opt.label %> (<%= opt.symbol %>) · <%= opt.network %></span>
+                                        <p class="crypto-send-amount">
+                                            <span id="send-amt-<%= key %>"><%= opt.amount %></span> <%= opt.symbol %>
+                                            <span class="usd-equiv">(≈ $<%= formatCurrency(total) %> USD)</span>
+                                        </p>
+
+                                        <div class="address-box">
+                                            <div class="address-label-row">
+                                                <span class="address-label">Deposit Address</span>
+                                                <div class="copy-actions">
+                                                    <button
+                                                        type="button"
+                                                        class="copy-mini-btn"
+                                                        data-copy-target="send-amt-<%= key %>"
+                                                        data-copy-default="Copy Amount"
+                                                    >Copy Amount</button>
+                                                    <button
+                                                        type="button"
+                                                        class="copy-mini-btn"
+                                                        data-copy-text="<%= opt.walletAddress %>"
+                                                        data-copy-default="Copy Address"
+                                                    >Copy Address</button>
+                                                </div>
+                                            </div>
+                                            <div class="wallet-address-text" id="wallet-addr-<%= key %>"><%= opt.walletAddress %></div>
+                                        </div>
+                                    </div>
+
+                                    <% if (opt.qrSvg) { %>
+                                    <div class="qr-frame" aria-label="<%= opt.label %> payment QR code">
+                                        <%- opt.qrSvg %>
+                                    </div>
+                                    <% } %>
+                                </div>
+
+                                <div class="crypto-status-note">
+                                    <% if (key === 'bitcoin') { %>
+                                        <strong>Automatic Live Confirmation:</strong> Our Mempool.space listener monitors <code><%= opt.walletAddress %></code> continuously. Once your exact BTC transfer is broadcast and detected, your confirmation slip unlocks automatically — no manual refresh needed.
+                                    <% } else { %>
+                                        <strong>On-Chain Transfer:</strong> Send the exact quoted <strong><%= opt.symbol %></strong> amount on <strong><%= opt.network %></strong> to the deposit address above, then click Complete Acquisition to register your order dossier and settlement record.
+                                    <% } %>
+                                </div>
+
+                                <% if (key === 'bitcoin') { %>
+                                <div class="btc-notice-card hidden" id="btcShippingPrompt" role="status">
+                                    <h3 class="btc-notice-title">Bitcoin Transfer Detected</h3>
+                                    <p class="btc-notice-body">
+                                        Your Bitcoin transfer has been detected on the network. Please ensure Steps 1–4 (Customer, Delivery, and Order Review confirmation) are complete, then submit to unlock your Order Confirmation Slip.
+                                    </p>
+                                </div>
+
+                                <%
+                                    const showInitialBtcNotice = Boolean(btc_notice && activeMethod === 'bitcoin');
+                                %>
+                                <div class="btc-notice-card <%= showInitialBtcNotice ? '' : 'hidden' %>" id="btcPaymentNotice" role="status">
+                                    <h3 class="btc-notice-title" id="btcNoticeTitle"><%= showInitialBtcNotice ? btc_notice.title : 'Awaiting Your Bitcoin Transfer' %></h3>
+                                    <p class="btc-notice-body" id="btcNoticeBody">
+                                        <%= showInitialBtcNotice ? btc_notice.body : '' %>
+                                    </p>
+                                    <dl class="btc-notice-meta">
+                                        <dt>Amount Due</dt>
+                                        <dd id="btcNoticeAmount"><%= (showInitialBtcNotice && btc_notice.amount) ? btc_notice.amount : opt.amount %> BTC</dd>
+                                        <dt>Deposit Address</dt>
+                                        <dd id="btcNoticeAddress"><%= (showInitialBtcNotice && btc_notice.address) ? btc_notice.address : opt.walletAddress %></dd>
+                                    </dl>
                                 </div>
                                 <% } %>
-                                <div class="deposit-fields">
-                                    <div>
-                                        <div class="deposit-field-top">
-                                            <span class="deposit-field-label"><%= opt.label %> Deposit Address</span>
-                                            <button type="button" class="copy-link" data-copy-target="wallet-<%= key %>">Copy</button>
-                                        </div>
-                                        <div class="deposit-value-box" id="wallet-<%= key %>"><%= opt.walletAddress %></div>
-                                    </div>
-                                    <div>
-                                        <div class="deposit-field-top">
-                                            <span class="deposit-field-label">Amount to Send</span>
-                                            <button type="button" class="copy-link" data-copy-target="send-amt-<%= key %>">Copy</button>
-                                        </div>
-                                        <div class="amount-box">
-                                            <strong><span id="send-amt-<%= key %>"><%= opt.amount %></span> <%= opt.symbol %></strong>
-                                            <span class="usd-equiv">≈ $<%= formatCurrency(total) %></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                             <% } else { %>
-                            <div class="wallet-pending">
-                                <%= opt.label %> (<%= opt.symbol %>) wallet address has not been added yet. Please provide your <%= opt.symbol %> address or choose Bitcoin (BTC) above to complete payment.
-                            </div>
-                            <div class="amount-box">
-                                <strong><span id="send-amt-<%= key %>"><%= opt.amount %></span> <%= opt.symbol %></strong>
-                                <span class="usd-equiv">≈ $<%= formatCurrency(total) %> (Rate: 1 <%= opt.symbol %> ≈ $<%= formatCurrency(opt.usdPrice) %>)</span>
-                            </div>
-                            <% } %>
-
-                            <div class="deposit-footer">
-                                Send only <%= opt.label %> to this address via the <%= opt.network %>. Transfer the exact converted amount shown above to settle your order.
-                            </div>
-
-                            <% if (key === 'bitcoin' && opt.walletAddress) { %>
-                            <div id="btcShippingPrompt" class="btc-shipping-prompt hidden" role="status">
-                                Bitcoin payment received — please complete your contact and shipping details above to generate your order confirmation slip.
-                            </div>
+                                <div class="gateway-notice" style="margin-bottom:0;">
+                                    <strong><%= opt.label %> (<%= opt.symbol %>) Address Pending:</strong>
+                                    The <code><%= key === 'bitcoin' ? 'BTC_WALLET_ADDRESS' : key === 'ethereum' ? 'ETH_WALLET_ADDRESS' : 'SOL_WALLET_ADDRESS' %></code> wallet address is not yet configured on the server. Please select Bitcoin (BTC), another configured crypto network, or Card/PayPal checkout.
+                                </div>
                             <% } %>
                         </div>
                         <% }) %>
 
-                        <div id="details-card" class="card-unavail-panel <%= selected_method === 'card' ? '' : 'hidden' %>" data-has-wallet="false">
-                            <p class="card-unavail-title">Card Payment Gateway Under Maintenance</p>
-                            <p class="card-unavail-desc">
-                                Credit and debit card checkout on this site is currently under maintenance. Please try another payment method above to complete your order.
-                            </p>
+                        <!-- Gateway Notice Panel (Stripe / PayPal) -->
+                        <%
+                            const activeGateway = payment_providers.find((p) => p.id === activeMethod) || payment_providers[0];
+                        %>
+                        <div class="gateway-notice <%= activeIsCrypto ? 'hidden' : '' %>" id="details-gateway">
+                            <% if (activeGateway && activeGateway.configured) { %>
+                                <strong>Ready for Hosted Verification:</strong> Clicking below transfers you securely to <strong><%= activeGateway.name %></strong> to authorize payment of <strong class="summary-total-inline">$<%= formatCurrency(total) %> USD</strong>. Your order confirmation slip appears only after server verification completes.
+                            <% } else { %>
+                                <strong>Gateway Configuration Required:</strong> <%= activeGateway ? activeGateway.requirementsNote : '' %> Orders are never marked paid until a verified payment confirmation is returned by the provider.
+                            <% } %>
                         </div>
 
-                        <div id="details-paypal" class="card-unavail-panel <%= selected_method === 'paypal' ? '' : 'hidden' %>" data-has-wallet="false">
-                            <p class="card-unavail-title">PayPal Checkout Under Maintenance</p>
-                            <p class="card-unavail-desc">
-                                PayPal checkout on this site is currently under maintenance. Please try another payment method above to complete your order.
-                            </p>
+                        <div class="step-actions">
+                            <button type="button" class="btn-secondary" data-prev-step="4">Back to Order Review</button>
+                            <button type="submit" class="btn-primary" id="submitOrderBtn">
+                                <% if (activeMethod === 'bitcoin') { %>
+                                    Confirm BTC Transfer &amp; Complete Order (<span id="submitBtnTotal">$<%= formatCurrency(total) %></span> USD)
+                                <% } else if (activeMethod === 'ethereum' || activeMethod === 'solana') { %>
+                                    Complete Acquisition with <%= activeMethod === 'ethereum' ? 'ETH' : 'SOL' %> (<span id="submitBtnTotal">$<%= formatCurrency(total) %></span> USD)
+                                <% } else { %>
+                                    Proceed to Payment (<span id="submitBtnTotal">$<%= formatCurrency(total) %></span> USD)
+                                <% } %>
+                            </button>
                         </div>
                     </section>
-
-                    <div>
-                        <div id="btcPaymentNotice" class="btc-notice-card <%= (typeof btc_notice !== 'undefined' && btc_notice) ? '' : 'hidden' %>" role="status" aria-live="polite">
-                            <div class="btc-notice-header">
-                                <span class="btc-notice-icon" aria-hidden="true">₿</span>
-                                <h3 class="btc-notice-title" id="btcNoticeTitle"><%= (typeof btc_notice !== 'undefined' && btc_notice) ? btc_notice.title : 'Awaiting Bitcoin Transfer' %></h3>
-                            </div>
-                            <p class="btc-notice-body" id="btcNoticeBody"><%= (typeof btc_notice !== 'undefined' && btc_notice) ? btc_notice.body : '' %></p>
-                            <div class="btc-notice-meta" id="btcNoticeMeta">
-                                <span class="btc-notice-label">Amount Due</span>
-                                <span class="btc-notice-value" id="btcNoticeAmount" style="font-weight: 700;"><%= (typeof btc_notice !== 'undefined' && btc_notice) ? btc_notice.amount + ' BTC' : '' %></span>
-                                <span class="btc-notice-label">Deposit Address</span>
-                                <span class="btc-notice-value" id="btcNoticeAddress"><%= (typeof btc_notice !== 'undefined' && btc_notice) ? btc_notice.address : '' %></span>
-                            </div>
-                        </div>
-                        <button type="submit" class="submit-btn" id="submitOrderBtn" <%= !selected_method || selected_method === 'card' || selected_method === 'paypal' ? 'disabled' : '' %>>
-                            <span id="submitAmtLabel">
-                                <% if (selected_method === 'bitcoin' && crypto_options.bitcoin) { %>
-                                    Verify Payment &amp; View Confirmation Slip · <%= crypto_options.bitcoin.amount %> BTC
-                                <% } else if (selected_method && crypto_options[selected_method]) { %>
-                                    Complete Order · <%= crypto_options[selected_method].amount %> <%= crypto_options[selected_method].symbol %>
-                                <% } else if (selected_method === 'card' || selected_method === 'paypal') { %>
-                                    Gateway Under Maintenance · Try Another Payment Method
-                                <% } else { %>
-                                    Select a Payment Method Above
-                                <% } %>
-                            </span>
-                        </button>
-                        <p class="submit-footnote">
-                            By completing your order, you agree to our
-                            <a href="/terms" style="text-decoration: underline; text-underline-offset: 2px;">Terms &amp; Conditions</a> and
-                            <a href="/privacy-policy" style="text-decoration: underline; text-underline-offset: 2px;">Privacy Policy</a>.
-                        </p>
-                    </div>
                 </form>
             </div>
 
-            <!-- Right Column: Sticky Order Summary -->
-            <aside class="summary-sticky">
+            <!-- Persistent Right Column Order Summary -->
+            <aside class="summary-sticky" id="checkoutSummaryAside" aria-label="Order summary">
                 <div class="summary-card">
-                    <h2 class="summary-title">Order Summary (<%= cart_items.reduce((sum, i) => sum + i.quantity, 0) %>)</h2>
+                    <h2 class="summary-title">
+                        <span>Order Summary</span>
+                        <span style="font-family: var(--font-mono); font-weight: 500; color: var(--muted);">
+                            <%= cart_items.reduce((s, i) => s + i.quantity, 0) %> <%= cart_items.reduce((s, i) => s + i.quantity, 0) === 1 ? 'Work' : 'Works' %>
+                        </span>
+                    </h2>
 
                     <div class="summary-items">
                         <% cart_items.forEach((item) => { %>
                         <div class="summary-item">
                             <div class="thumb-wrap">
-                                <img src="<%= item.image %>" alt="<%= item.title %>" />
-                                <span class="thumb-qty"><%= item.quantity %></span>
+                                <img src="<%= item.image %>" alt="<%= item.title %>" referrerPolicy="no-referrer" />
                             </div>
                             <div class="summary-item-info">
-                                <h3 class="summary-item-name"><%= item.title %></h3>
-                                <span class="summary-item-meta"><%= item.artist %> · <%= item.size %></span>
-                                <span class="summary-item-meta">$<%= formatCurrency(item.price) %> each</span>
+                                <p class="summary-item-name"><%= item.title %></p>
+                                <span class="summary-item-meta"><%= item.artist %> · Qty <%= item.quantity %></span>
+                                <% if (item.inventory_id) { %>
+                                <span class="summary-item-inv">Inventory ID: <%= item.inventory_id %></span>
+                                <% } %>
                             </div>
                             <span class="summary-item-price">$<%= formatCurrency(item.price * item.quantity) %></span>
                         </div>
@@ -1255,39 +1686,42 @@
                     </div>
 
                     <div>
+                        <label class="field-label" for="promoInput">Collector Code</label>
                         <div class="promo-row">
-                            <input type="text" id="promoInput" placeholder="Discount code or promo (try ART10)" value="<%= promo_code || '' %>" />
+                            <input id="promoInput" type="text" placeholder="Enter collector code" value="<%= promo_code || '' %>" />
                             <button type="button" id="applyPromoBtn" class="promo-apply-btn">Apply</button>
                         </div>
-                        <span id="promoStatus" class="promo-status <%= discount > 0 ? 'ok' : 'hidden' %>">
-                            <% if (discount > 0) { %>10% collector privilege applied (<%= promo_code %>)<% } %>
+                        <span id="promoStatus" class="promo-status <%= promo_code ? 'ok' : '' %>">
+                            <%= promo_code ? '10% Collector Promotion Applied' : '' %>
                         </span>
                     </div>
 
                     <div class="totals-list">
                         <div class="totals-line">
                             <span>Subtotal</span>
-                            <span class="mono">$<%= formatCurrency(subtotal) %></span>
+                            <span class="mono" id="summarySubtotal">$<%= formatCurrency(subtotal) %></span>
                         </div>
-                        <div class="totals-line discount <%= discount > 0 ? '' : 'hidden' %>" id="discountLine">
-                            <span>Promotion (10% off)</span>
-                            <span class="mono" id="discountAmount">-$<%= formatCurrency(discount) %></span>
+                        <div class="totals-line discount <%= discount > 0 ? '' : 'hidden' %>" id="discountRow">
+                            <span>Collector Discount (10%)</span>
+                            <span class="mono" id="summaryDiscount">-$<%= formatCurrency(discount) %></span>
                         </div>
-                        <div class="totals-line free">
-                            <span id="summaryShippingLabel"><%= (typeof shipping_details !== 'undefined' && shipping_details.hasFurniture) ? 'White-Glove Furniture Freight' : 'Insured Fine Art Delivery' %></span>
-                            <span class="free-val" id="summaryShipping">
-                                <% if (shipping === 0) { %>FREE<% } else { %>$<%= formatCurrency(shipping) %><% } %>
+                        <div class="totals-line">
+                            <span id="summaryShippingLabel"><%= shipping_details.methodTitle %></span>
+                            <span class="mono" id="summaryShipping" style="<%= shipping === 0 ? 'color: var(--green);' : '' %>">
+                                <%= shipping === 0 ? 'FREE' : '$' + formatCurrency(shipping) %>
                             </span>
+                        </div>
+                        <div class="totals-line">
+                            <span>Estimated Taxes &amp; Fees</span>
+                            <span class="mono" id="summaryTax">$<%= formatCurrency(tax || 0) %></span>
                         </div>
                         <div class="totals-grand">
                             <span class="totals-grand-label">Total</span>
-                            <div class="totals-grand-values">
-                                <span class="totals-grand-usd" id="summaryTotalUsd">$<%= formatCurrency(total) %></span>
-                                <span class="totals-grand-crypto" id="summaryTotalCrypto">
-                                    <% if (selected_method && crypto_options[selected_method]) { %>
-                                        ≈ <%= crypto_options[selected_method].amount %> <%= crypto_options[selected_method].symbol %>
-                                    <% } else { %>
-                                        Select payment method
+                            <div class="totals-grand-right">
+                                <span class="totals-grand-usd" id="summaryTotal">$<%= formatCurrency(total) %> USD</span>
+                                <span class="totals-grand-crypto <%= activeIsCrypto ? '' : 'hidden' %>" id="summaryCryptoLine">
+                                    <% if (activeIsCrypto && crypto_options[activeMethod]) { %>
+                                        ≈ <%= crypto_options[activeMethod].amount %> <%= crypto_options[activeMethod].symbol %>
                                     <% } %>
                                 </span>
                             </div>
@@ -1295,436 +1729,717 @@
                     </div>
 
                     <div class="trust-list">
-                        <div class="trust-item"><span class="trust-check">✓</span><a href="/shipping" style="text-decoration: underline; text-underline-offset: 2px;">Insured fine art courier delivery with tracking</a></div>
-                        <div class="trust-item"><span class="trust-check">✓</span><a href="/authenticity" style="text-decoration: underline; text-underline-offset: 2px;">100% authenticity guarantee with signed certificate</a></div>
-                        <div class="trust-item"><span class="trust-check">✓</span><a href="/contact" style="text-decoration: underline; text-underline-offset: 2px;">Concierge support &amp; direct crypto settlement guidance</a></div>
+                        <span>Server-verified payment &amp; live BTC Mempool confirmation prior to finalization</span>
+                        <span><a href="/authenticity">Artwork Documentation</a> · Permanent ART STUDIO Inventory ID records</span>
+                        <span><a href="/shipping">Shipping &amp; Transit Coverage</a> · Complimentary standard courier on orders $1,500+</span>
+                        <span><a href="/terms">14-Day Return Policy</a> · <a href="/contact">Collector Support</a></span>
                     </div>
                 </div>
             </aside>
         </div>
     </main>
 
+    <footer class="footer">
+        <div class="footer-inner">
+            <span>© 2026 ART STUDIO. All rights reserved.</span>
+            <nav class="footer-links" aria-label="Footer policies">
+                <a href="/artists">Meet the Artists</a>
+                <a href="/crypto-checkout">Crypto Checkout</a>
+                <a href="/shipping">Shipping &amp; Delivery</a>
+                <a href="/authenticity">Authenticity</a>
+                <a href="/terms">Terms</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/contact">Contact &amp; Support</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script src="/static/js/cart-sync.js"></script>
     <script>
-        const baseSubtotal = Number(document.body.dataset.subtotal || 0);
-        const methodInput = document.getElementById('paymentMethodInput');
-        const promoHidden = document.getElementById('promoCodeHidden');
-        const promoInput = document.getElementById('promoInput');
-        const applyPromoBtn = document.getElementById('applyPromoBtn');
-        const promoStatus = document.getElementById('promoStatus');
-        const discountLine = document.getElementById('discountLine');
-        const discountAmountEl = document.getElementById('discountAmount');
-        const summaryShippingEl = document.getElementById('summaryShipping');
-        const shippingMethodPriceEl = document.getElementById('shippingMethodPrice');
-        const summaryTotalUsdEl = document.getElementById('summaryTotalUsd');
-        const summaryTotalCryptoEl = document.getElementById('summaryTotalCrypto');
-        const submitAmtLabel = document.getElementById('submitAmtLabel');
-        const submitBtn = document.getElementById('submitOrderBtn');
-        const cryptoBtns = document.querySelectorAll('.crypto-btn');
-        const emptyPromptBox = document.getElementById('details-empty');
-        const methods = ['card', 'paypal', 'bitcoin', 'ethereum', 'solana'];
+        (() => {
+            const initialStep = Math.max(1, Math.min(5, Number(document.body.dataset.initialStep || '1')));
+            const cid = document.body.dataset.cid || '';
+            const DRAFT_KEY = 'art_studio_checkout_draft_' + (cid || 'default');
 
-        let currentPromo = (promoHidden.value || '').trim().toUpperCase();
+            let currentStep = initialStep;
+            let maxReachedStep = initialStep;
+            let isSubmitting = false;
+            let btcConfirmedUnlock = false;
+            let btcListenTimer = null;
 
-        function formatUsd(val) {
-            return Number(val).toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
+            const latestCryptoQuotes = {
+                bitcoin: '<%= crypto_options.bitcoin.amount %>',
+                ethereum: '<%= crypto_options.ethereum.amount %>',
+                solana: '<%= crypto_options.solana.amount %>'
+            };
 
-        const hasFurniture = document.body.dataset.hasFurniture === 'true';
-        const hasSculpture = document.body.dataset.hasSculpture === 'true';
-        const countryInput = document.getElementById('country');
-        const shippingMethodTitleEl = document.getElementById('shippingMethodTitle');
-        const shippingMethodBadgeEl = document.getElementById('shippingMethodBadge');
-        const shippingMethodDescEl = document.getElementById('shippingMethodDesc');
-        const summaryShippingLabelEl = document.getElementById('summaryShippingLabel');
+            const cryptoSymbols = {
+                bitcoin: 'BTC',
+                ethereum: 'ETH',
+                solana: 'SOL'
+            };
 
-        function isDomesticUsCountry(val) {
-            const norm = String(val || '').trim().toLowerCase().replace(/[.,]/g, '');
-            if (!norm) return true;
-            return norm === 'united states' || norm === 'united states of america' || norm === 'usa' || norm === 'us';
-        }
+            const btcWalletAddress = '<%= crypto_options.bitcoin.walletAddress %>';
 
-        function updateShippingDisplay() {
-            const countryVal = countryInput ? countryInput.value : '';
-            const isInternational = Boolean(countryVal.trim()) && !isDomesticUsCountry(countryVal);
-            const qualifiesFree = baseSubtotal >= 1500;
+            const stepTabs = Array.from(document.querySelectorAll('[data-step-tab]'));
+            const stepPanels = Array.from(document.querySelectorAll('[data-step-panel]'));
+            const validationBanner = document.getElementById('clientValidationBanner');
+            const form = document.getElementById('checkoutForm');
+            const submitBtn = document.getElementById('submitOrderBtn');
+            const methodInput = document.getElementById('paymentMethodInput');
+            const providerInput = document.getElementById('paymentProviderInput');
 
-            let title = 'Insured Fine Art Courier Delivery';
-            let desc = 'Custom-crated artwork handling via dedicated art courier. 100% declared-value transit insurance with signature verification upon arrival.';
-            let timing = '2–4 business days archival crating · 4–8 business days courier transit';
-            let summaryLabel = 'Insured Fine Art Delivery';
+            const mobileToggle = document.getElementById('mobileSummaryToggle');
+            const summaryAside = document.getElementById('checkoutSummaryAside');
 
-            if (hasFurniture && isInternational) {
-                title = 'International White-Glove Furniture Freight (Insured)';
-                desc = 'ISPM-15 heat-treated custom timber crating and blanket-wrapped white-glove freight via international fine art carrier. Includes 100% declared-value insurance, export customs brokerage documentation, and scheduled room-of-choice placement.';
-                timing = '3–5 business days ISPM-15 timber crating · 10–18 business days international freight';
-                summaryLabel = 'International Furniture Freight';
-            } else if (hasFurniture) {
-                title = 'White-Glove Furniture Delivery (Insured)';
-                desc = 'Blanket-wrapped, custom-crated white-glove carrier delivery inside room of choice. 100% declared-value transit insurance with signature verification included.';
-                timing = '3–5 business days custom crating · 5–10 business days domestic freight';
-                summaryLabel = 'White-Glove Furniture Freight';
-            } else if (isInternational && hasSculpture) {
-                title = 'International Insured Sculpture Courier';
-                desc = 'Custom foam-cavity timber crating via international specialist fine art air courier. Includes 100% declared-value transit insurance, airway bill tracking, and export customs clearance paperwork.';
-                timing = '3–5 business days custom crating · 7–14 business days international air transit';
-                summaryLabel = 'International Sculpture Courier';
-            } else if (isInternational) {
-                title = 'International Paintings & Prints Air Courier (Insured)';
-                desc = 'Archival acid-free glassine wrapping inside rigid museum flat-pack or telescoping fine art cases via priority air shuttle. Includes 100% declared-value transit insurance, airway bill tracking, and export customs paperwork.';
-                timing = '2–4 business days museum flat-packing · 5–10 business days priority international air';
-                summaryLabel = 'International Art Air Courier';
-            } else if (hasSculpture) {
-                title = 'Insured Fine Art & Sculpture Courier';
-                desc = 'Custom foam-cavity crated handling via dedicated art courier. 100% declared-value transit insurance with scheduled signature verification upon arrival.';
-                timing = '3–5 business days archival crating · 4–9 business days courier transit';
+            if (mobileToggle && summaryAside) {
+                mobileToggle.addEventListener('click', () => {
+                    const open = summaryAside.classList.toggle('mobile-open');
+                    mobileToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                });
             }
 
-            if (shippingMethodTitleEl) shippingMethodTitleEl.textContent = title;
-            if (shippingMethodBadgeEl) {
-                shippingMethodBadgeEl.textContent = qualifiesFree ? 'Complimentary $1,500+' : (isInternational ? 'International Courier' : 'Insured Courier');
-            }
-            if (shippingMethodDescEl) {
-                shippingMethodDescEl.innerHTML = desc + '<span id="shippingMethodWindow" style="display: block; margin-top: 4px; color: #404040; font-weight: 500;">' + timing + '</span>';
-            }
-            if (summaryShippingLabelEl) summaryShippingLabelEl.textContent = summaryLabel;
-        }
-
-        if (countryInput) {
-            countryInput.addEventListener('input', updateShippingDisplay);
-            countryInput.addEventListener('change', updateShippingDisplay);
-            if (countryInput.value.trim()) updateShippingDisplay();
-        }
-
-        function computeTotals() {
-            const validPromo = currentPromo === 'ART10' || currentPromo === 'COLLECTOR10';
-            const discount = validPromo ? Number((baseSubtotal * 0.1).toFixed(2)) : 0;
-            const discountedSub = Math.max(0, baseSubtotal - discount);
-            const shipping = baseSubtotal >= 1500 ? 0 : (baseSubtotal > 0 ? 65 : 0);
-            const total = Number((discountedSub + shipping).toFixed(2));
-            return { validPromo, discount, shipping, total };
-        }
-
-        function refreshAmountsAndSelection(selectedMethod) {
-            const { validPromo, discount, shipping, total } = computeTotals();
-
-            if (discountLine && discountAmountEl) {
-                discountLine.classList.toggle('hidden', discount <= 0);
-                discountAmountEl.textContent = '-$' + formatUsd(discount);
-            }
-            if (summaryShippingEl) {
-                summaryShippingEl.textContent = shipping === 0 ? 'FREE' : '$' + formatUsd(shipping);
-            }
-            if (shippingMethodPriceEl) {
-                shippingMethodPriceEl.innerHTML = shipping === 0
-                    ? '<span style="color: var(--green);">FREE</span>'
-                    : '$' + formatUsd(shipping);
-            }
-            if (summaryTotalUsdEl) {
-                summaryTotalUsdEl.textContent = '$' + formatUsd(total);
+            function fmt(amount) {
+                return Number(amount || 0).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
             }
 
-            document.querySelectorAll('.usd-equiv').forEach((el) => {
-                el.textContent = '≈ $' + formatUsd(total);
-            });
-
-            if (emptyPromptBox) {
-                emptyPromptBox.classList.toggle('hidden', Boolean(selectedMethod));
-            }
-
-            if (!selectedMethod && submitBtn) {
-                submitBtn.disabled = true;
-                if (summaryTotalCryptoEl) summaryTotalCryptoEl.textContent = 'Select payment method';
-                if (submitAmtLabel) submitAmtLabel.textContent = 'Select a Payment Method Above';
-            }
-
-            cryptoBtns.forEach((btn) => {
-                const method = btn.dataset.method || '';
-                const isSelected = method === selectedMethod;
-                btn.classList.toggle('active', isSelected);
-                btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-
-                if (method === 'card' || method === 'paypal') {
-                    if (isSelected) {
-                        if (summaryTotalCryptoEl) summaryTotalCryptoEl.textContent = 'Under maintenance · Try another method';
-                        if (submitAmtLabel) submitAmtLabel.textContent = 'Gateway Under Maintenance · Try Another Payment Method';
-                    }
+            function showBanner(msg) {
+                if (!validationBanner) return;
+                if (!msg) {
+                    validationBanner.textContent = '';
+                    validationBanner.classList.add('hidden');
                     return;
                 }
+                validationBanner.textContent = msg;
+                validationBanner.classList.remove('hidden');
+            }
 
-                const symbol = btn.dataset.symbol || 'BTC';
-                const rate = Number(btn.dataset.rate || 1);
-                const decimals = Number(btn.dataset.decimals || 8);
-                const amount = total > 0 && rate > 0 ? (total / rate).toFixed(decimals) : (0).toFixed(decimals);
+            function setFieldError(id, show) {
+                const el = document.getElementById('err-' + id);
+                if (el) el.classList.toggle('visible', Boolean(show));
+            }
 
-                const btnAmt = document.getElementById('btn-amt-' + method);
-                if (btnAmt) btnAmt.textContent = amount + ' ' + symbol;
+            function validateStep(step, silent) {
+                if (!silent) showBanner('');
+                if (step === 1) {
+                    const name = (document.getElementById('name')?.value || '').trim();
+                    const email = (document.getElementById('email')?.value || '').trim();
+                    const phone = (document.getElementById('phone')?.value || '').trim();
+                    const phoneDigits = phone.replace(/\D/g, '');
+                    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+                    const nameBad = name.length < 2;
+                    const emailBad = !emailOk;
+                    const phoneBad = phoneDigits.length < 7;
+                    if (!silent) {
+                        setFieldError('name', nameBad);
+                        setFieldError('email', emailBad);
+                        setFieldError('phone', phoneBad);
+                    }
+                    if (nameBad || emailBad || phoneBad) {
+                        if (!silent) showBanner('Please complete all required Customer Information fields.');
+                        return false;
+                    }
+                    return true;
+                }
+                if (step === 2) {
+                    const country = (document.getElementById('country')?.value || '').trim();
+                    const address = (document.getElementById('address')?.value || '').trim();
+                    const city = (document.getElementById('city')?.value || '').trim();
+                    const state = (document.getElementById('state')?.value || '').trim();
+                    const zip = (document.getElementById('zip_code')?.value || '').trim();
+                    const bad = {
+                        country: country.length < 2,
+                        address: address.length < 4,
+                        city: city.length < 2,
+                        state: state.length < 2,
+                        zip_code: zip.length < 2
+                    };
+                    if (!silent) {
+                        Object.entries(bad).forEach(([k, v]) => setFieldError(k, v));
+                    }
+                    if (Object.values(bad).some(Boolean)) {
+                        if (!silent) showBanner('Please complete your full delivery destination details.');
+                        return false;
+                    }
+                    return true;
+                }
+                if (step === 4) {
+                    const checked = Boolean(document.getElementById('reviewConfirmed')?.checked);
+                    if (!silent) setFieldError('review', !checked);
+                    if (!checked) {
+                        if (!silent) showBanner('Please confirm you have reviewed your order details before proceeding to payment.');
+                        return false;
+                    }
+                    return true;
+                }
+                return true;
+            }
 
-                const sendAmt = document.getElementById('send-amt-' + method);
-                if (sendAmt) sendAmt.textContent = amount;
+            function allPrerequisiteStepsValid(silent) {
+                return validateStep(1, silent) && validateStep(2, silent) && validateStep(4, silent);
+            }
 
-                if (isSelected) {
-                    if (summaryTotalCryptoEl) summaryTotalCryptoEl.textContent = '≈ ' + amount + ' ' + symbol;
-                    if (submitAmtLabel) {
-                        submitAmtLabel.textContent = method === 'bitcoin'
-                            ? 'Verify Payment & View Confirmation Slip · ' + amount + ' ' + symbol
-                            : 'Complete Order · ' + amount + ' ' + symbol;
+            function populateReviewSummary() {
+                const name = (document.getElementById('name')?.value || '').trim();
+                const email = (document.getElementById('email')?.value || '').trim();
+                const phone = (document.getElementById('phone')?.value || '').trim();
+                const country = (document.getElementById('country')?.value || '').trim();
+                const address = (document.getElementById('address')?.value || '').trim();
+                const apartment = (document.getElementById('apartment')?.value || '').trim();
+                const city = (document.getElementById('city')?.value || '').trim();
+                const state = (document.getElementById('state')?.value || '').trim();
+                const zip = (document.getElementById('zip_code')?.value || '').trim();
+                const instructions = (document.getElementById('delivery_instructions')?.value || '').trim();
+
+                const custEl = document.getElementById('reviewCustomerText');
+                if (custEl) {
+                    custEl.innerHTML = '';
+                    [name || '—', email || '—', phone || '—'].forEach((line, i) => {
+                        if (i > 0) custEl.appendChild(document.createElement('br'));
+                        custEl.appendChild(document.createTextNode(line));
+                    });
+                }
+
+                const delivEl = document.getElementById('reviewDeliveryText');
+                if (delivEl) {
+                    delivEl.innerHTML = '';
+                    const line1 = apartment ? `${address}, ${apartment}` : address;
+                    const line2 = `${city}, ${state} ${zip}`.trim();
+                    [line1 || '—', line2 || '—', country || '—'].forEach((line, i) => {
+                        if (i > 0) delivEl.appendChild(document.createElement('br'));
+                        delivEl.appendChild(document.createTextNode(line));
+                    });
+                }
+
+                const shipRadio = document.querySelector('input[name="shipping_option"]:checked');
+                const optId = shipRadio ? shipRadio.value : 'standard_insured';
+                const shipTitle = document.querySelector(`[data-ship-title="${optId}"]`)?.textContent || '';
+                const shipFee = document.querySelector(`[data-ship-fee="${optId}"]`)?.textContent?.trim() || '';
+                const revShipEl = document.getElementById('reviewShippingText');
+                if (revShipEl) {
+                    revShipEl.innerHTML = '';
+                    const strong = document.createElement('strong');
+                    strong.textContent = shipTitle + (shipFee ? ` (${shipFee})` : '');
+                    revShipEl.appendChild(strong);
+                    if (instructions) {
+                        const span = document.createElement('span');
+                        span.style.display = 'block';
+                        span.style.marginTop = '4px';
+                        span.style.color = '#525252';
+                        span.textContent = 'Instructions: ' + instructions;
+                        revShipEl.appendChild(span);
                     }
                 }
-            });
+            }
 
-            methods.forEach((key) => {
-                const box = document.getElementById('details-' + key);
-                if (!box) return;
-                const isSelected = key === selectedMethod;
-                box.classList.toggle('hidden', !isSelected);
-                if (isSelected && submitBtn) {
-                    const hasWallet = box.dataset.hasWallet === 'true';
-                    submitBtn.disabled = !hasWallet;
+            function goToStep(step) {
+                currentStep = Math.max(1, Math.min(5, step));
+                if (currentStep > maxReachedStep) maxReachedStep = currentStep;
+
+                stepPanels.forEach((panel) => {
+                    const panelStep = Number(panel.getAttribute('data-step-panel'));
+                    panel.classList.toggle('hidden', panelStep !== currentStep);
+                });
+
+                stepTabs.forEach((tab) => {
+                    const tabStep = Number(tab.getAttribute('data-step-tab'));
+                    tab.classList.toggle('active', tabStep === currentStep);
+                    tab.classList.toggle('done', tabStep < currentStep);
+                    tab.classList.toggle('reachable', tabStep <= maxReachedStep);
+                });
+
+                if (currentStep === 4) {
+                    populateReviewSummary();
                 }
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            document.querySelectorAll('[data-next-step]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const target = Number(btn.getAttribute('data-next-step'));
+                    if (validateStep(currentStep, false)) {
+                        saveDraft();
+                        goToStep(target);
+                    }
+                });
             });
-        }
 
-        function selectPaymentMethod(method) {
-            if (method !== '' && !methods.includes(method)) return;
-            methodInput.value = method;
-            refreshAmountsAndSelection(method);
-        }
-
-        cryptoBtns.forEach((btn) => {
-            btn.addEventListener('click', () => {
-                selectPaymentMethod(btn.dataset.method || '');
+            document.querySelectorAll('[data-prev-step], [data-jump-step]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const target = Number(btn.getAttribute('data-prev-step') || btn.getAttribute('data-jump-step'));
+                    showBanner('');
+                    goToStep(target);
+                });
             });
-        });
 
-        document.querySelectorAll('[data-switch-method]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                selectPaymentMethod(btn.dataset.switchMethod || 'bitcoin');
+            stepTabs.forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    const target = Number(tab.getAttribute('data-step-tab'));
+                    if (target <= maxReachedStep) {
+                        showBanner('');
+                        goToStep(target);
+                    }
+                });
             });
-        });
 
-        if (applyPromoBtn && promoInput) {
-            applyPromoBtn.addEventListener('click', () => {
-                const code = promoInput.value.trim().toUpperCase();
-                if (code === 'ART10' || code === 'COLLECTOR10') {
-                    currentPromo = code;
-                    promoHidden.value = code;
-                    promoStatus.textContent = '10% collector privilege applied (' + code + ')';
-                    promoStatus.className = 'promo-status ok';
+            function updateSummaryCryptoDisplay() {
+                const method = (methodInput?.value || 'bitcoin').toLowerCase();
+                const cryptoLine = document.getElementById('summaryCryptoLine');
+                if (!cryptoLine) return;
+                if (method === 'bitcoin' || method === 'ethereum' || method === 'solana') {
+                    cryptoLine.textContent = `≈ ${latestCryptoQuotes[method] || '0'} ${cryptoSymbols[method]}`;
+                    cryptoLine.classList.remove('hidden');
                 } else {
-                    currentPromo = '';
-                    promoHidden.value = '';
-                    promoStatus.textContent = code ? 'Invalid promo code. Try ART10 or COLLECTOR10.' : '';
-                    promoStatus.className = code ? 'promo-status err' : 'promo-status hidden';
-                }
-                refreshAmountsAndSelection(methodInput.value || '');
-            });
-        }
-
-        document.querySelectorAll('.copy-link').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-                const targetId = btn.dataset.copyTarget;
-                const el = targetId ? document.getElementById(targetId) : null;
-                const text = el ? el.textContent.trim() : '';
-                if (!text) return;
-                try {
-                    await navigator.clipboard.writeText(text);
-                    const original = btn.textContent;
-                    btn.textContent = 'Copied';
-                    setTimeout(() => { btn.textContent = original; }, 1600);
-                } catch {
-                    // Clipboard fallback
-                }
-            });
-        });
-
-        const checkoutForm = document.getElementById('checkoutForm');
-        const btcShippingPrompt = document.getElementById('btcShippingPrompt');
-        const btcPaymentNotice = document.getElementById('btcPaymentNotice');
-        const btcNoticeTitle = document.getElementById('btcNoticeTitle');
-        const btcNoticeBody = document.getElementById('btcNoticeBody');
-        const btcNoticeMeta = document.getElementById('btcNoticeMeta');
-        const btcNoticeAmount = document.getElementById('btcNoticeAmount');
-        const btcNoticeAddress = document.getElementById('btcNoticeAddress');
-        let btcPollTimer = null;
-        let btcPaymentDetected = false;
-        let btcAutoSubmitting = false;
-        let btcCheckingSubmit = false;
-
-        function hideBtcNotice() {
-            if (btcPaymentNotice) {
-                btcPaymentNotice.classList.add('hidden');
-            }
-        }
-
-        function showBtcNotice(opts) {
-            if (!btcPaymentNotice) return;
-            if (btcNoticeTitle) btcNoticeTitle.textContent = opts.title || 'Awaiting Bitcoin Transfer';
-            if (btcNoticeBody) btcNoticeBody.textContent = opts.body || '';
-            if (btcNoticeMeta) {
-                const showMeta = Boolean(opts.amount && opts.address);
-                btcNoticeMeta.classList.toggle('hidden', !showMeta);
-                if (btcNoticeAmount) btcNoticeAmount.textContent = opts.amount ? opts.amount + ' BTC' : '';
-                if (btcNoticeAddress) btcNoticeAddress.textContent = opts.address || '';
-            }
-            btcPaymentNotice.classList.remove('hidden');
-        }
-
-        function submitOrderForSlip() {
-            if (!checkoutForm || btcAutoSubmitting) return;
-            hideBtcNotice();
-            if (checkoutForm.checkValidity()) {
-                btcAutoSubmitting = true;
-                if (btcShippingPrompt) btcShippingPrompt.classList.add('hidden');
-                checkoutForm.submit();
-            } else {
-                if (btcShippingPrompt) btcShippingPrompt.classList.remove('hidden');
-                if (typeof checkoutForm.reportValidity === 'function') {
-                    checkoutForm.reportValidity();
+                    cryptoLine.textContent = '';
+                    cryptoLine.classList.add('hidden');
                 }
             }
-        }
 
-        async function fetchBitcoinListenStatus(forceRefresh = false) {
-            const expectedBtc = document.getElementById('send-amt-bitcoin')?.textContent?.trim() || '0';
-            const activeCid = document.body?.dataset?.cid || '';
-            const params = new URLSearchParams({ expected_btc: expectedBtc });
-            if (activeCid) params.set('cid', activeCid);
-            if (forceRefresh) params.set('refresh', '1');
-
-            const res = await fetch('/api/bitcoin/listen?' + params.toString(), {
-                credentials: 'include',
-                cache: 'no-store'
-            });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return await res.json();
-        }
-
-        async function checkBitcoinMempoolSilently() {
-            if (btcPaymentDetected || (methodInput.value || '') !== 'bitcoin') return;
-
-            try {
-                const data = await fetchBitcoinListenStatus(false);
-
-                if (data.status === 'detected' || data.status === 'confirmed') {
-                    btcPaymentDetected = true;
-                    if (btcPollTimer) {
-                        clearInterval(btcPollTimer);
-                        btcPollTimer = null;
-                    }
-                    submitOrderForSlip();
+            function updateSubmitButtonLabel(usdText) {
+                if (!submitBtn) return;
+                const method = (methodInput?.value || 'bitcoin').toLowerCase();
+                const curUsd = usdText || (document.getElementById('submitBtnTotal')?.textContent || '$<%= formatCurrency(total) %>');
+                if (method === 'bitcoin') {
+                    submitBtn.innerHTML = `Confirm BTC Transfer &amp; Complete Order (<span id="submitBtnTotal">${curUsd}</span> USD)`;
+                } else if (method === 'ethereum' || method === 'solana') {
+                    submitBtn.innerHTML = `Complete Acquisition with ${cryptoSymbols[method]} (<span id="submitBtnTotal">${curUsd}</span> USD)`;
+                } else {
+                    submitBtn.innerHTML = `Proceed to Payment (<span id="submitBtnTotal">${curUsd}</span> USD)`;
                 }
-            } catch {
-                // Retry quietly on next interval
             }
-        }
 
-        if (checkoutForm) {
-            checkoutForm.addEventListener('submit', async (e) => {
-                if ((methodInput.value || '') !== 'bitcoin' || btcPaymentDetected || btcAutoSubmitting) {
-                    return;
-                }
-                e.preventDefault();
-                if (btcCheckingSubmit) return;
-                if (!checkoutForm.checkValidity()) {
-                    if (typeof checkoutForm.reportValidity === 'function') {
-                        checkoutForm.reportValidity();
-                    }
-                    return;
-                }
+            // Live Shipping, Promo & Crypto Quote Recalculation via /api/cart
+            async function refreshOrderTotals() {
+                const country = (document.getElementById('country')?.value || '').trim();
+                const promo = (document.getElementById('promoCodeHidden')?.value || '').trim();
+                const shipRadio = document.querySelector('input[name="shipping_option"]:checked');
+                const shippingOption = shipRadio ? shipRadio.value : 'standard_insured';
 
-                btcCheckingSubmit = true;
-                const prevLabel = submitAmtLabel ? submitAmtLabel.textContent : '';
-                if (submitBtn) submitBtn.disabled = true;
-                if (submitAmtLabel) submitAmtLabel.textContent = 'Verifying Bitcoin Transfer...';
-                hideBtcNotice();
+                const qs = new URLSearchParams();
+                if (cid) qs.set('cid', cid);
+                if (country) qs.set('country', country);
+                if (promo) qs.set('promo_code', promo);
+                if (shippingOption) qs.set('shipping_option', shippingOption);
 
                 try {
-                    const data = await fetchBitcoinListenStatus(true);
-                    if (data.status === 'detected' || data.status === 'confirmed') {
-                        btcPaymentDetected = true;
-                        if (btcPollTimer) {
-                            clearInterval(btcPollTimer);
-                            btcPollTimer = null;
+                    const res = await fetch('/api/cart?' + qs.toString(), {
+                        credentials: 'include',
+                        cache: 'no-store'
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const sd = data.shipping_details || {};
+
+                    if (Array.isArray(sd.shippingOptions)) {
+                        sd.shippingOptions.forEach((opt) => {
+                            const titleEl = document.querySelector(`[data-ship-title="${opt.id}"]`);
+                            const metaEl = document.querySelector(`[data-ship-meta="${opt.id}"]`);
+                            const descEl = document.querySelector(`[data-ship-desc="${opt.id}"]`);
+                            const feeEl = document.querySelector(`[data-ship-fee="${opt.id}"]`);
+                            if (titleEl) titleEl.textContent = opt.title;
+                            if (metaEl) metaEl.textContent = `${opt.badgeText} · ${opt.cratingWindow} · ${opt.transitWindow}`;
+                            if (descEl) descEl.textContent = opt.description;
+                            if (feeEl) {
+                                feeEl.textContent = opt.fee === 0 ? 'FREE' : '$' + fmt(opt.fee);
+                                feeEl.style.color = opt.fee === 0 ? 'var(--green)' : '';
+                            }
+                        });
+                    }
+
+                    const customsEl = document.getElementById('customsDisclosureText');
+                    if (customsEl && sd.customsNotice) customsEl.textContent = sd.customsNotice;
+
+                    const subEl = document.getElementById('summarySubtotal');
+                    const discRow = document.getElementById('discountRow');
+                    const discEl = document.getElementById('summaryDiscount');
+                    const shipLabelEl = document.getElementById('summaryShippingLabel');
+                    const shipEl = document.getElementById('summaryShipping');
+                    const taxEl = document.getElementById('summaryTax');
+                    const totalEl = document.getElementById('summaryTotal');
+                    const mobileTotalEl = document.getElementById('mobileSummaryTotal');
+
+                    const totalFormatted = '$' + fmt(data.total);
+                    if (subEl) subEl.textContent = '$' + fmt(data.subtotal);
+                    if (discRow && discEl) {
+                        const d = Number(data.discount || 0);
+                        discRow.classList.toggle('hidden', d <= 0);
+                        discEl.textContent = '-$' + fmt(d);
+                    }
+                    if (shipLabelEl && sd.methodTitle) shipLabelEl.textContent = sd.methodTitle;
+                    if (shipEl) {
+                        const s = Number(data.shipping || 0);
+                        shipEl.textContent = s === 0 ? 'FREE' : '$' + fmt(s);
+                        shipEl.style.color = s === 0 ? 'var(--green)' : '';
+                    }
+                    if (taxEl) taxEl.textContent = '$' + fmt(data.tax || 0);
+                    if (totalEl) totalEl.textContent = totalFormatted + ' USD';
+                    if (mobileTotalEl) mobileTotalEl.textContent = totalFormatted + ' USD';
+
+                    document.querySelectorAll('.usd-equiv').forEach((el) => {
+                        el.textContent = `(≈ ${totalFormatted} USD)`;
+                    });
+                    document.querySelectorAll('.summary-total-inline').forEach((el) => {
+                        el.textContent = totalFormatted + ' USD';
+                    });
+
+                    if (data.crypto_quotes) {
+                        ['bitcoin', 'ethereum', 'solana'].forEach((k) => {
+                            if (data.crypto_quotes[k]) {
+                                latestCryptoQuotes[k] = String(data.crypto_quotes[k]);
+                                const btnAmt = document.getElementById('btn-amt-' + k);
+                                const sendAmt = document.getElementById('send-amt-' + k);
+                                if (btnAmt) btnAmt.textContent = `${latestCryptoQuotes[k]} ${cryptoSymbols[k]}`;
+                                if (sendAmt) sendAmt.textContent = latestCryptoQuotes[k];
+                            }
+                        });
+                        const noticeAmt = document.getElementById('btcNoticeAmount');
+                        if (noticeAmt && latestCryptoQuotes.bitcoin) {
+                            noticeAmt.textContent = `${latestCryptoQuotes.bitcoin} BTC`;
                         }
-                        submitOrderForSlip();
+                    }
+
+                    updateSummaryCryptoDisplay();
+                    updateSubmitButtonLabel(totalFormatted);
+                    if (currentStep === 4) populateReviewSummary();
+                } catch {
+                    // Keep existing server-rendered numbers on transient error
+                }
+            }
+
+            document.querySelectorAll('input[name="shipping_option"]').forEach((radio) => {
+                radio.addEventListener('change', () => {
+                    document.querySelectorAll('.shipping-option-card').forEach((card) => {
+                        card.classList.toggle('selected', card.getAttribute('data-ship-card') === radio.value);
+                    });
+                    saveDraft();
+                    refreshOrderTotals();
+                });
+            });
+
+            document.getElementById('country')?.addEventListener('change', () => {
+                saveDraft();
+                refreshOrderTotals();
+            });
+
+            document.getElementById('applyPromoBtn')?.addEventListener('click', () => {
+                const input = document.getElementById('promoInput');
+                const hidden = document.getElementById('promoCodeHidden');
+                const status = document.getElementById('promoStatus');
+                const code = (input?.value || '').trim().toUpperCase();
+                if (code === 'ART10' || code === 'COLLECTOR10') {
+                    if (hidden) hidden.value = code;
+                    if (status) {
+                        status.textContent = '10% Collector Promotion Applied';
+                        status.className = 'promo-status ok';
+                    }
+                } else {
+                    if (hidden) hidden.value = '';
+                    if (status) {
+                        status.textContent = code ? 'Collector code not recognized.' : '';
+                        status.className = 'promo-status err';
+                    }
+                }
+                saveDraft();
+                refreshOrderTotals();
+            });
+
+            // Copy buttons in crypto deposit panels
+            document.querySelectorAll('[data-copy-target], [data-copy-text]').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    const targetId = btn.getAttribute('data-copy-target');
+                    const directText = btn.getAttribute('data-copy-text');
+                    const defaultLabel = btn.getAttribute('data-copy-default') || 'Copy';
+                    const text = targetId
+                        ? (document.getElementById(targetId)?.textContent || '').trim()
+                        : (directText || '').trim();
+                    if (!text) return;
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        btn.textContent = 'Copied';
+                        window.setTimeout(() => {
+                            btn.textContent = defaultLabel;
+                        }, 1800);
+                    } catch {
+                        // Clipboard unavailable in context
+                    }
+                });
+            });
+
+            // Payment Method Selection (BTC, ETH, SOL, Stripe, PayPal)
+            const methodCards = Array.from(document.querySelectorAll('[data-method-id]'));
+            const gatewayNoticeBox = document.getElementById('details-gateway');
+
+            function selectPaymentMethod(methodId) {
+                if (methodInput) methodInput.value = methodId;
+                if (providerInput) providerInput.value = methodId;
+
+                methodCards.forEach((card) => {
+                    const isSelected = card.getAttribute('data-method-id') === methodId;
+                    card.classList.toggle('active', isSelected);
+                    card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+                });
+
+                ['bitcoin', 'ethereum', 'solana'].forEach((k) => {
+                    const panel = document.getElementById('details-' + k);
+                    if (panel) panel.classList.toggle('hidden', methodId !== k);
+                });
+
+                const isGateway = methodId === 'stripe' || methodId === 'paypal';
+                if (gatewayNoticeBox) {
+                    gatewayNoticeBox.classList.toggle('hidden', !isGateway);
+                    if (isGateway) {
+                        const card = document.querySelector(`[data-method-id="${methodId}"]`);
+                        const configured = card?.getAttribute('data-provider-configured') === 'true';
+                        const note = card?.getAttribute('data-provider-note') || '';
+                        const name = card?.getAttribute('data-provider-name') || methodId;
+                        const curTotal = document.getElementById('summaryTotal')?.textContent || '';
+                        gatewayNoticeBox.innerHTML = configured
+                            ? `<strong>Ready for Hosted Verification:</strong> Clicking below transfers you securely to <strong>${name}</strong> to authorize payment of <strong class="summary-total-inline">${curTotal}</strong>. Your order confirmation slip appears only after server verification completes.`
+                            : `<strong>Gateway Configuration Required:</strong> ${note} Orders are never marked paid until a verified payment confirmation is returned by the provider.`;
+                    }
+                }
+
+                updateSummaryCryptoDisplay();
+                updateSubmitButtonLabel();
+                syncBitcoinListener();
+            }
+
+            methodCards.forEach((card) => {
+                card.addEventListener('click', () => {
+                    const mid = card.getAttribute('data-method-id');
+                    if (mid) selectPaymentMethod(mid);
+                });
+            });
+
+            // Live Mempool.space Bitcoin Listener
+            function showBtcNotice(title, body, showMeta = true) {
+                const noticeEl = document.getElementById('btcPaymentNotice');
+                const titleEl = document.getElementById('btcNoticeTitle');
+                const bodyEl = document.getElementById('btcNoticeBody');
+                const amtEl = document.getElementById('btcNoticeAmount');
+                const addrEl = document.getElementById('btcNoticeAddress');
+                if (!noticeEl) return;
+                if (titleEl) titleEl.textContent = title;
+                if (bodyEl) bodyEl.textContent = body;
+                if (amtEl) amtEl.textContent = `${latestCryptoQuotes.bitcoin || '0'} BTC`;
+                if (addrEl) addrEl.textContent = btcWalletAddress;
+                const metaEl = noticeEl.querySelector('.btc-notice-meta');
+                if (metaEl) metaEl.classList.toggle('hidden', !showMeta);
+                noticeEl.classList.remove('hidden');
+                noticeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            function hideBtcNotice() {
+                document.getElementById('btcPaymentNotice')?.classList.add('hidden');
+            }
+
+            async function fetchBitcoinListenStatus(forceRefresh = false) {
+                const qs = new URLSearchParams({
+                    expected_btc: latestCryptoQuotes.bitcoin || '0',
+                    cid
+                });
+                if (forceRefresh) qs.set('refresh', '1');
+                const res = await fetch('/api/bitcoin/listen?' + qs.toString(), {
+                    credentials: 'include',
+                    cache: 'no-store'
+                });
+                return res.json();
+            }
+
+            async function checkBitcoinMempoolSilently() {
+                if ((methodInput?.value || '') !== 'bitcoin' || isSubmitting) return;
+                try {
+                    const data = await fetchBitcoinListenStatus(false);
+                    if (data.status === 'detected' || data.status === 'confirmed') {
+                        hideBtcNotice();
+                        if (allPrerequisiteStepsValid(true)) {
+                            btcConfirmedUnlock = true;
+                            isSubmitting = true;
+                            saveDraft();
+                            if (submitBtn) {
+                                submitBtn.disabled = true;
+                                submitBtn.textContent = 'Bitcoin Confirmed — Generating Slip...';
+                            }
+                            form?.submit();
+                        } else {
+                            document.getElementById('btcShippingPrompt')?.classList.remove('hidden');
+                        }
+                    } else if (data.status === 'partial') {
+                        showBtcNotice(
+                            'Partial Bitcoin Transfer Received',
+                            `We detected ${data.receivedBtc} BTC so far. Please send the remaining balance — your order confirmation slip will appear automatically once full payment arrives.`
+                        );
+                    }
+                } catch {
+                    // Silent background check retry
+                }
+            }
+
+            function syncBitcoinListener() {
+                if (btcListenTimer) {
+                    window.clearInterval(btcListenTimer);
+                    btcListenTimer = null;
+                }
+                if ((methodInput?.value || '') === 'bitcoin' && btcWalletAddress) {
+                    btcListenTimer = window.setInterval(checkBitcoinMempoolSilently, 5000);
+                }
+            }
+
+            // SessionStorage Draft Persistence across refreshes
+            const DRAFT_FIELDS = [
+                'name', 'email', 'phone', 'country', 'address',
+                'apartment', 'city', 'state', 'zip_code', 'delivery_instructions'
+            ];
+
+            function saveDraft() {
+                try {
+                    const data = {};
+                    DRAFT_FIELDS.forEach((id) => {
+                        const el = document.getElementById(id);
+                        if (el) data[id] = el.value || '';
+                    });
+                    const ship = document.querySelector('input[name="shipping_option"]:checked');
+                    if (ship) data.shipping_option = ship.value;
+                    data.promo_code = document.getElementById('promoCodeHidden')?.value || '';
+                    window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+                } catch {
+                    // Ignore storage restrictions
+                }
+            }
+
+            function restoreDraftIfEmpty() {
+                try {
+                    const raw = window.sessionStorage.getItem(DRAFT_KEY);
+                    if (!raw) return;
+                    const data = JSON.parse(raw);
+                    if (!data || typeof data !== 'object') return;
+                    DRAFT_FIELDS.forEach((id) => {
+                        const el = document.getElementById(id);
+                        if (el && !el.value && typeof data[id] === 'string' && data[id]) {
+                            el.value = data[id];
+                        }
+                    });
+                    if (data.shipping_option) {
+                        const targetRadio = document.querySelector(`input[name="shipping_option"][value="${data.shipping_option}"]`);
+                        if (targetRadio) {
+                            targetRadio.checked = true;
+                            document.querySelectorAll('.shipping-option-card').forEach((c) => {
+                                c.classList.toggle('selected', c.getAttribute('data-ship-card') === data.shipping_option);
+                            });
+                        }
+                    }
+                    if (data.promo_code && !document.getElementById('promoCodeHidden')?.value) {
+                        document.getElementById('promoCodeHidden').value = data.promo_code;
+                        document.getElementById('promoInput').value = data.promo_code;
+                        refreshOrderTotals();
+                    }
+                } catch {
+                    // Ignore storage restrictions
+                }
+            }
+
+            DRAFT_FIELDS.forEach((id) => {
+                document.getElementById(id)?.addEventListener('input', saveDraft);
+            });
+
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    if (btcConfirmedUnlock) {
                         return;
                     }
-                    const expectedBtc = document.getElementById('send-amt-bitcoin')?.textContent?.trim() || data.expectedBtc || '0';
-                    const btcAddr = document.getElementById('wallet-bitcoin')?.textContent?.trim() || data.address || '';
-                    if (data.status === 'partial') {
-                        showBtcNotice({
-                            title: 'Partial Bitcoin Transfer Received',
-                            body: 'We detected ' + data.receivedBtc + ' BTC so far. Please send the remaining balance below — your order confirmation slip will appear automatically once full payment arrives.',
-                            amount: expectedBtc,
-                            address: btcAddr
-                        });
-                    } else if (data.status === 'unavailable') {
-                        showBtcNotice({
-                            title: 'Verifying Network Connection',
-                            body: 'Unable to reach Mempool.space at this moment. Please wait a few seconds and try again.'
-                        });
-                    } else {
-                        showBtcNotice({
-                            title: 'Awaiting Your Bitcoin Transfer',
-                            body: 'No payment has arrived yet. Please send the exact amount shown below — your order confirmation slip will appear automatically as soon as your transfer is picked up.',
-                            amount: expectedBtc,
-                            address: btcAddr
-                        });
+                    if (isSubmitting) {
+                        e.preventDefault();
+                        return;
                     }
-                } catch {
-                    showBtcNotice({
-                        title: 'Verification Temporarily Unavailable',
-                        body: 'Please verify your internet connection or try again in a few seconds.'
-                    });
-                } finally {
-                    btcCheckingSubmit = false;
-                    if (!btcAutoSubmitting) {
-                        if (submitBtn) submitBtn.disabled = false;
-                        if (submitAmtLabel && prevLabel) submitAmtLabel.textContent = prevLabel;
+                    if (!validateStep(1, false)) {
+                        e.preventDefault();
+                        goToStep(1);
+                        return;
                     }
-                }
-            });
-
-            checkoutForm.addEventListener('change', () => {
-                if (btcPaymentDetected && (methodInput.value || '') === 'bitcoin' && checkoutForm.checkValidity()) {
-                    submitOrderForSlip();
-                }
-            });
-        }
-
-        function syncBitcoinListener(selectedMethod, isInitialLoad = false) {
-            if (btcPollTimer) {
-                clearInterval(btcPollTimer);
-                btcPollTimer = null;
-            }
-            if (!isInitialLoad) {
-                hideBtcNotice();
-            }
-            if (selectedMethod === 'bitcoin') {
-                if (btcPaymentDetected) {
-                    submitOrderForSlip();
-                    return;
-                }
-                checkBitcoinMempoolSilently();
-                btcPollTimer = setInterval(() => {
-                    if (!document.hidden && (methodInput.value || '') === 'bitcoin' && !btcPaymentDetected) {
-                        checkBitcoinMempoolSilently();
+                    if (!validateStep(2, false)) {
+                        e.preventDefault();
+                        goToStep(2);
+                        return;
                     }
-                }, 5000);
+                    if (!validateStep(4, false)) {
+                        e.preventDefault();
+                        goToStep(4);
+                        return;
+                    }
+
+                    const method = (methodInput?.value || 'bitcoin').toLowerCase();
+                    if (method === 'bitcoin') {
+                        e.preventDefault();
+                        isSubmitting = true;
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                            submitBtn.textContent = 'Checking Bitcoin Network...';
+                        }
+                        try {
+                            const status = await fetchBitcoinListenStatus(true);
+                            if (status.status === 'detected' || status.status === 'confirmed') {
+                                hideBtcNotice();
+                                btcConfirmedUnlock = true;
+                                saveDraft();
+                                if (submitBtn) {
+                                    submitBtn.textContent = 'Bitcoin Confirmed — Generating Slip...';
+                                }
+                                form.submit();
+                                return;
+                            }
+                            if (status.status === 'partial') {
+                                showBtcNotice(
+                                    'Partial Bitcoin Transfer Received',
+                                    `We detected ${status.receivedBtc} BTC so far. Please send the remaining balance to unlock your order confirmation slip automatically.`
+                                );
+                            } else if (status.status === 'unavailable') {
+                                showBtcNotice(
+                                    'Checking Bitcoin Network',
+                                    'Unable to reach Mempool.space at this moment. Please wait a few seconds and click Confirm again.',
+                                    false
+                                );
+                            } else {
+                                showBtcNotice(
+                                    'Awaiting Your Bitcoin Transfer',
+                                    'No Bitcoin transfer has been detected yet. Please send your payment first — your order confirmation slip will appear automatically once your transfer is confirmed.'
+                                );
+                            }
+                        } catch {
+                            showBtcNotice(
+                                'Checking Bitcoin Network',
+                                'Please ensure your Bitcoin transfer has been broadcast, then try again in a few moments.'
+                            );
+                        } finally {
+                            isSubmitting = false;
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                updateSubmitButtonLabel();
+                            }
+                        }
+                        return;
+                    }
+
+                    isSubmitting = true;
+                    saveDraft();
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = (method === 'stripe' || method === 'paypal')
+                            ? 'Connecting to Payment Gateway...'
+                            : 'Registering Order...';
+                    }
+                });
             }
-        }
 
-        const origSelectPaymentMethod = selectPaymentMethod;
-        selectPaymentMethod = function(method, isInitialLoad = false) {
-            origSelectPaymentMethod(method);
-            syncBitcoinListener(method, isInitialLoad);
-        };
-
-        selectPaymentMethod(methodInput.value || '', true);
+            restoreDraftIfEmpty();
+            updateSummaryCryptoDisplay();
+            updateSubmitButtonLabel();
+            syncBitcoinListener();
+            goToStep(initialStep);
+        })();
     </script>
-    <script src="/static/js/cart-sync.js"></script>
 </body>
 </html>
