@@ -1234,7 +1234,7 @@
                     <%= (typeof search_query !== 'undefined' && search_query) ? `Results for "${search_query}"` : 'The Complete Archive' %>
                 </h1>
                 <p class="archive-lead">
-                    Original paintings, museum-grade photography, and sculptural lighting works sourced directly from independent contemporary studios and prepared for worldwide dispatch.
+                    Curated fine art, collectible design, and vintage objects—spanning original paintings, rare prints, archival photography, historical sculptures, and antique or modernist furniture sourced from independent studios and vetted dealers for insured worldwide dispatch.
                 </p>
                 <div class="archive-meta">
                     <span>Showing <span class="mono-count" id="visibleCount"><%= products.length %></span> Works</span>
@@ -1532,14 +1532,14 @@
                 <div>
                     <span class="footer-kicker">Stay Connected</span>
                     <h3 class="footer-heading">Curated releases and new acquisitions.</h3>
-                    <p class="footer-sub">Receive updates when original paintings, archival photographs, and studio sculptures enter the collection.</p>
+                    <p class="footer-sub">Receive updates when original paintings, rare prints, archival photography, historical sculptures, and collectible vintage furniture enter the archive.</p>
                 </div>
                 <div>
                     <form class="newsletter-form" id="newsletterForm">
                         <input type="email" id="newsletterEmail" required placeholder="Enter your email" />
                         <button type="submit">Subscribe</button>
                     </form>
-                    <p class="newsletter-msg hidden" id="newsletterMsg">Thank you — you are on the private collector list.</p>
+                    <p class="newsletter-msg hidden" id="newsletterMsg" role="status" aria-live="polite">Thank you — you are on the private collector list.</p>
                 </div>
             </div>
 
@@ -1559,7 +1559,7 @@
                         <li><a href="/shipping">Shipping &amp; Delivery</a></li>
                         <li><a href="/contact">Contact &amp; Support</a></li>
                         <li><a href="/cart">Shopping Bag</a></li>
-                        <li><a href="/checkout">Crypto Checkout</a></li>
+                        <li><a href="/crypto-checkout">Crypto Checkout</a></li>
                     </ul>
                 </div>
 
@@ -1681,11 +1681,32 @@
         const newsletterForm = document.getElementById('newsletterForm');
         const newsletterMsg = document.getElementById('newsletterMsg');
         if (newsletterForm && newsletterMsg) {
-            newsletterForm.addEventListener('submit', (e) => {
+            newsletterForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                newsletterMsg.classList.remove('hidden');
                 const input = document.getElementById('newsletterEmail');
-                if (input) input.value = '';
+                const submitBtn = newsletterForm.querySelector('button[type="submit"]');
+                const email = input ? input.value.trim() : '';
+                if (!email) return;
+
+                if (submitBtn) submitBtn.disabled = true;
+                try {
+                    const res = await fetch('/api/newsletter', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    const data = await res.json();
+                    newsletterMsg.textContent = data.message || 'Thank you — you are on the private collector list.';
+                    newsletterMsg.style.color = data.ok ? '#34d399' : '#fca5a5';
+                    newsletterMsg.classList.remove('hidden');
+                    if (data.ok && input) input.value = '';
+                } catch {
+                    newsletterMsg.textContent = 'Unable to register right now. Please try again shortly.';
+                    newsletterMsg.style.color = '#fca5a5';
+                    newsletterMsg.classList.remove('hidden');
+                } finally {
+                    if (submitBtn) submitBtn.disabled = false;
+                }
             });
         }
 

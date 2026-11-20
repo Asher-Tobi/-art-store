@@ -298,6 +298,9 @@
                         <%= order.address %><% if (order.apartment) { %>, <%= order.apartment %><% } %><br>
                         <%= order.city %>, <%= order.state %> <%= order.zip_code %><br>
                         <%= order.country %>
+                        <span style="display: block; margin-top: 6px; font-size: 12px; color: #525252;">
+                            <%= order.shipping_method || 'Insured Fine Art Courier Delivery' %>
+                        </span>
                     </p>
                 </div>
             </div>
@@ -319,6 +322,10 @@
                     <span class="mono">-$<%= formatCurrency(order.discount) %></span>
                 </div>
                 <% } %>
+                <div class="item-row" style="<%= order.shipping === 0 ? 'color: #047857;' : '' %>">
+                    <span><%= order.shipping_method || 'Insured Fine Art Courier Delivery' %></span>
+                    <span class="mono"><%= order.shipping === 0 ? 'COMPLIMENTARY' : '$' + formatCurrency(order.shipping) %></span>
+                </div>
                 <div class="total-row">
                     <span>Total</span>
                     <span class="mono">$<%= formatCurrency(order.total) %> USD</span>
@@ -334,8 +341,10 @@
         <div class="footer-inner">
             <span>© 2026 ART STUDIO. All rights reserved.</span>
             <nav class="footer-links" aria-label="Footer policies">
+                <a href="/artists">Meet the Artists</a>
                 <a href="/shipping">Shipping &amp; Delivery</a>
                 <a href="/authenticity">Authenticity</a>
+                <a href="/crypto-checkout">Crypto Checkout</a>
                 <a href="/terms">Terms</a>
                 <a href="/privacy-policy">Privacy Policy</a>
                 <a href="/contact">Contact &amp; Support</a>

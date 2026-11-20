@@ -608,6 +608,66 @@
             color: var(--ink);
         }
 
+        .provenance-dossier {
+            margin: 0 0 24px;
+            padding: 16px 18px;
+            background: var(--canvas);
+            border: 1px solid var(--card-border);
+            border-radius: 2px;
+        }
+
+        .provenance-dossier-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .provenance-dossier-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--ink);
+            margin: 0;
+        }
+
+        .provenance-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--gold);
+        }
+
+        .provenance-list {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            font-size: 12.5px;
+            line-height: 1.55;
+            color: #404040;
+        }
+
+        .provenance-row {
+            display: grid;
+            grid-template-columns: 92px 1fr;
+            gap: 10px;
+            align-items: baseline;
+        }
+
+        .provenance-key {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #737373;
+        }
+
         .add-cart-form {
             display: flex;
             gap: 12px;
@@ -821,7 +881,44 @@
                         <span class="spec-label">Dimensions</span>
                         <span class="spec-val"><%= product.size %></span>
                     </div>
+                    <% if (typeof provenance !== 'undefined' && provenance) { %>
+                    <div>
+                        <span class="spec-label">Date / Period</span>
+                        <span class="spec-val"><%= provenance.datePeriod %></span>
+                    </div>
+                    <div>
+                        <span class="spec-label">Origin / Attribution</span>
+                        <span class="spec-val"><%= provenance.originAttribution %></span>
+                    </div>
+                    <% } %>
                 </div>
+
+                <% if (typeof provenance !== 'undefined' && provenance) { %>
+                <div class="provenance-dossier" aria-label="Authenticity and provenance dossier">
+                    <div class="provenance-dossier-head">
+                        <h2 class="provenance-dossier-title">Provenance &amp; Authenticity Dossier</h2>
+                        <a href="/authenticity" class="provenance-badge">COA Verified →</a>
+                    </div>
+                    <div class="provenance-list">
+                        <div class="provenance-row">
+                            <span class="provenance-key">Materials</span>
+                            <span><%= provenance.materialsMedium %></span>
+                        </div>
+                        <div class="provenance-row">
+                            <span class="provenance-key">Markings</span>
+                            <span><%= provenance.markingsEdition %></span>
+                        </div>
+                        <div class="provenance-row">
+                            <span class="provenance-key">Condition</span>
+                            <span><%= provenance.conditionNote %></span>
+                        </div>
+                        <div class="provenance-row">
+                            <span class="provenance-key">Provenance</span>
+                            <span><%= provenance.provenanceRecord %></span>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
 
                 <% if (messages && messages.length) { %>
                     <% messages.forEach((message) => { %>
@@ -840,7 +937,16 @@
 
                 <div class="guarantees">
                     <div class="guarantee-line"><span>✓</span><span>Direct on-chain settlement via BTC, ETH, or SOL</span></div>
-                    <div class="guarantee-line"><span>✓</span><a href="/shipping" style="text-decoration: underline; text-underline-offset: 3px;">Custom-crated insured fine art courier delivery</a></div>
+                    <div class="guarantee-line">
+                        <span>✓</span>
+                        <a href="/shipping" style="text-decoration: underline; text-underline-offset: 3px;">
+                            <% if (product.category === 'Furniture') { %>
+                                White-glove insured furniture crating &amp; worldwide delivery (<%= product.price >= 1500 ? 'complimentary' : 'complimentary $1,500+' %>)
+                            <% } else { %>
+                                Insured worldwide fine art courier (<%= product.price >= 1500 ? 'complimentary on this piece' : '$65 flat · complimentary $1,500+' %>)
+                            <% } %>
+                        </a>
+                    </div>
                     <div class="guarantee-line"><span>✓</span><a href="/authenticity" style="text-decoration: underline; text-underline-offset: 3px;">Includes signed certificate of authenticity</a></div>
                 </div>
 
@@ -898,6 +1004,7 @@
                 <a href="/artists">Meet the Artists</a>
                 <a href="/shipping">Shipping &amp; Delivery</a>
                 <a href="/authenticity">Authenticity</a>
+                <a href="/crypto-checkout">Crypto Checkout</a>
                 <a href="/terms">Terms</a>
                 <a href="/privacy-policy">Privacy Policy</a>
                 <a href="/contact">Contact &amp; Support</a>

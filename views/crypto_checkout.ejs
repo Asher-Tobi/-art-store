@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Direct on-chain cryptocurrency checkout via Bitcoin (BTC), Ethereum (ETH), and Solana (SOL) at ART STUDIO." />
+    <title>Crypto Checkout | ART STUDIO</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink: #0a0a0a;
+            --ink-soft: #404040;
+            --muted: #666666;
+            --border: #dcdcdc;
+            --card-border: #e5e5e5;
+            --surface: #ffffff;
+            --canvas: #fafafa;
+            --gold: #a3702b;
+            --gold-bright: #d49653;
+            --green: #047857;
+            --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --font-serif: "Playfair Display", Georgia, serif;
+            --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: var(--font-sans);
+            background: var(--surface);
+            color: var(--ink);
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        button { font: inherit; }
+
+        .main-wrap {
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+            flex: 1;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #737373;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 28px;
+        }
+
+        .breadcrumb a:hover { color: var(--ink); }
+        .breadcrumb .current { color: var(--ink); font-weight: 500; }
+
+        .hero-head {
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 32px;
+            margin-bottom: 40px;
+            display: grid;
+            grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+            gap: 40px;
+            align-items: end;
+        }
+
+        .hero-kicker {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .hero-title {
+            font-family: var(--font-serif);
+            font-size: clamp(2rem, 3.8vw, 3rem);
+            font-weight: 400;
+            line-height: 1.12;
+            letter-spacing: -0.02em;
+            margin: 0 0 14px;
+        }
+
+        .hero-lead {
+            font-size: 15px;
+            line-height: 1.75;
+            color: #525252;
+            margin: 0;
+            max-width: 660px;
+        }
+
+        .rate-strip {
+            background: var(--canvas);
+            border: 1px solid var(--card-border);
+            padding: 18px 20px;
+            border-radius: 2px;
+        }
+
+        .rate-strip-title {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: #737373;
+            margin-bottom: 12px;
+        }
+
+        .rate-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rate-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .rate-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .rate-mono {
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .checkout-hub-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+            gap: 36px;
+            align-items: start;
+        }
+
+        .network-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .network-card {
+            border: 1px solid var(--card-border);
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 2px;
+        }
+
+        .network-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .network-id {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .network-badge {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .network-name {
+            font-family: var(--font-serif);
+            font-size: 21px;
+            font-weight: 400;
+            margin: 0;
+        }
+
+        .network-sub {
+            display: block;
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .verification-pill {
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 5px 10px;
+            border-radius: 2px;
+        }
+
+        .verification-pill.live {
+            background: #ecfdf5;
+            color: var(--green);
+            border: 1px solid #a7f3d0;
+        }
+
+        .verification-pill.manual {
+            background: #fcfaf6;
+            color: var(--gold);
+            border: 1px solid #e6dcc8;
+        }
+
+        .network-desc {
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: #404040;
+            margin: 0 0 14px;
+        }
+
+        .addr-box {
+            background: var(--canvas);
+            border: 1px solid var(--card-border);
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .addr-val {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--ink);
+            word-break: break-all;
+        }
+
+        .addr-copy {
+            background: none;
+            border: 1px solid var(--border);
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            background: #ffffff;
+        }
+
+        .addr-copy:hover {
+            border-color: var(--ink);
+        }
+
+        .network-cta-row {
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .network-amount {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .select-network-link {
+            display: inline-block;
+            padding: 10px 16px;
+            background: var(--ink);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            border-radius: 2px;
+        }
+
+        .select-network-link:hover {
+            background: #262626;
+        }
+
+        .bag-panel {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            padding: 28px;
+            position: sticky;
+            top: 88px;
+            border-radius: 2px;
+        }
+
+        .bag-panel-title {
+            margin: 0 0 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .bag-mini-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 18px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .bag-mini-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #ececec;
+        }
+
+        .bag-mini-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .bag-mini-item img {
+            width: 52px;
+            height: 62px;
+            object-fit: cover;
+            border: 1px solid var(--card-border);
+            flex-shrink: 0;
+        }
+
+        .bag-mini-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .bag-mini-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bag-mini-sub {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .bag-mini-price {
+            font-family: var(--font-mono);
+            font-size: 12.5px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #525252;
+            margin-bottom: 10px;
+        }
+
+        .summary-line .mono {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        .summary-grand {
+            padding-top: 14px;
+            margin-top: 12px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .summary-grand .mono {
+            font-family: var(--font-mono);
+            font-size: 20px;
+        }
+
+        .primary-cta {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 16px 20px;
+            background: var(--ink);
+            color: #ffffff;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            border-radius: 2px;
+        }
+
+        .primary-cta:hover { background: #262626; }
+
+        .secondary-links {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .secondary-pill {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            background: var(--canvas);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .secondary-pill:hover {
+            border-color: var(--ink);
+            background: #ffffff;
+        }
+
+        .empty-bag-box {
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: #525252;
+        }
+
+        .process-steps {
+            margin-top: 44px;
+            border: 1px solid var(--card-border);
+            background: var(--canvas);
+            padding: 28px;
+            border-radius: 2px;
+        }
+
+        .process-steps h2 {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            font-weight: 400;
+            margin: 0 0 18px;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .step-item {
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            padding: 18px;
+        }
+
+        .step-num {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gold);
+            margin-bottom: 6px;
+        }
+
+        .step-item h3 {
+            margin: 0 0 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .step-item p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #525252;
+        }
+
+        .footer {
+            background: #111111;
+            color: #999999;
+            border-top: 1px solid #262626;
+            padding: 36px 24px;
+            margin-top: auto;
+        }
+
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 12px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-links a:hover { color: #ffffff; }
+
+        @media (max-width: 960px) {
+            .hero-head,
+            .checkout-hub-grid,
+            .steps-grid {
+                grid-template-columns: 1fr;
+            }
+            .bag-panel {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body data-cid="<%= cid %>">
+    <%- include('partials/site-header') %>
+
+    <main class="main-wrap">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+            <a href="/">Archive</a>
+            <span>/</span>
+            <span class="current">Crypto Checkout</span>
+        </nav>
+
+        <section class="hero-head">
+            <div>
+                <span class="hero-kicker">Direct On-Chain Settlement</span>
+                <h1 class="hero-title">Crypto Checkout</h1>
+                <p class="hero-lead">
+                    Settle fine art, collectible design, and vintage acquisitions directly on-chain via Bitcoin (BTC), Ethereum (ETH), or Solana (SOL). Totals are calculated in USD at live market conversion rates with zero intermediary card holds.
+                </p>
+            </div>
+
+            <div class="rate-strip">
+                <span class="rate-strip-title">Reference Studio Conversion Rates</span>
+                <div class="rate-rows">
+                    <div class="rate-row">
+                        <span>Bitcoin (BTC)</span>
+                        <span class="rate-mono">1 BTC ≈ $<%= formatCurrency(prices.bitcoin) %></span>
+                    </div>
+                    <div class="rate-row">
+                        <span>Ethereum (ETH)</span>
+                        <span class="rate-mono">1 ETH ≈ $<%= formatCurrency(prices.ethereum) %></span>
+                    </div>
+                    <div class="rate-row">
+                        <span>Solana (SOL)</span>
+                        <span class="rate-mono">1 SOL ≈ $<%= formatCurrency(prices.solana) %></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="checkout-hub-grid">
+            <section class="network-cards" aria-label="Supported cryptocurrency networks">
+                <% ['bitcoin', 'ethereum', 'solana'].forEach((key) => { const opt = crypto_options[key]; %>
+                <article class="network-card">
+                    <div class="network-top">
+                        <div class="network-id">
+                            <span class="network-badge" style="background-color: <%= opt.accentColor %>;"><%= opt.icon %></span>
+                            <div>
+                                <h2 class="network-name"><%= opt.label %> (<%= opt.symbol %>)</h2>
+                                <span class="network-sub"><%= opt.network %></span>
+                            </div>
+                        </div>
+                        <% if (key === 'bitcoin') { %>
+                            <span class="verification-pill live">Live Mempool.space Listener</span>
+                        <% } else { %>
+                            <span class="verification-pill manual">Direct Wallet Settlement</span>
+                        <% } %>
+                    </div>
+
+                    <p class="network-desc">
+                        <% if (key === 'bitcoin') { %>
+                            Bitcoin transfers are monitored automatically via Mempool.space against the studio deposit address below. Once the incoming transfer is detected in the mempool or confirmed on-chain, your order confirmation slip is unlocked automatically.
+                        <% } else if (key === 'ethereum') { %>
+                            Send ETH directly on Ethereum Mainnet (ERC-20). Note: automated on-chain listening is currently active for Bitcoin; Ethereum transfers are registered at checkout and verified manually by our Collector Desk before dispatch.
+                        <% } else { %>
+                            Send SOL directly on Solana Mainnet. Note: automated on-chain listening is currently active for Bitcoin; Solana transfers are registered at checkout and verified manually by our Collector Desk before dispatch.
+                        <% } %>
+                    </p>
+
+                    <% if (opt.walletAddress) { %>
+                    <div class="addr-box">
+                        <span class="addr-val" id="hub-wallet-<%= key %>"><%= opt.walletAddress %></span>
+                        <button type="button" class="addr-copy" data-copy-id="hub-wallet-<%= key %>">Copy Address</button>
+                    </div>
+                    <% } %>
+
+                    <% if (cart_items && cart_items.length) { %>
+                    <div class="network-cta-row">
+                        <span class="network-amount">Bag Total: <%= opt.amount %> <%= opt.symbol %> (≈ $<%= formatCurrency(shipping_details.total) %>)</span>
+                        <a href="/checkout?method=<%= key %>" class="select-network-link">Pay with <%= opt.symbol %> →</a>
+                    </div>
+                    <% } %>
+                </article>
+                <% }) %>
+            </section>
+
+            <aside class="bag-panel">
+                <% if (cart_items && cart_items.length) { %>
+                    <h2 class="bag-panel-title">Active Shopping Bag (<%= cart_items.reduce((s, i) => s + i.quantity, 0) %>)</h2>
+
+                    <div class="bag-mini-list">
+                        <% cart_items.forEach((item) => { %>
+                        <div class="bag-mini-item">
+                            <img src="<%= item.image %>" alt="<%= item.title %>" referrerPolicy="no-referrer" />
+                            <div class="bag-mini-info">
+                                <p class="bag-mini-title"><%= item.title %></p>
+                                <div class="bag-mini-sub"><%= item.artist %> · Qty <%= item.quantity %></div>
+                            </div>
+                            <span class="bag-mini-price">$<%= formatCurrency(item.price * item.quantity) %></span>
+                        </div>
+                        <% }) %>
+                    </div>
+
+                    <div class="summary-line">
+                        <span>Subtotal</span>
+                        <span class="mono">$<%= formatCurrency(shipping_details.subtotal) %></span>
+                    </div>
+                    <div class="summary-line">
+                        <span><%= shipping_details.hasFurniture ? 'White-Glove Furniture Courier' : 'Insured Fine Art Delivery' %></span>
+                        <span class="mono" style="<%= shipping_details.shipping === 0 ? 'color: var(--green);' : '' %>">
+                            <%= shipping_details.shipping === 0 ? 'FREE' : '$' + formatCurrency(shipping_details.shipping) %>
+                        </span>
+                    </div>
+                    <div class="summary-grand">
+                        <span>Total</span>
+                        <span class="mono">$<%= formatCurrency(shipping_details.total) %> USD</span>
+                    </div>
+
+                    <a href="/checkout?method=bitcoin" class="primary-cta">Proceed to Crypto Settlement</a>
+
+                    <div class="secondary-links">
+                        <a href="/checkout?method=ethereum" class="secondary-pill">Use ETH</a>
+                        <a href="/checkout?method=solana" class="secondary-pill">Use SOL</a>
+                        <a href="/cart" class="secondary-pill">Edit Bag</a>
+                    </div>
+                <% } else { %>
+                    <h2 class="bag-panel-title">Ready to Acquire</h2>
+                    <div class="empty-bag-box">
+                        <p style="margin-top: 0;">Your shopping bag is currently empty. Add any painting, print, photograph, sculpture, or vintage furniture piece to calculate your live BTC, ETH, or SOL settlement quote at checkout.</p>
+                        <p>Orders of <strong>$1,500 USD or more</strong> automatically receive complimentary insured worldwide courier delivery, including white-glove furniture crating.</p>
+                    </div>
+
+                    <a href="/" class="primary-cta">Explore Complete Archive</a>
+
+                    <div class="secondary-links">
+                        <a href="/?category=Painting" class="secondary-pill">Paintings</a>
+                        <a href="/?category=Furniture" class="secondary-pill">Furniture</a>
+                        <a href="/?category=Prints" class="secondary-pill">Prints</a>
+                        <a href="/shipping" class="secondary-pill">Shipping Guide</a>
+                    </div>
+                <% } %>
+            </aside>
+        </div>
+
+        <section class="process-steps" aria-label="How crypto settlement works">
+            <h2>On-Chain Acquisition Workflow</h2>
+            <div class="steps-grid">
+                <div class="step-item">
+                    <span class="step-num">01 · SELECT WORKS</span>
+                    <h3>Add to Bag &amp; Review Delivery</h3>
+                    <p>Add artworks or vintage design objects to your bag. Orders $1,500+ unlock complimentary worldwide insured courier or white-glove freight delivery.</p>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">02 · SETTLE ON-CHAIN</span>
+                    <h3>Transfer Exact Crypto Quote</h3>
+                    <p>Enter your insured delivery address at checkout, choose BTC, ETH, or SOL, and scan the QR code or copy the studio deposit address.</p>
+                </div>
+                <div class="step-item">
+                    <span class="step-num">03 · CRATING &amp; DISPATCH</span>
+                    <h3>Confirmation Slip &amp; COA</h3>
+                    <p>Once payment is confirmed, our team prepares archival museum crating, signed Certificate of Authenticity documentation, and insured courier tracking.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <span>© 2026 ART STUDIO. All rights reserved.</span>
+            <nav class="footer-links" aria-label="Footer policies">
+                <a href="/artists">Meet the Artists</a>
+                <a href="/shipping">Shipping &amp; Delivery</a>
+                <a href="/authenticity">Authenticity</a>
+                <a href="/crypto-checkout">Crypto Checkout</a>
+                <a href="/terms">Terms</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/contact">Contact &amp; Support</a>
+            </nav>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('[data-copy-id]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const target = document.getElementById(btn.dataset.copyId);
+                const text = target ? target.textContent.trim() : '';
+                if (!text) return;
+                try {
+                    await navigator.clipboard.writeText(text);
+                    const prev = btn.textContent;
+                    btn.textContent = 'Copied';
+                    setTimeout(() => { btn.textContent = prev; }, 1600);
+                } catch {
+                    // Clipboard permission fallback
+                }
+            });
+        });
+    </script>
+    <script src="/static/js/cart-sync.js"></script>
+</body>
+</html>

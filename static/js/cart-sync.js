@@ -72,13 +72,50 @@
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!data) return;
-        if (data.cid && data.cid !== cid) {
-          applyCidToDom(data.cid);
+        const resolvedCid = data.cid || cid;
+        if (resolvedCid && resolvedCid !== cid) {
+          applyCidToDom(resolvedCid);
         }
         if (typeof data.cart_count === "number") {
           document.querySelectorAll(".cart-count").forEach((badge) => {
             badge.textContent = String(data.cart_count);
           });
+        }
+        const path = window.location.pathname;
+        const urlParams = new URLSearchParams(window.location.search);
+        const serverRenderedCid = document.body?.dataset?.cid || "";
+        const retryKey = `art_studio_rehydrated_${path}`;
+        let alreadyRetried = false;
+        try {
+          alreadyRetried = window.sessionStorage.getItem(retryKey) === "1";
+        } catch {
+          // Ignore storage restrictions
+        }
+
+        if (
+          (path === "/cart" || path === "/checkout" || path === "/crypto-checkout") &&
+          !urlParams.get("cid") &&
+          !serverRenderedCid &&
+          !alreadyRetried &&
+          resolvedCid &&
+          typeof data.cart_count === "number" &&
+          data.cart_count > 0
+        ) {
+          try {
+            window.sessionStorage.setItem(retryKey, "1");
+          } catch {
+            // Ignore storage restrictions
+          }
+          urlParams.set("cid", resolvedCid);
+          window.location.replace(
+            `${path}?${urlParams.toString()}${window.location.hash}`
+          );
+        } else if (urlParams.get("cid") || serverRenderedCid) {
+          try {
+            window.sessionStorage.removeItem(retryKey);
+          } catch {
+            // Ignore storage restrictions
+          }
         }
       })
       .catch(() => {});
@@ -94,7 +131,8 @@
   }
   syncCartCount(activeCid);
 
-  window.addEventListener("pageshow", () => {
+  window.addEventListener("pageshow", (event) => {
+    if (!event.persisted) return;
     const latestCid =
       new URLSearchParams(window.location.search).get("cid") ||
       document.body?.dataset?.cid ||

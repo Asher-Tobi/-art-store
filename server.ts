@@ -48,6 +48,10 @@ interface Order {
   subtotal: number;
   discount: number;
   shipping: number;
+  shipping_method?: string;
+  shipping_tier?: string;
+  is_international?: boolean;
+  has_furniture?: boolean;
   total: number;
   items: CartItem[];
 }
@@ -859,6 +863,279 @@ function getProductById(productId: string | number): Product | undefined {
   return productLookup.get(String(productId));
 }
 
+interface ProductProvenance {
+  datePeriod: string;
+  originAttribution: string;
+  materialsMedium: string;
+  markingsEdition: string;
+  conditionNote: string;
+  provenanceRecord: string;
+}
+
+const curatedProvenanceById: Record<number, ProductProvenance> = {
+  4: {
+    datePeriod: "Contemporary Original",
+    originAttribution: "Studio of Paul Chang",
+    materialsMedium: "Layered oil and mixed pigment on stretched canvas",
+    markingsEdition: "Unique Original (1 of 1)",
+    conditionNote: "Excellent studio condition; surface inspected prior to crating.",
+    provenanceRecord: "Acquired directly from the artist's studio · Accompanied by signed ART STUDIO Certificate of Authenticity.",
+  },
+  5: {
+    datePeriod: "Contemporary Edition",
+    originAttribution: "Igor Vitomirov · Europe",
+    materialsMedium: "Archival pigment fine art photograph on museum paper",
+    markingsEdition: "Numbered Studio Edition",
+    conditionNote: "Pristine archival condition.",
+    provenanceRecord: "Direct studio edition · Accompanied by ART STUDIO Certificate of Authenticity.",
+  },
+  7: {
+    datePeriod: "Contemporary Edition",
+    originAttribution: "Emily Kent · North America",
+    materialsMedium: "Archival fine art landscape photograph",
+    markingsEdition: "Studio Archive Print",
+    conditionNote: "Pristine archival condition.",
+    provenanceRecord: "Direct studio provenance · Accompanied by ART STUDIO Certificate of Authenticity.",
+  },
+  8: {
+    datePeriod: "Contemporary Original",
+    originAttribution: "Studio of Suren Ter-Avakian",
+    materialsMedium: "Oil and mineral pigment glazes on stretched canvas",
+    markingsEdition: "Unique Original (1 of 1)",
+    conditionNote: "Excellent studio condition; rich textured impasto intact.",
+    provenanceRecord: "Direct studio acquisition · Accompanied by signed ART STUDIO Certificate of Authenticity.",
+  },
+  9: {
+    datePeriod: "Contemporary Original",
+    originAttribution: "Studio of Juan Alvarez",
+    materialsMedium: "Oil on stretched canvas",
+    markingsEdition: "Unique Original (1 of 1)",
+    conditionNote: "Excellent studio condition.",
+    provenanceRecord: "Direct studio acquisition · Accompanied by signed ART STUDIO Certificate of Authenticity.",
+  },
+  10: {
+    datePeriod: "Contemporary Edition",
+    originAttribution: "Atelier Luc Moreau · France",
+    materialsMedium: "Dark patinated cast bronze on architectural plinth",
+    markingsEdition: "Foundry Cast · Signed Atelier Edition",
+    conditionNote: "Fine even patina across all four silhouettes.",
+    provenanceRecord: "Acquired via atelier partnership · Accompanied by ART STUDIO Certificate of Authenticity.",
+  },
+  11: {
+    datePeriod: "Contemporary Original",
+    originAttribution: "Gregory Christeas · United States (Parallels Series)",
+    materialsMedium: "Metallic and fluorescent acrylics on heavy stretched canvas",
+    markingsEdition: "Unique Original · Parallels Series (1 of 1)",
+    conditionNote: "Excellent unblemished canvas tension and metallic luster.",
+    provenanceRecord: "Direct from the artist's Parallels Series studio archive · Includes signed Certificate of Authenticity.",
+  },
+  12: {
+    datePeriod: "Contemporary Craft Edition",
+    originAttribution: "Cozy Art Land Atelier",
+    materialsMedium: "Frosted blue-rimmed blown glass, turned natural wood base, warm LED",
+    markingsEdition: "Atelier Sculptural Lighting Edition",
+    conditionNote: "New atelier condition; electrical hardware tested.",
+    provenanceRecord: "Direct atelier sourcing · Accompanied by ART STUDIO Certificate of Authenticity.",
+  },
+  13: {
+    datePeriod: "c. 1958 (Designed 1950)",
+    originAttribution: "Hans J. Wegner (1914–2007) · Early Danish Production (Model GE225)",
+    materialsMedium: "250m woven flag halyard cord, dark green lacquered & chromed steel frame, original wooden feet, leather headrest, sheepskin throw",
+    markingsEdition: "Early 1958 Model GE225 Archival Example",
+    conditionNote: "Well-preserved vintage patina on steel lacquer and wooden feet; halyard weave tension inspected and structurally sound.",
+    provenanceRecord: "Sourced via vetted European modernist design archive · Full structural & period joinery inspection · Includes ART STUDIO Provenance Dossier & COA.",
+  },
+  14: {
+    datePeriod: "2025",
+    originAttribution: "Mary Ogochukwu · Nigeria",
+    materialsMedium: "Acrylic on stretched canvas",
+    markingsEdition: "Unique Original (1 of 1) · Dated 2025",
+    conditionNote: "Excellent studio condition.",
+    provenanceRecord: "Direct studio provenance · Accompanied by signed Certificate of Authenticity.",
+  },
+  15: {
+    datePeriod: "1887 (Victorian Sporting Era)",
+    originAttribution: "Albert Clark (1843–1928) · London, England",
+    materialsMedium: "Oil on canvas in period ornate antique giltwood frame",
+    markingsEdition: "Signed and dated '1887' by the artist",
+    conditionNote: "Clean surface tension and historic craquelure appropriate to 1887 oil on canvas; antique gilt frame carefully conserved.",
+    provenanceRecord: "Acquired from an established British historical sporting art specialist · Documented period attribution · Includes ART STUDIO COA.",
+  },
+  16: {
+    datePeriod: "20th Century Grand Tour Tradition",
+    originAttribution: "Italian School · Tuscany / Rome Workshop",
+    materialsMedium: "Hand-carved veined white marble on custom black steel display stand",
+    markingsEdition: "Unique Hand-Carved Stone Fragment",
+    conditionNote: "Authentic weathered surface patina and natural stone veining intact; securely pinned to steel plinth.",
+    provenanceRecord: "Vetted European antiquities & sculptural object dealer provenance · Accompanied by ART STUDIO Certificate of Authenticity.",
+  },
+  17: {
+    datePeriod: "Contemporary Edition",
+    originAttribution: "Nando Kallweit · Germany",
+    materialsMedium: "Lost-wax cast patinated bronze from original carved oak body",
+    markingsEdition: "Strictly Limited Edition of 25 · Numbered & Signed",
+    conditionNote: "Mint foundry condition retaining tactile carved timber grain.",
+    provenanceRecord: "Direct German studio & foundry provenance · Accompanied by numbered Certificate of Authenticity.",
+  },
+  18: {
+    datePeriod: "19th Century (After Sassoferrato)",
+    originAttribution: "Italian Old Master School · Rome / Central Italy",
+    materialsMedium: "Oil on hand-woven linen canvas on original period stretcher",
+    markingsEdition: "Unique 19th-Century Academic Oil Painting",
+    conditionNote: "Even age craquelure and deep ultramarine pigment preservation consistent with 19th-century European linen works.",
+    provenanceRecord: "Sourced from vetted European Old Master specialist dealer · Period canvas & stretcher verified · Includes ART STUDIO COA.",
+  },
+  19: {
+    datePeriod: "2026",
+    originAttribution: "Beth Barry · United States",
+    materialsMedium: "Acrylic on stretched canvas",
+    markingsEdition: "Unique Original (1 of 1) · 2026",
+    conditionNote: "Mint contemporary condition.",
+    provenanceRecord: "Acquired with Gallery Sitka provenance · Accompanied by ART STUDIO Certificate of Authenticity.",
+  },
+  20: {
+    datePeriod: "2026",
+    originAttribution: "Alex Garant · Canada",
+    materialsMedium: "Oil on canvas in bespoke diamond hardwood floater frame",
+    markingsEdition: "Unique Original · Signed 2026",
+    conditionNote: "Mint exhibition condition.",
+    provenanceRecord: "Created for 'Imaginary Menagerie' at Arch Enemy Arts · Full exhibition provenance & signed COA.",
+  },
+  21: {
+    datePeriod: "2026",
+    originAttribution: "Shiri Phillips · Contemporary Studio",
+    materialsMedium: "Sculptural impasto acrylic on canvas in custom painted mauve frame",
+    markingsEdition: "Unique Original · Signed on Frame Edge",
+    conditionNote: "Mint exhibition condition; high-relief impasto peaks intact.",
+    provenanceRecord: "Acquired with PxP Contemporary provenance · Accompanied by Certificate of Authenticity.",
+  },
+  22: {
+    datePeriod: "2026",
+    originAttribution: "Will Klemm · Austin, Texas, USA",
+    materialsMedium: "Oil on canvas, custom framed (16 × 16 × 2 in overall)",
+    markingsEdition: "Unique Original · Signed Lower Left",
+    conditionNote: "Mint gallery condition.",
+    provenanceRecord: "Acquired with Wally Workman Gallery provenance · Accompanied by Certificate of Authenticity.",
+  },
+  23: {
+    datePeriod: "Contemporary Atelier",
+    originAttribution: "Cobalt Guild · Jingdezhen, China",
+    materialsMedium: "High-fired porcelain with hand-painted underglaze cobalt oxide",
+    markingsEdition: "Four-Tier Interlocking Studio Porcelain",
+    conditionNote: "Clean glaze and intact tubular floral spouts with zero hairlines.",
+    provenanceRecord: "Direct Jingdezhen atelier provenance · Accompanied by ART STUDIO Certificate of Authenticity.",
+  },
+  24: {
+    datePeriod: "Contemporary Collectible Design",
+    originAttribution: "Studio Bernhardt & Vella · Milan, Italy",
+    materialsMedium: "Curved bentwood shell, glossy bronze lacquer swivel plinth, velvet-touch camel upholstery",
+    markingsEdition: "Authenticated Milanese Designer Seating",
+    conditionNote: "Pristine upholstery and smooth balanced swivel mechanism.",
+    provenanceRecord: "Sourced via authorized Italian luxury furniture partner · Accompanied by ART STUDIO Authenticity & Design Dossier.",
+  },
+  25: {
+    datePeriod: "c. 1880 (High Victorian Era)",
+    originAttribution: "English Victorian School · England",
+    materialsMedium: "Solid hand-carved mahogany frame, olive button-tufted leather, brass nailheads, period brass casters",
+    markingsEdition: "Unique 19th-Century Piece · Signed Period Brass Casters",
+    conditionNote: "Honest aged patina to original olive leather and rich mahogany surface; turned legs, scrolled arms, and casters structurally sound.",
+    provenanceRecord: "Acquired from a vetted British antique furniture dealer · Period timber, leather & caster hallmarks inspected · Includes ART STUDIO Provenance COA.",
+  },
+  26: {
+    datePeriod: "Contemporary Limited Edition",
+    originAttribution: "MW Exclusive x Street Artist NEP · Handcrafted in France",
+    materialsMedium: "Suspended tempered art glass side panels, HR40 architectural green upholstery, brushed stainless steel joinery",
+    markingsEdition: "Signed & Numbered Limited Edition 'Interface(s)'",
+    conditionNote: "Gallery mint condition; glass panels and steel hardware inspected.",
+    provenanceRecord: "Direct French design house provenance · Accompanied by signed edition Certificate of Authenticity.",
+  },
+  27: {
+    datePeriod: "c. 1930 (Interwar Art Deco)",
+    originAttribution: "Style of Francis Jourdain · Northern Italy / France",
+    materialsMedium: "Shellac-polished teak framing, geometric woven cane backrests, ebonized feet",
+    markingsEdition: "Matched Period Pair (Set of 2)",
+    conditionNote: "Professionally stabilized vintage joinery with authentic 1930s shellac patina and taut woven cane panels.",
+    provenanceRecord: "Sourced via vetted European Art Deco furniture specialist · Timber and joinery restoration log documented · Includes ART STUDIO COA.",
+  },
+  28: {
+    datePeriod: "c. 1900 (Early 20th Century)",
+    originAttribution: "French Atelier · France",
+    materialsMedium: "Carved ebonised hardwood frames, woven floral tapestry upholstery, decorative braid trim",
+    markingsEdition: "Matched Period Pair (Set of 2)",
+    conditionNote: "Sound tapered frame construction with well-preserved ebonised finish and intact tapestry seating.",
+    provenanceRecord: "Vetted French antiques trade provenance · Frame & upholstery condition verified · Includes ART STUDIO Provenance COA.",
+  },
+  29: {
+    datePeriod: "c. 1652–1677 (17th Century)",
+    originAttribution: "Wenceslaus Hollar (1607–1677) · Prague / Antwerp / London",
+    materialsMedium: "Original copperplate etching on laid paper",
+    markingsEdition: "Signed in the plate lower left · Cat. Refs: New Hollstein 2491, Pennington 779, Parthey 1295",
+    conditionNote: "Crisp 17th-century plate impression on laid paper with strong architectural and riverine line clarity.",
+    provenanceRecord: "Vetted Old Master prints dealer provenance · Catalogued against New Hollstein, Pennington & Parthey · Includes ART STUDIO Provenance COA.",
+  },
+  30: {
+    datePeriod: "2006 (Printed from Expired Polaroid Film)",
+    originAttribution: "Stefanie Schneider (b. 1968) · Germany / California",
+    materialsMedium: "Archival C-print from Polaroid negative (Inventory #2192)",
+    markingsEdition: "Limited Edition of 5 + 2 AP · Signed Certificate & Label",
+    conditionNote: "Unmounted archival C-print stored flat in acid-free portfolio.",
+    provenanceRecord: "Direct artist/gallery archive provenance · Accompanied by signed edition label & Certificate of Authenticity.",
+  },
+  31: {
+    datePeriod: "2003 (Burlesque Series, Whoopee Club, London)",
+    originAttribution: "Richard Heeps · Cambridge, England",
+    materialsMedium: "Hand-printed gloss wet-darkroom color photograph from original medium-format negative",
+    markingsEdition: "Limited Edition of 25 · Signed & Numbered COA",
+    conditionNote: "Mint darkroom archival print.",
+    provenanceRecord: "Cambridge darkroom studio provenance · Complete with signed & numbered Certificate of Authenticity.",
+  },
+  32: {
+    datePeriod: "2018 (Wild Life Series)",
+    originAttribution: "Shane Russeck (b. 1977) · Los Angeles, USA",
+    materialsMedium: "Large-scale monochrome archival pigment photograph (40 × 60 in)",
+    markingsEdition: "Open Studio Archival Edition (Unsigned)",
+    conditionNote: "Pristine unframed exhibition print condition.",
+    provenanceRecord: "Direct studio archive print · Accompanied by ART STUDIO Certificate of Authenticity.",
+  },
+  33: {
+    datePeriod: "c. 1920s (French Art Deco)",
+    originAttribution: "Alexandre Kéléty (1874–1940) · Budapest / Paris",
+    materialsMedium: "Dark patinated cast bronze mounted on veined marble plinth",
+    markingsEdition: "Signed 'A. Kéléty' on the bronze base",
+    conditionNote: "Original interwar bronze patina intact; marble plinth cleanly preserved with natural mineral veining.",
+    provenanceRecord: "Acquired from vetted European Art Deco sculpture specialist · Foundry signature verified · Includes ART STUDIO Provenance COA.",
+  },
+  34: {
+    datePeriod: "c. 1580–1620 (Spanish Golden Age / Siglo de Oro)",
+    originAttribution: "Spanish Renaissance Guild Workshop · Castile / Andalusia",
+    materialsMedium: "Hand-carved deep-relief hardwood with original polychrome pigments and aged water-gilding on custom black plinth",
+    markingsEdition: "Unique 16th/17th-Century Architectural Woodcarving",
+    conditionNote: "Remarkable retention of original Renaissance bole, water-gilding, and polychrome surface; stable historic timber mounted on bespoke stand.",
+    provenanceRecord: "Vetted European Renaissance sculpture specialist provenance · Conservation mount & material age verified · Includes ART STUDIO COA.",
+  },
+  35: {
+    datePeriod: "c. 1880 (19th-Century Jacobean Revival)",
+    originAttribution: "English Victorian School · England",
+    materialsMedium: "Carved solid walnut casework, barley twist stand, sculpted caryatid pilasters, mother-of-pearl floral inlay",
+    markingsEdition: "Unique 19th-Century Collector's Cabinet",
+    conditionNote: "Rich walnut color and historic hand-carved relief detail intact; paneled doors, brass hardware, and barley twist stretchers structurally inspected.",
+    provenanceRecord: "Vetted British antique cabinetmaking specialist provenance · Period walnut & mother-of-pearl inlay verified · Includes ART STUDIO Provenance COA.",
+  },
+};
+
+function getProductProvenance(product: Product): ProductProvenance {
+  return (
+    curatedProvenanceById[product.id] ?? {
+      datePeriod: "Curated Studio Work",
+      originAttribution: product.artist,
+      materialsMedium: product.category,
+      markingsEdition: "Authenticated Archive Piece",
+      conditionNote: "Inspected prior to museum-grade crating.",
+      provenanceRecord: "Accompanied by signed ART STUDIO Certificate of Authenticity.",
+    }
+  );
+}
+
 interface StoredCartEntry {
   items: Record<string, number>;
   updatedAt: number;
@@ -1320,17 +1597,143 @@ function getCartItems(req: Request): CartItem[] {
   return items;
 }
 
+const FREE_SHIPPING_THRESHOLD = 1500;
+const STANDARD_COURIER_FEE = 65;
+
+interface ShippingDetails {
+  subtotal: number;
+  discount: number;
+  discountedSubtotal: number;
+  shipping: number;
+  total: number;
+  freeShippingThreshold: number;
+  amountForFreeShipping: number;
+  qualifiesForFreeShipping: boolean;
+  hasFurniture: boolean;
+  hasSculpture: boolean;
+  isInternational: boolean;
+  country: string;
+  methodTitle: string;
+  methodDescription: string;
+  cratingWindow: string;
+  transitWindow: string;
+  tierLabel: string;
+}
+
+function isDomesticCountry(country?: string): boolean {
+  const normalized = String(country ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[.,]/g, "");
+  if (!normalized) return true;
+  return (
+    normalized === "united states" ||
+    normalized === "united states of america" ||
+    normalized === "usa" ||
+    normalized === "us"
+  );
+}
+
+function calculateShippingDetails(
+  cartItems: CartItem[],
+  options?: { country?: string; discount?: number }
+): ShippingDetails {
+  const subtotal = Number(
+    cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)
+  );
+  const discount = Math.max(0, Number((options?.discount ?? 0).toFixed(2)));
+  const discountedSubtotal = Number(Math.max(0, subtotal - discount).toFixed(2));
+  const country = String(options?.country ?? "").trim();
+  const isInternational = Boolean(country) && !isDomesticCountry(country);
+  const hasFurniture = cartItems.some(
+    (item) => item.category.toLowerCase() === "furniture"
+  );
+  const hasSculpture = cartItems.some(
+    (item) => item.category.toLowerCase() === "sculpture"
+  );
+  const qualifiesForFreeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
+  const shipping =
+    subtotal <= 0 ? 0.0 : qualifiesForFreeShipping ? 0.0 : STANDARD_COURIER_FEE;
+  const total = Number((discountedSubtotal + shipping).toFixed(2));
+  const amountForFreeShipping =
+    qualifiesForFreeShipping || subtotal <= 0
+      ? 0
+      : Number((FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2));
+
+  let methodTitle = "Insured Fine Art Courier Delivery";
+  let methodDescription =
+    "Custom-crated artwork handling via dedicated art courier. 100% declared-value transit insurance with signature verification upon arrival.";
+  let cratingWindow = "2–4 business days archival crating";
+  let transitWindow = "4–8 business days courier transit";
+
+  if (hasFurniture && isInternational) {
+    methodTitle = "International White-Glove Furniture Freight (Insured)";
+    methodDescription =
+      "ISPM-15 heat-treated custom timber crating and blanket-wrapped white-glove freight via international fine art carrier. Includes 100% declared-value insurance, export customs brokerage documentation, and scheduled room-of-choice placement.";
+    cratingWindow = "3–5 business days ISPM-15 timber crating";
+    transitWindow = "10–18 business days international freight";
+  } else if (hasFurniture) {
+    methodTitle = "White-Glove Furniture Delivery (Insured)";
+    methodDescription =
+      "Blanket-wrapped, custom-crated white-glove carrier delivery inside room of choice. 100% declared-value transit insurance with signature verification included.";
+    cratingWindow = "3–5 business days custom crating";
+    transitWindow = "5–10 business days domestic freight";
+  } else if (isInternational && hasSculpture) {
+    methodTitle = "International Insured Sculpture Courier";
+    methodDescription =
+      "Custom foam-cavity timber crating via international specialist fine art air courier. Includes 100% declared-value transit insurance, airway bill tracking, and export customs clearance paperwork.";
+    cratingWindow = "3–5 business days custom crating";
+    transitWindow = "7–14 business days international air transit";
+  } else if (isInternational) {
+    methodTitle = "International Paintings & Prints Air Courier (Insured)";
+    methodDescription =
+      "Archival acid-free glassine wrapping inside rigid museum flat-pack or telescoping fine art cases via priority air shuttle. Includes 100% declared-value transit insurance, airway bill tracking, and export customs paperwork.";
+    cratingWindow = "2–4 business days museum flat-packing";
+    transitWindow = "5–10 business days priority international air";
+  } else if (hasSculpture) {
+    methodTitle = "Insured Fine Art & Sculpture Courier";
+    methodDescription =
+      "Custom foam-cavity crated handling via dedicated art courier. 100% declared-value transit insurance with scheduled signature verification upon arrival.";
+    cratingWindow = "3–5 business days archival crating";
+    transitWindow = "4–9 business days courier transit";
+  }
+
+  const tierLabel = qualifiesForFreeShipping
+    ? "Complimentary ($1,500+)"
+    : "Standard Insured ($65.00)";
+
+  return {
+    subtotal,
+    discount,
+    discountedSubtotal,
+    shipping,
+    total,
+    freeShippingThreshold: FREE_SHIPPING_THRESHOLD,
+    amountForFreeShipping,
+    qualifiesForFreeShipping,
+    hasFurniture,
+    hasSculpture,
+    isInternational,
+    country,
+    methodTitle,
+    methodDescription,
+    cratingWindow,
+    transitWindow,
+    tierLabel,
+  };
+}
+
 function calculateTotals(cartItems: CartItem[]): {
   subtotal: number;
   shipping: number;
   total: number;
 } {
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const shipping = subtotal >= 1500 ? 0.0 : subtotal > 0 ? 65.0 : 0.0;
-  return { subtotal, shipping, total: subtotal + shipping };
+  const details = calculateShippingDetails(cartItems);
+  return {
+    subtotal: details.subtotal,
+    shipping: details.shipping,
+    total: details.total,
+  };
 }
 
 function formatCurrency(value: number): string {
@@ -1504,15 +1907,17 @@ app.get(["/", "/shop"], (req: Request, res: Response) => {
 app.get("/api/cart", (req: Request, res: Response) => {
   const cid = getRequestCartId(req) ?? "";
   const cartItems = getCartItems(req);
-  const { subtotal, shipping, total } = calculateTotals(cartItems);
+  const country = String(req.query.country ?? "").trim();
+  const details = calculateShippingDetails(cartItems, { country });
   res.setHeader("Cache-Control", "no-store");
   res.json({
     cid,
     cart_count: getCartCount(req),
     items: cartItems,
-    subtotal,
-    shipping,
-    total,
+    subtotal: details.subtotal,
+    shipping: details.shipping,
+    total: details.total,
+    shipping_details: details,
   });
 });
 
@@ -1529,8 +1934,23 @@ app.get("/product/:product_id", (req: Request, res: Response) => {
   }
   res.render("product", {
     product,
+    provenance: getProductProvenance(product),
     activeNav: product.category,
     messages: consumeFlashes(req),
+  });
+});
+
+app.get("/crypto-checkout", async (req: Request, res: Response) => {
+  const cartItems = getCartItems(req);
+  const shippingDetails = calculateShippingDetails(cartItems);
+  const prices = await getCryptoPrices();
+  const cryptoOptions = await buildCryptoOptions(shippingDetails.total, prices);
+  res.render("crypto_checkout", {
+    cart_items: cartItems,
+    shipping_details: shippingDetails,
+    crypto_options: cryptoOptions,
+    prices,
+    activeNav: "",
   });
 });
 
@@ -1561,12 +1981,13 @@ app.get("/search", (req: Request, res: Response) => {
 
 app.get("/cart", (req: Request, res: Response) => {
   const cartItems = getCartItems(req);
-  const { subtotal, shipping, total } = calculateTotals(cartItems);
+  const shippingDetails = calculateShippingDetails(cartItems);
   res.render("cart", {
     cart_items: cartItems,
-    subtotal,
-    shipping,
-    total,
+    subtotal: shippingDetails.subtotal,
+    shipping: shippingDetails.shipping,
+    total: shippingDetails.total,
+    shipping_details: shippingDetails,
     messages: consumeFlashes(req),
   });
 });
@@ -1636,17 +2057,26 @@ app.get("/checkout", async (req: Request, res: Response) => {
   if (!req.session.btcCheckoutStartedAt) {
     req.session.btcCheckoutStartedAt = Date.now();
   }
-  const { subtotal, shipping, total } = calculateTotals(cartItems);
+  const shippingDetails = calculateShippingDetails(cartItems);
   const prices = await getCryptoPrices();
-  const cryptoOptions = await buildCryptoOptions(total, prices);
+  const cryptoOptions = await buildCryptoOptions(shippingDetails.total, prices);
+  const requestedMethod = String(req.query.method ?? "").trim().toLowerCase();
+  const initialMethod: CryptoMethodKey | "" =
+    requestedMethod === "bitcoin" ||
+    requestedMethod === "ethereum" ||
+    requestedMethod === "solana"
+      ? requestedMethod
+      : "";
+
   res.render("checkout", {
     cart_items: cartItems,
-    subtotal,
+    subtotal: shippingDetails.subtotal,
     discount: 0,
     promo_code: "",
-    shipping,
-    total,
-    selected_method: "",
+    shipping: shippingDetails.shipping,
+    total: shippingDetails.total,
+    shipping_details: shippingDetails,
+    selected_method: initialMethod,
     crypto_options: cryptoOptions,
     form_values: {
       name: "",
@@ -1672,13 +2102,14 @@ app.post("/checkout", async (req: Request, res: Response) => {
     return;
   }
 
+  const country = String(req.body.country ?? "").trim();
   const baseTotals = calculateTotals(cartItems);
   const rawPromo = String(req.body.promo_code ?? "").trim().toUpperCase();
   const promoApplied = rawPromo === "ART10" || rawPromo === "COLLECTOR10";
   const discount = promoApplied ? Number((baseTotals.subtotal * 0.1).toFixed(2)) : 0;
-  const discountedSubtotal = Math.max(0, baseTotals.subtotal - discount);
-  const shipping = discountedSubtotal >= 1500 ? 0.0 : discountedSubtotal > 0 ? 65.0 : 0.0;
-  const total = Number((discountedSubtotal + shipping).toFixed(2));
+  const shippingDetails = calculateShippingDetails(cartItems, { country, discount });
+  const shipping = shippingDetails.shipping;
+  const total = shippingDetails.total;
 
   const prices = await getCryptoPrices();
   const cryptoOptions = await buildCryptoOptions(total, prices);
@@ -1686,7 +2117,6 @@ app.post("/checkout", async (req: Request, res: Response) => {
   const name = String(req.body.name ?? "").trim();
   const email = String(req.body.email ?? "").trim();
   const phone = String(req.body.phone ?? "").trim();
-  const country = String(req.body.country ?? "").trim();
   const address = String(req.body.address ?? "").trim();
   const apartment = String(req.body.apartment ?? "").trim();
   const city = String(req.body.city ?? "").trim();
@@ -1788,6 +2218,7 @@ app.post("/checkout", async (req: Request, res: Response) => {
           promo_code: promoApplied ? rawPromo : "",
           shipping,
           total,
+          shipping_details: shippingDetails,
           selected_method: "bitcoin",
           crypto_options: cryptoOptions,
           form_values: formValues,
@@ -1820,6 +2251,10 @@ app.post("/checkout", async (req: Request, res: Response) => {
       subtotal: baseTotals.subtotal,
       discount,
       shipping,
+      shipping_method: shippingDetails.methodTitle,
+      shipping_tier: shippingDetails.tierLabel,
+      is_international: shippingDetails.isInternational,
+      has_furniture: shippingDetails.hasFurniture,
       total,
       items: cartItems,
     };
@@ -1853,6 +2288,7 @@ app.post("/checkout", async (req: Request, res: Response) => {
     promo_code: promoApplied ? rawPromo : "",
     shipping,
     total,
+    shipping_details: shippingDetails,
     selected_method: isSupportedMethod || rawMethod === "card" || rawMethod === "paypal" ? rawMethod : "",
     crypto_options: cryptoOptions,
     form_values: formValues,
@@ -1997,36 +2433,42 @@ interface SupportInquiry {
 
 const inquiryStore = new Map<string, SupportInquiry>();
 
+const newsletterSubscribers = new Map<
+  string,
+  { email: string; subscribedAt: string }
+>();
+
 const trustPages: Record<string, TrustPageConfig> = {
   shipping: {
     slug: "shipping",
-    kicker: "Fine Art Logistics",
+    kicker: "Fine Art & Furniture Logistics",
     title: "Shipping & Delivery",
     description:
-      "Insured fine art courier delivery, museum-grade crating, and worldwide shipping timelines at ART STUDIO.",
-    lead: "Every original painting, photograph, sculpture, and collectible design work is custom-packed by art handlers and shipped worldwide with full declared-value transit insurance.",
+      "Insured fine art courier delivery, white-glove furniture crating, and complimentary worldwide shipping on orders $1,500+ at ART STUDIO.",
+    lead: "Every original painting, photograph, print, sculpture, and collectible furniture piece ships worldwide via insured specialist art carriers—with complimentary insured courier delivery on all orders of $1,500 USD or more, including furniture and international destinations.",
     highlights: [
-      { label: "Orders $1,500+", value: "Complimentary Courier" },
-      { label: "Transit Coverage", value: "100% Declared Value" },
-      { label: "Tracking & Care", value: "Signature Required" },
+      { label: "Orders $1,500+", value: "Complimentary Worldwide" },
+      { label: "Paintings & Prints", value: "Museum Flat-Pack Air" },
+      { label: "Large Furniture", value: "ISPM-15 White-Glove" },
     ],
     sections: [
       {
-        heading: "Museum-Grade Crating & Packaging",
+        heading: "Paintings, Prints & Works on Paper vs. Large Furniture",
         paragraphs: [
-          "All framed works, stretched canvases, stone sculptures, and design objects are prepared in-house or at the originating studio prior to carrier handover.",
+          "International transit arrangements are tailored strictly to the physical medium, dimensions, and fragility of each acquisition rather than routed through standard parcel post.",
         ],
         bullets: [
-          "Paintings and framed works are wrapped in acid-free glassine paper, rigid corner protectors, high-density foam cushioning, and double-walled export cartons or custom timber crates.",
-          "Marble, bronze, and glass sculptures ship in custom-molded cavity inserts suspended inside reinforced wood crating.",
-          "Your signed Certificate of Authenticity travels inside a sealed archival sleeve accompanying the shipment.",
+          "Paintings, Prints & Framed Photographs (Domestic & International): Wrapped in acid-free glassine paper with rigid corner guards, archival foam boarding, and museum flat-pack cases or telescoping fine art crates dispatched via priority air shuttle (4–8 business days domestic; 5–10 business days international air).",
+          "Sculptures & Historical Wood/Marble Objects: Stabilized inside custom-cut high-density foam cavities within reinforced wood crates (4–9 business days domestic; 7–14 business days international air courier).",
+          "Large Vintage & Collectible Furniture: Dispatched inside ISPM-15 heat-treated export timber crates with blanket-wrapped white-glove freight, export customs clearance brokerage, and scheduled two-person inside room-of-choice placement (5–10 business days domestic; 10–18 business days international freight).",
+          "Every signed Certificate of Authenticity travels inside a sealed archival sleeve accompanying the shipment.",
         ],
       },
       {
-        heading: "International Dispatch & Customs",
+        heading: "International Dispatch & Customs Clearance",
         paragraphs: [
-          "Orders are dispatched from our partner studios and gallery vaults across North America and Europe. Tracking credentials and courier airway bills are emailed immediately upon dispatch.",
-          "Import duties, VAT, or local clearance fees outside the originating region are assessed by destination customs authorities and remain the responsibility of the recipient unless specified otherwise.",
+          "We ship worldwide to North America, the UK, Europe, Asia-Pacific, the Middle East, Africa, and Latin America. Airway bills, export invoices, and courier tracking credentials are issued immediately upon dispatch, with complimentary insured courier delivery applying internationally on orders $1,500+.",
+          "Import duties, VAT, or local customs clearance fees assessed at the destination border remain the responsibility of the recipient unless separately arranged with our Logistics Desk prior to dispatch.",
         ],
       },
       {
@@ -2264,6 +2706,37 @@ app.post("/contact", (req: Request, res: Response) => {
     `Thank you, ${name}. Your inquiry (${refCode}) has been received by our Collector Concierge team, who will reply to ${email} within 1 business day.`
   );
   redirectWithSession(req, res, "/contact");
+});
+
+app.post("/api/newsletter", (req: Request, res: Response) => {
+  const email = String(req.body?.email ?? "").trim().toLowerCase();
+  const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+  if (!isValid || email.length > 160) {
+    res.status(400).json({
+      ok: false,
+      message: "Please enter a valid collector email address.",
+    });
+    return;
+  }
+
+  if (newsletterSubscribers.has(email)) {
+    res.json({
+      ok: true,
+      alreadySubscribed: true,
+      message: "This address is already registered on our private collector list.",
+    });
+    return;
+  }
+
+  newsletterSubscribers.set(email, {
+    email,
+    subscribedAt: new Date().toISOString(),
+  });
+  res.json({
+    ok: true,
+    alreadySubscribed: false,
+    message: "Thank you — you are on the private collector list.",
+  });
 });
 
 interface ArtistMilestone {
@@ -2911,6 +3384,24 @@ app.get("/artists/:slug", (req: Request, res: Response) => {
     nextArtist: nextProfile ? { slug: nextProfile.slug, name: nextProfile.name } : null,
     activeNav: "Artists",
   });
+});
+
+app.get("/healthz", (_req: Request, res: Response) => {
+  res.status(200).json({ ok: true });
+});
+
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("Express request error:", err);
+  if (res.headersSent) return;
+  res.status(500).send("Temporary studio server error. Please refresh the page.");
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
 });
 
 app.listen(PORT, "0.0.0.0", () => {

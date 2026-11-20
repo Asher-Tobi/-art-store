@@ -917,7 +917,7 @@
         }
     </style>
 </head>
-<body data-subtotal="<%= subtotal %>" data-cid="<%= cid %>">
+<body data-subtotal="<%= subtotal %>" data-cid="<%= cid %>" data-has-furniture="<%= (typeof shipping_details !== 'undefined' && shipping_details.hasFurniture) ? 'true' : 'false' %>" data-has-sculpture="<%= (typeof shipping_details !== 'undefined' && shipping_details.hasSculpture) ? 'true' : 'false' %>">
     <%- include('partials/site-header') %>
 
     <main class="wrap">
@@ -1041,11 +1041,14 @@
                         <div class="shipping-method-box">
                             <div>
                                 <div class="shipping-method-title">
-                                    <strong>Insured Fine Art Courier Delivery</strong>
-                                    <span class="pill-included">Included</span>
+                                    <strong id="shippingMethodTitle"><%= (typeof shipping_details !== 'undefined' && shipping_details.methodTitle) ? shipping_details.methodTitle : 'Insured Fine Art Courier Delivery' %></strong>
+                                    <span class="pill-included" id="shippingMethodBadge"><%= (typeof shipping_details !== 'undefined' && shipping_details.qualifiesForFreeShipping) ? 'Complimentary $1,500+' : 'Insured Courier' %></span>
                                 </div>
-                                <p class="shipping-method-desc">
-                                    Custom-crated artwork handling via dedicated art courier. Fully insured declared value with signature verification upon arrival.
+                                <p class="shipping-method-desc" id="shippingMethodDesc">
+                                    <%= (typeof shipping_details !== 'undefined' && shipping_details.methodDescription) ? shipping_details.methodDescription : 'Custom-crated artwork handling via dedicated art courier. Fully insured declared value with signature verification upon arrival.' %>
+                                    <span id="shippingMethodWindow" style="display: block; margin-top: 4px; color: #404040; font-weight: 500;">
+                                        <%= (typeof shipping_details !== 'undefined') ? `${shipping_details.cratingWindow} · ${shipping_details.transitWindow}` : '' %>
+                                    </span>
                                 </p>
                             </div>
                             <span class="shipping-price" id="shippingMethodPrice">
@@ -1271,7 +1274,7 @@
                             <span class="mono" id="discountAmount">-$<%= formatCurrency(discount) %></span>
                         </div>
                         <div class="totals-line free">
-                            <span>Insured Fine Art Delivery</span>
+                            <span id="summaryShippingLabel"><%= (typeof shipping_details !== 'undefined' && shipping_details.hasFurniture) ? 'White-Glove Furniture Freight' : 'Insured Fine Art Delivery' %></span>
                             <span class="free-val" id="summaryShipping">
                                 <% if (shipping === 0) { %>FREE<% } else { %>$<%= formatCurrency(shipping) %><% } %>
                             </span>
@@ -1329,11 +1332,77 @@
             });
         }
 
+        const hasFurniture = document.body.dataset.hasFurniture === 'true';
+        const hasSculpture = document.body.dataset.hasSculpture === 'true';
+        const countryInput = document.getElementById('country');
+        const shippingMethodTitleEl = document.getElementById('shippingMethodTitle');
+        const shippingMethodBadgeEl = document.getElementById('shippingMethodBadge');
+        const shippingMethodDescEl = document.getElementById('shippingMethodDesc');
+        const summaryShippingLabelEl = document.getElementById('summaryShippingLabel');
+
+        function isDomesticUsCountry(val) {
+            const norm = String(val || '').trim().toLowerCase().replace(/[.,]/g, '');
+            if (!norm) return true;
+            return norm === 'united states' || norm === 'united states of america' || norm === 'usa' || norm === 'us';
+        }
+
+        function updateShippingDisplay() {
+            const countryVal = countryInput ? countryInput.value : '';
+            const isInternational = Boolean(countryVal.trim()) && !isDomesticUsCountry(countryVal);
+            const qualifiesFree = baseSubtotal >= 1500;
+
+            let title = 'Insured Fine Art Courier Delivery';
+            let desc = 'Custom-crated artwork handling via dedicated art courier. 100% declared-value transit insurance with signature verification upon arrival.';
+            let timing = '2–4 business days archival crating · 4–8 business days courier transit';
+            let summaryLabel = 'Insured Fine Art Delivery';
+
+            if (hasFurniture && isInternational) {
+                title = 'International White-Glove Furniture Freight (Insured)';
+                desc = 'ISPM-15 heat-treated custom timber crating and blanket-wrapped white-glove freight via international fine art carrier. Includes 100% declared-value insurance, export customs brokerage documentation, and scheduled room-of-choice placement.';
+                timing = '3–5 business days ISPM-15 timber crating · 10–18 business days international freight';
+                summaryLabel = 'International Furniture Freight';
+            } else if (hasFurniture) {
+                title = 'White-Glove Furniture Delivery (Insured)';
+                desc = 'Blanket-wrapped, custom-crated white-glove carrier delivery inside room of choice. 100% declared-value transit insurance with signature verification included.';
+                timing = '3–5 business days custom crating · 5–10 business days domestic freight';
+                summaryLabel = 'White-Glove Furniture Freight';
+            } else if (isInternational && hasSculpture) {
+                title = 'International Insured Sculpture Courier';
+                desc = 'Custom foam-cavity timber crating via international specialist fine art air courier. Includes 100% declared-value transit insurance, airway bill tracking, and export customs clearance paperwork.';
+                timing = '3–5 business days custom crating · 7–14 business days international air transit';
+                summaryLabel = 'International Sculpture Courier';
+            } else if (isInternational) {
+                title = 'International Paintings & Prints Air Courier (Insured)';
+                desc = 'Archival acid-free glassine wrapping inside rigid museum flat-pack or telescoping fine art cases via priority air shuttle. Includes 100% declared-value transit insurance, airway bill tracking, and export customs paperwork.';
+                timing = '2–4 business days museum flat-packing · 5–10 business days priority international air';
+                summaryLabel = 'International Art Air Courier';
+            } else if (hasSculpture) {
+                title = 'Insured Fine Art & Sculpture Courier';
+                desc = 'Custom foam-cavity crated handling via dedicated art courier. 100% declared-value transit insurance with scheduled signature verification upon arrival.';
+                timing = '3–5 business days archival crating · 4–9 business days courier transit';
+            }
+
+            if (shippingMethodTitleEl) shippingMethodTitleEl.textContent = title;
+            if (shippingMethodBadgeEl) {
+                shippingMethodBadgeEl.textContent = qualifiesFree ? 'Complimentary $1,500+' : (isInternational ? 'International Courier' : 'Insured Courier');
+            }
+            if (shippingMethodDescEl) {
+                shippingMethodDescEl.innerHTML = desc + '<span id="shippingMethodWindow" style="display: block; margin-top: 4px; color: #404040; font-weight: 500;">' + timing + '</span>';
+            }
+            if (summaryShippingLabelEl) summaryShippingLabelEl.textContent = summaryLabel;
+        }
+
+        if (countryInput) {
+            countryInput.addEventListener('input', updateShippingDisplay);
+            countryInput.addEventListener('change', updateShippingDisplay);
+            if (countryInput.value.trim()) updateShippingDisplay();
+        }
+
         function computeTotals() {
             const validPromo = currentPromo === 'ART10' || currentPromo === 'COLLECTOR10';
             const discount = validPromo ? Number((baseSubtotal * 0.1).toFixed(2)) : 0;
             const discountedSub = Math.max(0, baseSubtotal - discount);
-            const shipping = discountedSub >= 1500 ? 0 : (discountedSub > 0 ? 65 : 0);
+            const shipping = baseSubtotal >= 1500 ? 0 : (baseSubtotal > 0 ? 65 : 0);
             const total = Number((discountedSub + shipping).toFixed(2));
             return { validPromo, discount, shipping, total };
         }

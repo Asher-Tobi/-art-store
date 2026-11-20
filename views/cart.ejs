@@ -438,7 +438,7 @@
                 <% } else { %>
                     <div class="empty">
                         <h2>Your bag is currently empty</h2>
-                        <p>Browse our complete archive of paintings, photography, and studio sculptures.</p>
+                        <p>Browse our complete archive of paintings, rare prints, photography, historical sculptures, and collectible furniture.</p>
                         <a href="/" class="empty-btn">Browse Archive</a>
                     </div>
                 <% } %>
@@ -451,7 +451,7 @@
                     <span class="mono">$<%= formatCurrency(subtotal) %></span>
                 </div>
                 <div class="totals-line">
-                    <span>Insured Fine Art Delivery</span>
+                    <span><%= (typeof shipping_details !== 'undefined' && shipping_details.hasFurniture) ? 'White-Glove Furniture Courier' : 'Insured Fine Art Delivery' %></span>
                     <span class="mono" style="<%= shipping === 0 && subtotal > 0 ? 'color: var(--green);' : '' %>">
                         <%= subtotal > 0 && shipping === 0 ? 'FREE' : '$' + formatCurrency(shipping) %>
                     </span>
@@ -461,6 +461,19 @@
                     <span class="mono">$<%= formatCurrency(total) %> USD</span>
                 </div>
 
+                <% if (subtotal > 0) { %>
+                <div style="margin-top: 16px; padding: 11px 13px; background: <%= subtotal >= 1500 ? '#ecfdf5' : '#fcfaf6' %>; border: 1px solid <%= subtotal >= 1500 ? '#a7f3d0' : '#e6dcc8' %>; font-size: 12px; line-height: 1.5; color: <%= subtotal >= 1500 ? '#065f46' : '#404040' %>;">
+                    <% if (subtotal >= 1500) { %>
+                        <strong>✓ Complimentary Insured Worldwide Delivery Unlocked</strong>
+                        <% if (typeof shipping_details !== 'undefined' && shipping_details.hasFurniture) { %>
+                            <span style="display: block; margin-top: 2px;">Includes white-glove crated furniture freight &amp; signature placement.</span>
+                        <% } %>
+                    <% } else { %>
+                        Add <strong>$<%= formatCurrency(1500 - subtotal) %></strong> more to unlock complimentary insured worldwide courier delivery (orders $1,500+).
+                    <% } %>
+                </div>
+                <% } %>
+
                 <% if (cart_items && cart_items.length) { %>
                     <a href="/checkout" class="checkout-btn">Proceed to Checkout</a>
                 <% } else { %>
@@ -468,7 +481,7 @@
                 <% } %>
 
                 <p class="checkout-note">
-                    <a href="/shipping" style="text-decoration: underline; text-underline-offset: 3px;">Complimentary courier delivery</a> on orders over $1,500. Pay seamlessly via BTC, ETH, or SOL.
+                    <a href="/shipping" style="text-decoration: underline; text-underline-offset: 3px;">Complimentary worldwide courier delivery</a> on orders $1,500+, including furniture &amp; international destinations.
                 </p>
             </aside>
         </div>
@@ -481,6 +494,7 @@
                 <a href="/artists">Meet the Artists</a>
                 <a href="/shipping">Shipping &amp; Delivery</a>
                 <a href="/authenticity">Authenticity</a>
+                <a href="/crypto-checkout">Crypto Checkout</a>
                 <a href="/terms">Terms</a>
                 <a href="/privacy-policy">Privacy Policy</a>
                 <a href="/contact">Contact &amp; Support</a>
