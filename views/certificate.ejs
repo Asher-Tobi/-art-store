@@ -453,7 +453,7 @@
                         <span class="registry-seal-status">
                             Archive State:
                             <strong><%= product.status === 'sold' ? 'Acquired · Sold Archive' : 'Available' %></strong>
-                            <% if (product.sold_order_reference) { %>
+                            <% if (typeof isAdmin !== 'undefined' && isAdmin && product.sold_order_reference) { %>
                                 · Order #<%= product.sold_order_reference %>
                             <% } %>
                         </span>
@@ -597,7 +597,7 @@
                     <div>
                         <div><strong>Cataloged:</strong> <span class="mono"><%= product.created_at.slice(0, 10) %></span></div>
                         <div><strong>Inventory Reference:</strong> <span class="mono"><%= product.inventory_id %></span></div>
-                        <% if (product.sold_order_reference) { %>
+                        <% if (typeof isAdmin !== 'undefined' && isAdmin && product.sold_order_reference) { %>
                         <div><strong>Acquisition Order:</strong> <span class="mono">#<%= product.sold_order_reference %></span></div>
                         <% } %>
                     </div>

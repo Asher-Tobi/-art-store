@@ -51,6 +51,7 @@ declare module "express-session" {
     flashes?: string[];
     isAdmin?: boolean;
     adminVer?: string;
+    adminExpiresAt?: number;
     adminSignedInAt?: string;
     adminCsrf?: string;
   }
@@ -84,6 +85,35 @@ const ADMIN_COOKIE_NAME = "art_studio_admin";
 const ADMIN_CSRF_COOKIE_NAME = "art_studio_csrf";
 const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const adminAuthAttempts = new Map<string, { count: number; resetAt: number }>();
+const revokedAdminTokens = new Map<string, number>();
+
+function pruneRevokedAdminTokens(now: number): void {
+  for (const [jti, expiresAt] of revokedAdminTokens.entries()) {
+    if (expiresAt <= now) {
+      revokedAdminTokens.delete(jti);
+    }
+  }
+}
+
+function revokeAdminToken(jti: string, expiresAt: number): void {
+  if (!jti) return;
+  const now = Date.now();
+  pruneRevokedAdminTokens(now);
+  if (expiresAt > now) {
+    revokedAdminTokens.set(jti, expiresAt);
+  }
+}
+
+function isAdminTokenRevoked(jti: string | undefined): boolean {
+  if (!jti) return false;
+  const expiresAt = revokedAdminTokens.get(jti);
+  if (!expiresAt) return false;
+  if (expiresAt <= Date.now()) {
+    revokedAdminTokens.delete(jti);
+    return false;
+  }
+  return true;
+}
 
 function getConfiguredEnvAdminPasscode(): string {
   return (process.env.ADMIN_ACCESS_PASSCODE || "").trim();
@@ -250,9 +280,22 @@ function getOrIssueAdminCsrfToken(req: Request, res: Response): string {
 function isAdminAuthenticated(req: Request): boolean {
   if (!isAdminConfigured()) return false;
   const expectedVer = getAdminCredentialVersion();
+  const now = Date.now();
 
-  if (req.session.isAdmin === true && req.session.adminVer === expectedVer) {
+  if (
+    req.session.isAdmin === true &&
+    req.session.adminVer === expectedVer &&
+    typeof req.session.adminExpiresAt === "number" &&
+    req.session.adminExpiresAt > now
+  ) {
     return true;
+  }
+
+  if (req.session.isAdmin) {
+    req.session.isAdmin = false;
+    req.session.adminVer = undefined;
+    req.session.adminExpiresAt = undefined;
+    req.session.adminSignedInAt = undefined;
   }
 
   const cookies = parseRequestCookies(req);
@@ -262,13 +305,17 @@ function isAdminAuthenticated(req: Request): boolean {
       role?: string;
       ver?: string;
       exp?: number;
+      jti?: string;
     }>(rawToken);
     if (
       parsed &&
       parsed.role === "admin" &&
       parsed.ver === expectedVer &&
       typeof parsed.exp === "number" &&
-      parsed.exp > Date.now()
+      parsed.exp > now &&
+      typeof parsed.jti === "string" &&
+      parsed.jti.length >= 16 &&
+      !isAdminTokenRevoked(parsed.jti)
     ) {
       return true;
     }
@@ -277,18 +324,28 @@ function isAdminAuthenticated(req: Request): boolean {
   return false;
 }
 
+function rotateAdminCsrfToken(req: Request, res: Response): string {
+  const token = crypto.randomBytes(24).toString("hex");
+  req.session.adminCsrf = token;
+  const signed = signAdminPayload({ token, exp: Date.now() + ADMIN_SESSION_TTL_MS });
+  setAdminManagedCookie(req, res, ADMIN_CSRF_COOKIE_NAME, signed, ADMIN_SESSION_TTL_MS / 1000);
+  return token;
+}
+
 function issueAdminAuthSession(req: Request, res: Response): void {
   const ver = getAdminCredentialVersion();
   const exp = Date.now() + ADMIN_SESSION_TTL_MS;
+  const jti = crypto.randomBytes(16).toString("hex");
   req.session.isAdmin = true;
   req.session.adminVer = ver;
+  req.session.adminExpiresAt = exp;
   req.session.adminSignedInAt = new Date().toISOString();
 
   const token = signAdminPayload({
     role: "admin",
     ver,
     exp,
-    nonce: crypto.randomBytes(8).toString("hex"),
+    jti,
   });
   setAdminManagedCookie(
     req,
@@ -297,13 +354,55 @@ function issueAdminAuthSession(req: Request, res: Response): void {
     token,
     Math.floor(ADMIN_SESSION_TTL_MS / 1000)
   );
+  rotateAdminCsrfToken(req, res);
+}
+
+function regenerateAndIssueAdminSession(
+  req: Request,
+  res: Response,
+  flashes: string[],
+  done: () => void
+): void {
+  const preservedCart = req.session.cart;
+  const preservedCartUpdatedAt = req.session.cartUpdatedAt;
+  const preservedCartId = req.session.cartId;
+  const preservedOrder = req.session.order;
+  const preservedBtcStarted = req.session.btcCheckoutStartedAt;
+  const preservedTokens = req.session.checkoutTokens;
+
+  req.session.regenerate((err) => {
+    if (err) {
+      console.warn("Admin session regeneration fallback:", err);
+    }
+    if (preservedCart !== undefined) req.session.cart = preservedCart;
+    if (preservedCartUpdatedAt !== undefined) req.session.cartUpdatedAt = preservedCartUpdatedAt;
+    if (preservedCartId !== undefined) req.session.cartId = preservedCartId;
+    if (preservedOrder !== undefined) req.session.order = preservedOrder;
+    if (preservedBtcStarted !== undefined) req.session.btcCheckoutStartedAt = preservedBtcStarted;
+    if (preservedTokens !== undefined) req.session.checkoutTokens = preservedTokens;
+    if (flashes.length > 0) req.session.flashes = flashes;
+
+    issueAdminAuthSession(req, res);
+    req.session.save(() => done());
+  });
 }
 
 function clearAdminAuthSession(req: Request, res: Response): void {
+  const cookies = parseRequestCookies(req);
+  const rawToken = cookies[ADMIN_COOKIE_NAME];
+  if (rawToken) {
+    const parsed = verifySignedPayload<{ jti?: string; exp?: number }>(rawToken);
+    if (parsed && typeof parsed.jti === "string" && typeof parsed.exp === "number") {
+      revokeAdminToken(parsed.jti, parsed.exp);
+    }
+  }
   req.session.isAdmin = false;
   req.session.adminVer = undefined;
+  req.session.adminExpiresAt = undefined;
   req.session.adminSignedInAt = undefined;
+  req.session.adminCsrf = undefined;
   clearAdminManagedCookie(req, res, ADMIN_COOKIE_NAME);
+  clearAdminManagedCookie(req, res, ADMIN_CSRF_COOKIE_NAME);
 }
 
 function isSameOriginRequest(req: Request): boolean {
@@ -390,19 +489,20 @@ function clearAdminAttempts(req: Request): void {
 }
 
 function requireAdminPage(req: Request, res: Response, next: NextFunction): void {
+  res.setHeader("Cache-Control", "no-store");
   if (!isAdminAuthenticated(req)) {
-    const csrfToken = getOrIssueAdminCsrfToken(req, res);
-    res.setHeader("Cache-Control", "no-store");
-    res.status(401).render("admin_login", {
-      mode: isAdminConfigured() ? "login" : "setup",
-      errorMessage:
-        req.method === "GET"
-          ? ""
-          : "Administrator authentication is required before modifying inventory records.",
-      messages: consumeFlashes(req),
-      csrfToken,
-      activeNav: "",
-    });
+    if (req.method === "GET" || req.method === "HEAD") {
+      res.redirect(302, "/admin/login");
+      return;
+    }
+    if (req.headers.accept?.includes("application/json")) {
+      res.status(401).json({
+        ok: false,
+        error: "Administrator authentication required.",
+      });
+      return;
+    }
+    res.status(401).send("Administrator authentication required.");
     return;
   }
   if (req.method !== "GET" && req.method !== "HEAD" && !verifyAdminCsrf(req)) {
@@ -4951,6 +5051,32 @@ app.get("/artists/:slug", (req: Request, res: Response) => {
 });
 
 // Admin Authentication & Inventory Management System
+app.use("/admin", (req: Request, res: Response, next: NextFunction) => {
+  res.setHeader("Cache-Control", "no-store");
+  const openAuthPaths = ["/login", "/setup", "/logout"];
+  if (openAuthPaths.includes(req.path)) {
+    next();
+    return;
+  }
+  if (!isAdminAuthenticated(req)) {
+    if (req.method === "GET" || req.method === "HEAD") {
+      res.redirect(302, "/admin/login");
+      return;
+    }
+    if (req.headers.accept?.includes("application/json")) {
+      res.status(401).json({ ok: false, error: "Administrator authentication required." });
+      return;
+    }
+    res.status(401).send("Administrator authentication required.");
+    return;
+  }
+  next();
+});
+
+app.get("/admin", requireAdminPage, (_req: Request, res: Response) => {
+  res.redirect("/admin/inventory");
+});
+
 app.get("/admin/login", (req: Request, res: Response) => {
   res.setHeader("Cache-Control", "no-store");
   if (isAdminAuthenticated(req)) {
@@ -4958,12 +5084,14 @@ app.get("/admin/login", (req: Request, res: Response) => {
     return;
   }
   const csrfToken = getOrIssueAdminCsrfToken(req, res);
-  res.render("admin_login", {
-    mode: isAdminConfigured() ? "login" : "setup",
-    errorMessage: "",
-    messages: consumeFlashes(req),
-    csrfToken,
-    activeNav: "",
+  req.session.save(() => {
+    res.render("admin_login", {
+      mode: isAdminConfigured() ? "login" : "setup",
+      errorMessage: "",
+      messages: consumeFlashes(req),
+      csrfToken,
+      activeNav: "",
+    });
   });
 });
 
@@ -5024,11 +5152,14 @@ app.post("/admin/setup", (req: Request, res: Response) => {
   const { salt, passwordHash } = hashAdminPassword(password);
   inventoryStore.claimAdminCredential(salt, passwordHash);
   clearAdminAttempts(req);
-  issueAdminAuthSession(req, res);
-  pushFlash(req, "Administrator passcode configured and signed in.");
-  req.session.save(() => {
-    res.redirect("/admin/inventory");
-  });
+  regenerateAndIssueAdminSession(
+    req,
+    res,
+    ["Administrator passcode configured and signed in."],
+    () => {
+      res.redirect("/admin/inventory");
+    }
+  );
 });
 
 app.post("/admin/login", (req: Request, res: Response) => {
@@ -5068,8 +5199,7 @@ app.post("/admin/login", (req: Request, res: Response) => {
   }
 
   clearAdminAttempts(req);
-  issueAdminAuthSession(req, res);
-  req.session.save(() => {
+  regenerateAndIssueAdminSession(req, res, [], () => {
     res.redirect("/admin/inventory");
   });
 });
@@ -5270,6 +5400,32 @@ app.post(
   }
 );
 
+app.post(
+  "/admin/inventory/:identifier/delete",
+  requireAdminPage,
+  (req: Request, res: Response) => {
+    const identifier = String(req.params.identifier ?? "").trim();
+    const outcome = inventoryStore.deleteProduct(identifier);
+    if (!outcome.ok) {
+      pushFlash(
+        req,
+        outcome.reason === "not_found"
+          ? "Artwork not found in inventory."
+          : outcome.reason || "Unable to remove inventory record."
+      );
+      redirectWithSession(req, res, "/admin/inventory");
+      return;
+    }
+    pushFlash(
+      req,
+      `Removed "${outcome.deleted!.title}" (${outcome.deleted!.inventory_id}) from catalog.`
+    );
+    redirectWithSession(req, res, "/admin/inventory");
+  }
+);
+
+app.use("/api/inventory", requireAdminApi);
+
 app.get("/api/inventory", requireAdminApi, (req: Request, res: Response) => {
   const q = String(req.query.q ?? "").trim();
   const category = String(req.query.category ?? "all").trim();
@@ -5427,6 +5583,22 @@ app.patch("/api/inventory/:identifier", requireAdminApi, (req: Request, res: Res
   });
 
   res.json({ ok: true, product: updated });
+});
+
+app.delete("/api/inventory/:identifier", requireAdminApi, (req: Request, res: Response) => {
+  const outcome = inventoryStore.deleteProduct(String(req.params.identifier ?? ""));
+  if (!outcome.ok) {
+    if (outcome.reason === "not_found") {
+      res.status(404).json({ ok: false, error: "Not Found" });
+      return;
+    }
+    res.status(409).json({
+      ok: false,
+      error: outcome.reason || "Unable to delete inventory record.",
+    });
+    return;
+  }
+  res.json({ ok: true, deleted: outcome.deleted });
 });
 
 app.get("/healthz", (_req: Request, res: Response) => {

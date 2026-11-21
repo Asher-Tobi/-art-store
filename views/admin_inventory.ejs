@@ -762,6 +762,12 @@
                                     <a href="/admin/inventory?edit=<%= encodeURIComponent(p.inventory_id) %>" class="mini-link">Edit</a>
                                     <a href="/certificate/<%= encodeURIComponent(p.inventory_id) %>" class="mini-link">Certificate</a>
                                     <a href="/product/<%= p.id %>" class="mini-link">Page</a>
+                                    <% if (p.status !== 'sold') { %>
+                                    <form action="/admin/inventory/<%= encodeURIComponent(p.inventory_id) %>/delete" method="POST" style="display: inline; margin: 0;">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                                        <button type="submit" class="mini-link" style="cursor: pointer; color: #991b1b; border-color: #fecaca;">Delete</button>
+                                    </form>
+                                    <% } %>
                                 </div>
                             </td>
                         </tr>

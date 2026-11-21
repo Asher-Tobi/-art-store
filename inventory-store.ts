@@ -135,11 +135,13 @@ function isServerlessEnv(): boolean {
   );
 }
 
-const DEFAULT_DB_PATH = isServerlessEnv()
-  ? SERVERLESS_TMP_DB_PATH
-  : fs.existsSync(BUNDLED_DB_PATH) || !fs.existsSync(CWD_DB_PATH)
-    ? BUNDLED_DB_PATH
-    : CWD_DB_PATH;
+const DEFAULT_DB_PATH = (process.env.INVENTORY_DB_PATH || "").trim()
+  ? path.resolve((process.env.INVENTORY_DB_PATH || "").trim())
+  : isServerlessEnv()
+    ? SERVERLESS_TMP_DB_PATH
+    : fs.existsSync(BUNDLED_DB_PATH) || !fs.existsSync(CWD_DB_PATH)
+      ? BUNDLED_DB_PATH
+      : CWD_DB_PATH;
 
 export const CATEGORY_CODES: Record<string, string> = {
   painting: "PA",
@@ -764,6 +766,31 @@ export class InventoryStore {
     product.updated_at = new Date().toISOString();
     this.saveToDisk();
     return product;
+  }
+
+  public deleteProduct(idOrInventoryId: string | number): {
+    ok: boolean;
+    reason?: string;
+    deleted?: Product;
+  } {
+    const product = this.getProductById(idOrInventoryId);
+    if (!product) {
+      return { ok: false, reason: "not_found" };
+    }
+    if (product.status === "sold") {
+      return {
+        ok: false,
+        reason: "Sold archive records cannot be deleted so Inventory ID provenance remains intact.",
+      };
+    }
+    const idx = this.products.findIndex((p) => p.id === product.id);
+    if (idx === -1) {
+      return { ok: false, reason: "not_found" };
+    }
+    const [removed] = this.products.splice(idx, 1);
+    this.rebuildIndexes();
+    this.saveToDisk();
+    return { ok: true, deleted: removed };
   }
 
   public markProductsSold(productIds: number[], orderReference: string): void {
