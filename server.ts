@@ -720,6 +720,7 @@ let cachedCryptoPrices: {
   solana: number;
   fetchedAt: number;
 } | null = null;
+let lastCryptoFetchAttemptAt = 0;
 
 async function getCryptoPrices(): Promise<{
   bitcoin: number;
@@ -735,11 +736,22 @@ async function getCryptoPrices(): Promise<{
     };
   }
 
-  const fallback = {
-    bitcoin: BTC_USD_PRICE,
-    ethereum: ETH_USD_PRICE,
-    solana: SOL_USD_PRICE,
-  };
+  const fallback = cachedCryptoPrices
+    ? {
+        bitcoin: cachedCryptoPrices.bitcoin,
+        ethereum: cachedCryptoPrices.ethereum,
+        solana: cachedCryptoPrices.solana,
+      }
+    : {
+        bitcoin: BTC_USD_PRICE,
+        ethereum: ETH_USD_PRICE,
+        solana: SOL_USD_PRICE,
+      };
+
+  if (lastCryptoFetchAttemptAt && now - lastCryptoFetchAttemptAt < 60_000) {
+    return fallback;
+  }
+  lastCryptoFetchAttemptAt = now;
 
   try {
     const response = await fetch(
@@ -4766,8 +4778,36 @@ process.on("unhandledRejection", (reason) => {
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught exception:", err);
+  const code = (err as NodeJS.ErrnoException)?.code;
+  if (code === "EADDRINUSE" || code === "EACCES") {
+    process.exit(1);
+  }
 });
 
-app.listen(PORT, "0.0.0.0", () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`ART STUDIO server running on http://0.0.0.0:${PORT}`);
 });
+
+server.on("error", (err: NodeJS.ErrnoException) => {
+  console.error("HTTP server error:", err);
+  if (err.code === "EADDRINUSE" || err.code === "EACCES") {
+    process.exit(1);
+  }
+});
+
+let shuttingDown = false;
+function shutdownGracefully(signal: string) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`Received ${signal}, closing ART STUDIO server...`);
+  if (typeof server.closeAllConnections === "function") {
+    server.closeAllConnections();
+  }
+  server.close(() => {
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(0), 1500).unref();
+}
+
+process.on("SIGTERM", () => shutdownGracefully("SIGTERM"));
+process.on("SIGINT", () => shutdownGracefully("SIGINT"));

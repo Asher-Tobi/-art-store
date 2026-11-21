@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch server.ts",
+    "dev": "tsx watch --clear-screen=false --exclude 'data/**' --exclude 'static/**' --exclude 'public/**' server.ts",
     "build": "tsc --noEmit",
     "start": "node server.ts",
     "lint": "tsc --noEmit"
