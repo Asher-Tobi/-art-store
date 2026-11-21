@@ -1,4 +1,6 @@
 import crypto from "node:crypto";
+import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
@@ -49,8 +51,13 @@ declare module "express-session" {
   }
 }
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.url
+  ? fileURLToPath(import.meta.url)
+  : path.join(process.cwd(), "server.ts");
 const __dirname = path.dirname(__filename);
+const require = createRequire(
+  import.meta.url || `file://${path.join(process.cwd(), "server.ts")}`
+);
 
 const PORT = Number(process.env.PORT || "3000") || 3000;
 const BTC_WALLET_ADDRESS =
@@ -2354,13 +2361,37 @@ function redirectWithSession(
   });
 }
 
+const bundledViewsDir = path.join(__dirname, "views");
+const cwdViewsDir = path.join(process.cwd(), "views");
+const viewsDir = fs.existsSync(bundledViewsDir) ? bundledViewsDir : cwdViewsDir;
+
+const bundledStaticDir = path.join(__dirname, "static");
+const cwdStaticDir = path.join(process.cwd(), "static");
+const staticDir = fs.existsSync(bundledStaticDir) ? bundledStaticDir : cwdStaticDir;
+
+const bundledPublicDir = path.join(__dirname, "public");
+const cwdPublicDir = path.join(process.cwd(), "public");
+const publicDir = fs.existsSync(bundledPublicDir) ? bundledPublicDir : cwdPublicDir;
+
 const app = express();
 app.set("trust proxy", true);
+try {
+  const ejsModule = require("ejs") as {
+    __express?: Parameters<typeof app.engine>[1];
+    renderFile?: Parameters<typeof app.engine>[1];
+  };
+  const ejsRenderer = ejsModule.__express || ejsModule.renderFile;
+  if (typeof ejsRenderer === "function") {
+    app.engine("ejs", ejsRenderer);
+  }
+} catch (err) {
+  console.warn("Unable to preload ejs template engine:", err);
+}
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+app.set("views", viewsDir);
 
-app.use("/static", express.static(path.join(__dirname, "static")));
-app.use(express.static(path.join(__dirname, "public")));
+app.use("/static", express.static(staticDir));
+app.use(express.static(publicDir));
 app.use(express.urlencoded({ extended: false }));
 app.use(
   express.json({
@@ -4772,42 +4803,53 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).send("Temporary studio server error. Please refresh the page.");
 });
 
-process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled promise rejection:", reason);
-});
+const isServerlessRuntime = Boolean(
+  process.env.VERCEL ||
+    process.env.VERCEL_ENV ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.LAMBDA_TASK_ROOT
+);
 
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught exception:", err);
-  const code = (err as NodeJS.ErrnoException)?.code;
-  if (code === "EADDRINUSE" || code === "EACCES") {
-    process.exit(1);
-  }
-});
-
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`ART STUDIO server running on http://0.0.0.0:${PORT}`);
-});
-
-server.on("error", (err: NodeJS.ErrnoException) => {
-  console.error("HTTP server error:", err);
-  if (err.code === "EADDRINUSE" || err.code === "EACCES") {
-    process.exit(1);
-  }
-});
-
-let shuttingDown = false;
-function shutdownGracefully(signal: string) {
-  if (shuttingDown) return;
-  shuttingDown = true;
-  console.log(`Received ${signal}, closing ART STUDIO server...`);
-  if (typeof server.closeAllConnections === "function") {
-    server.closeAllConnections();
-  }
-  server.close(() => {
-    process.exit(0);
+if (!isServerlessRuntime) {
+  process.on("unhandledRejection", (reason) => {
+    console.error("Unhandled promise rejection:", reason);
   });
-  setTimeout(() => process.exit(0), 1500).unref();
+
+  process.on("uncaughtException", (err) => {
+    console.error("Uncaught exception:", err);
+    const code = (err as NodeJS.ErrnoException)?.code;
+    if (code === "EADDRINUSE" || code === "EACCES") {
+      process.exit(1);
+    }
+  });
+
+  const server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`ART STUDIO server running on http://0.0.0.0:${PORT}`);
+  });
+
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    console.error("HTTP server error:", err);
+    if (err.code === "EADDRINUSE" || err.code === "EACCES") {
+      process.exit(1);
+    }
+  });
+
+  let shuttingDown = false;
+  function shutdownGracefully(signal: string) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`Received ${signal}, closing ART STUDIO server...`);
+    if (typeof server.closeAllConnections === "function") {
+      server.closeAllConnections();
+    }
+    server.close(() => {
+      process.exit(0);
+    });
+    setTimeout(() => process.exit(0), 1500).unref();
+  }
+
+  process.on("SIGTERM", () => shutdownGracefully("SIGTERM"));
+  process.on("SIGINT", () => shutdownGracefully("SIGINT"));
 }
 
-process.on("SIGTERM", () => shutdownGracefully("SIGTERM"));
-process.on("SIGINT", () => shutdownGracefully("SIGINT"));
+export default app;

@@ -102,10 +102,29 @@ interface InventoryDatabaseFile {
   consumed_txids?: Record<string, string>;
 }
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = import.meta.url
+  ? fileURLToPath(import.meta.url)
+  : path.join(process.cwd(), "inventory-store.ts");
 const __dirname = path.dirname(__filename);
 
-const DEFAULT_DB_PATH = path.join(__dirname, "data", "inventory.json");
+const BUNDLED_DB_PATH = path.join(__dirname, "data", "inventory.json");
+const CWD_DB_PATH = path.join(process.cwd(), "data", "inventory.json");
+const SERVERLESS_TMP_DB_PATH = path.join("/tmp", "art-studio-inventory.json");
+
+function isServerlessEnv(): boolean {
+  return Boolean(
+    process.env.VERCEL ||
+      process.env.VERCEL_ENV ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.LAMBDA_TASK_ROOT
+  );
+}
+
+const DEFAULT_DB_PATH = isServerlessEnv()
+  ? SERVERLESS_TMP_DB_PATH
+  : fs.existsSync(BUNDLED_DB_PATH) || !fs.existsSync(CWD_DB_PATH)
+    ? BUNDLED_DB_PATH
+    : CWD_DB_PATH;
 
 export const CATEGORY_CODES: Record<string, string> = {
   painting: "PA",
@@ -156,6 +175,7 @@ export function formatPriceDisplay(price: number): string {
 
 export class InventoryStore {
   private dbPath: string;
+  private customDbPath: boolean;
   private sequences: Record<string, number> = {};
   private products: Product[] = [];
   private orders: PersistedOrderRecord[] = [];
@@ -163,8 +183,9 @@ export class InventoryStore {
   private byId = new Map<string, Product>();
   private byInventoryId = new Map<string, Product>();
 
-  constructor(dbPath: string = DEFAULT_DB_PATH) {
-    this.dbPath = dbPath;
+  constructor(dbPath?: string) {
+    this.customDbPath = typeof dbPath === "string" && dbPath.trim().length > 0;
+    this.dbPath = this.customDbPath ? dbPath! : DEFAULT_DB_PATH;
   }
 
   private rebuildIndexes(): void {
@@ -178,11 +199,17 @@ export class InventoryStore {
     }
   }
 
-  private saveToDisk(): void {
-    const dir = path.dirname(this.dbPath);
+  private writePayloadToPath(targetPath: string, payload: InventoryDatabaseFile): void {
+    const dir = path.dirname(targetPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
+    const tmpPath = `${targetPath}.${process.pid}.tmp`;
+    fs.writeFileSync(tmpPath, JSON.stringify(payload, null, 2), "utf8");
+    fs.renameSync(tmpPath, targetPath);
+  }
+
+  private saveToDisk(): void {
     const payload: InventoryDatabaseFile = {
       version: 1,
       sequences: this.sequences,
@@ -190,9 +217,32 @@ export class InventoryStore {
       orders: this.orders,
       consumed_txids: this.consumedTxids,
     };
-    const tmpPath = `${this.dbPath}.${process.pid}.tmp`;
-    fs.writeFileSync(tmpPath, JSON.stringify(payload, null, 2), "utf8");
-    fs.renameSync(tmpPath, this.dbPath);
+
+    try {
+      this.writePayloadToPath(this.dbPath, payload);
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException)?.code;
+      const isReadOnlyOrDenied =
+        code === "EROFS" || code === "EACCES" || code === "EPERM";
+      if (!this.customDbPath && isReadOnlyOrDenied && this.dbPath !== SERVERLESS_TMP_DB_PATH) {
+        console.warn(
+          `Database path ${this.dbPath} is read-only (${code}); falling back to ${SERVERLESS_TMP_DB_PATH}`
+        );
+        this.dbPath = SERVERLESS_TMP_DB_PATH;
+        try {
+          this.writePayloadToPath(this.dbPath, payload);
+          return;
+        } catch (fallbackErr) {
+          console.warn("Unable to persist inventory to /tmp fallback:", fallbackErr);
+          return;
+        }
+      }
+      if (isReadOnlyOrDenied) {
+        console.warn(`Inventory persistence skipped on read-only filesystem (${code}).`);
+        return;
+      }
+      throw err;
+    }
   }
 
   private syncSequenceFromExistingIds(): void {
@@ -234,9 +284,14 @@ export class InventoryStore {
     seedProvenanceById: Record<number, ProductProvenance>
   ): void {
     let loaded: InventoryDatabaseFile | null = null;
-    if (fs.existsSync(this.dbPath)) {
+    const readCandidates = this.customDbPath
+      ? [this.dbPath]
+      : [this.dbPath, BUNDLED_DB_PATH, CWD_DB_PATH];
+    const readPath = readCandidates.find((candidate) => fs.existsSync(candidate));
+
+    if (readPath) {
       try {
-        const raw = fs.readFileSync(this.dbPath, "utf8");
+        const raw = fs.readFileSync(readPath, "utf8");
         const parsed = JSON.parse(raw) as Partial<InventoryDatabaseFile>;
         if (parsed && Array.isArray(parsed.products)) {
           loaded = {
