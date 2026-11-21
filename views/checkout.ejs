@@ -1488,10 +1488,49 @@
                             </div>
                         </div>
                         <p class="card-subtitle">
-                            Complete settlement via direct cryptocurrency transfer (Bitcoin with automatic live Mempool detection, Ethereum, or Solana) or select an authorized card or PayPal gateway.
+                            Choose from card and digital wallet gateways or direct on-chain cryptocurrency settlement (Bitcoin with automatic live Mempool detection, Ethereum, or Solana).
                         </p>
 
-                        <!-- Group A: Direct Cryptocurrency Settlement -->
+                        <!-- Group A: Authorized Card & PayPal Gateways (Displayed First) -->
+                        <div class="payment-group-label">
+                            <span>Credit Card &amp; PayPal Checkout</span>
+                            <span style="font-family: var(--font-mono); font-weight: 500;">Card · PayPal</span>
+                        </div>
+
+                        <div class="provider-grid" role="radiogroup" aria-label="Payment gateway options">
+                            <% payment_providers.forEach((provider) => { %>
+                            <button
+                                type="button"
+                                class="payment-option-card <%= activeMethod === provider.id ? 'active' : '' %>"
+                                data-method-id="<%= provider.id %>"
+                                data-method-type="gateway"
+                                data-provider-name="<%= provider.name %>"
+                                data-provider-configured="<%= provider.configured ? 'true' : 'false' %>"
+                                data-provider-note="<%= provider.requirementsNote %>"
+                                aria-pressed="<%= activeMethod === provider.id ? 'true' : 'false' %>"
+                            >
+                                <span class="pay-opt-title"><%= provider.name %></span>
+                                <span class="pay-opt-sub"><%= provider.subtitle %></span>
+                                <span class="pay-opt-state <%= provider.configured ? 'ready' : '' %>">
+                                    <%= provider.configured ? 'Available · Hosted Checkout' : 'Temporarily Suspended · Maintenance' %>
+                                </span>
+                            </button>
+                            <% }) %>
+                        </div>
+
+                        <!-- Gateway Maintenance / Hosted Notice Panel (Stripe / PayPal) -->
+                        <%
+                            const activeGateway = payment_providers.find((p) => p.id === activeMethod) || payment_providers[0];
+                        %>
+                        <div class="gateway-notice <%= activeIsCrypto ? 'hidden' : '' %>" id="details-gateway" role="status">
+                            <% if (activeGateway && activeGateway.configured) { %>
+                                <strong>Ready for Hosted Verification:</strong> Clicking below transfers you securely to <strong><%= activeGateway.name %></strong> to authorize payment of <strong class="summary-total-inline">$<%= formatCurrency(total) %> USD</strong>. Your order confirmation slip appears only after server verification completes.
+                            <% } else { %>
+                                <strong>Scheduled Payment Maintenance:</strong> <%= activeGateway ? activeGateway.requirementsNote : 'Our site is currently undergoing scheduled maintenance and credit card payment is temporarily suspended. Please select another payment option.' %>
+                            <% } %>
+                        </div>
+
+                        <!-- Group B: Direct Cryptocurrency Settlement -->
                         <div class="payment-group-label">
                             <span>Direct Cryptocurrency Settlement</span>
                             <span style="font-family: var(--font-mono); font-weight: 500; color: var(--gold);">BTC · ETH · SOL</span>
@@ -1515,33 +1554,6 @@
                                 <span class="pay-opt-amount" id="btn-amt-<%= key %>"><%= opt.amount %> <%= opt.symbol %></span>
                                 <span class="pay-opt-state <%= opt.key === 'bitcoin' ? 'ready' : '' %>">
                                     <%= opt.key === 'bitcoin' ? 'Live Mempool Listener' : (opt.walletAddress ? 'On-Chain Transfer' : 'Address Pending') %>
-                                </span>
-                            </button>
-                            <% }) %>
-                        </div>
-
-                        <!-- Group B: Authorized Card & PayPal Gateways -->
-                        <div class="payment-group-label">
-                            <span>Card &amp; Digital Wallet Gateways</span>
-                            <span style="font-family: var(--font-mono); font-weight: 500;">Hosted Checkout</span>
-                        </div>
-
-                        <div class="provider-grid" role="radiogroup" aria-label="Payment gateway options">
-                            <% payment_providers.forEach((provider) => { %>
-                            <button
-                                type="button"
-                                class="payment-option-card <%= activeMethod === provider.id ? 'active' : '' %>"
-                                data-method-id="<%= provider.id %>"
-                                data-method-type="gateway"
-                                data-provider-name="<%= provider.name %>"
-                                data-provider-configured="<%= provider.configured ? 'true' : 'false' %>"
-                                data-provider-note="<%= provider.requirementsNote %>"
-                                aria-pressed="<%= activeMethod === provider.id ? 'true' : 'false' %>"
-                            >
-                                <span class="pay-opt-title"><%= provider.name %></span>
-                                <span class="pay-opt-sub"><%= provider.subtitle %></span>
-                                <span class="pay-opt-state <%= provider.configured ? 'ready' : '' %>">
-                                    <%= provider.configured ? 'Gateway Configured · Hosted Redirect' : 'Authorization Required on Server' %>
                                 </span>
                             </button>
                             <% }) %>
@@ -1628,18 +1640,6 @@
                             <% } %>
                         </div>
                         <% }) %>
-
-                        <!-- Gateway Notice Panel (Stripe / PayPal) -->
-                        <%
-                            const activeGateway = payment_providers.find((p) => p.id === activeMethod) || payment_providers[0];
-                        %>
-                        <div class="gateway-notice <%= activeIsCrypto ? 'hidden' : '' %>" id="details-gateway">
-                            <% if (activeGateway && activeGateway.configured) { %>
-                                <strong>Ready for Hosted Verification:</strong> Clicking below transfers you securely to <strong><%= activeGateway.name %></strong> to authorize payment of <strong class="summary-total-inline">$<%= formatCurrency(total) %> USD</strong>. Your order confirmation slip appears only after server verification completes.
-                            <% } else { %>
-                                <strong>Gateway Configuration Required:</strong> <%= activeGateway ? activeGateway.requirementsNote : '' %> Orders are never marked paid until a verified payment confirmation is returned by the provider.
-                            <% } %>
-                        </div>
 
                         <div class="step-actions">
                             <button type="button" class="btn-secondary" data-prev-step="4">Back to Order Review</button>
@@ -2199,7 +2199,7 @@
                         const curTotal = document.getElementById('summaryTotal')?.textContent || '';
                         gatewayNoticeBox.innerHTML = configured
                             ? `<strong>Ready for Hosted Verification:</strong> Clicking below transfers you securely to <strong>${name}</strong> to authorize payment of <strong class="summary-total-inline">${curTotal}</strong>. Your order confirmation slip appears only after server verification completes.`
-                            : `<strong>Gateway Configuration Required:</strong> ${note} Orders are never marked paid until a verified payment confirmation is returned by the provider.`;
+                            : `<strong>Scheduled Payment Maintenance:</strong> ${note}`;
                     }
                 }
 

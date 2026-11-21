@@ -669,6 +669,24 @@ const seedProducts: SeedProductInput[] = [
     description:
       "Circa 1880 English Jacobean-style carved walnut cabinet resting on a barley twist stand. Detailed with three front doors separated by sculpted caryatids, inlaid mother-of-pearl floral vases, lion masks, and raised paneled joinery suited for collectors' cabinets or luxury bar storage.",
   },
+  {
+    id: 36,
+    title: "Framed 1994 Bedroom at Arles Offset Lithograph",
+    artist: "Roy Lichtenstein",
+    category: "Prints",
+    price: 250.0,
+    price_display: "$250",
+    size: "15.5 x 14.5 x 0.75 in (Framed; Paper 5 x 7 in)",
+    image: "/static/images/roy-lichtenstein-bedroom-arles-1.jpg",
+    images: [
+      "/static/images/roy-lichtenstein-bedroom-arles-1.jpg",
+      "/static/images/roy-lichtenstein-bedroom-arles-2.jpg",
+      "/static/images/roy-lichtenstein-bedroom-arles-3.jpg",
+      "/static/images/roy-lichtenstein-bedroom-arles-4.jpg",
+    ],
+    description:
+      "1994 offset lithograph after Roy Lichtenstein's Bedroom at Arles, from a portfolio of six prints published by the Guggenheim Museum (now out of print). In this witty Pop Art reinterpretation of Vincent van Gogh's iconic interior, Lichtenstein translates the intimate room into bold black outlines, flat colors, and Ben-Day dots. Presented in a white wood frame with a 4-inch archival mat (frame 15.5 x 14.5 x 0.75 in; sheet 5 x 7 in; image 4.5 x 6.25 in).",
+  },
 ];
 
 const categories: string[] = [
@@ -866,7 +884,7 @@ function getPaymentProviders(): PaymentProviderOption[] {
       subtitle: "Visa, Mastercard, American Express · Hosted Checkout",
       configured: Boolean(cfg.stripeSecretKey),
       requirementsNote:
-        "Pending merchant authorization and server-side STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET configuration.",
+        "Our site is currently undergoing scheduled maintenance and credit card payment is temporarily suspended. Please select another payment option.",
     },
     {
       id: "paypal",
@@ -874,7 +892,7 @@ function getPaymentProviders(): PaymentProviderOption[] {
       subtitle: "PayPal Account & Verified Funding · Hosted Approval",
       configured: Boolean(cfg.paypalClientId && cfg.paypalClientSecret),
       requirementsNote:
-        "Pending merchant business authorization and server-side PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET configuration.",
+        "Our site is currently undergoing scheduled maintenance and PayPal payment is temporarily suspended. Please select another payment option.",
     },
   ];
 }
@@ -1193,6 +1211,14 @@ const curatedProvenanceById: Record<number, ProductProvenance> = {
     markingsEdition: "Unique 19th-Century Collector's Cabinet",
     conditionNote: "Rich walnut color and historic hand-carved relief detail intact; paneled doors, brass hardware, and barley twist stretchers structurally inspected.",
     provenanceRecord: "Vetted British antique cabinetmaking specialist provenance · Period walnut & mother-of-pearl inlay verified · Includes ART STUDIO Provenance COA.",
+  },
+  36: {
+    datePeriod: "1994 (Guggenheim Museum Portfolio)",
+    originAttribution: "After Roy Lichtenstein (1923–1997) · Published by Guggenheim Museum, New York",
+    materialsMedium: "Offset lithograph on archival wove paper in custom white wood gallery frame with 4-inch mat",
+    markingsEdition: "Out-of-Print Six-Print Guggenheim Portfolio Impression (Unsigned)",
+    conditionNote: "Grade A mint condition; crisp sheet, clean mat, and solid gallery frame.",
+    provenanceRecord: "Sourced via vetted fine art prints & works-on-paper dealer archive · Accompanied by ART STUDIO Certificate of Authenticity.",
   },
 };
 
@@ -3103,7 +3129,7 @@ app.post("/checkout", async (req: Request, res: Response) => {
   const chosenProvider = providers.find((p) => p.id === selectedProviderId)!;
   if (!chosenProvider.configured) {
     renderAtStep(5, [
-      `${chosenProvider.name} cannot process live charges yet because merchant credentials and business authorization are not configured on this server. No payment was taken, your order was not placed, and your shopping bag has been preserved.`,
+      `${chosenProvider.name} is temporarily unavailable while our payment gateway undergoes scheduled maintenance. No payment was taken and your shopping bag has been preserved — please select another payment option.`,
     ]);
     return;
   }
@@ -4409,6 +4435,25 @@ const artistProfiles: ArtistProfile[] = [
     milestones: [
       { year: "1580–1620", detail: "Hand-carved deep-relief angel and fruit-festoon frieze created in a Spanish Renaissance guild workshop." },
       { year: "Conservation", detail: "Mounted on a custom stepped black display stand preserving original polychrome and water-gilding." },
+    ],
+  },
+  {
+    slug: "roy-lichtenstein",
+    name: "Roy Lichtenstein",
+    discipline: "American Pop Art & Printmaking",
+    origin: "New York, United States",
+    era: "1923–1997",
+    tagline:
+      "Pioneering American Pop artist celebrated for crisp comic-inspired linework, Ben-Day dot screens, and witty reinterpretations of modern art history.",
+    biography: [
+      "Born in New York City in 1923, Roy Lichtenstein studied under Reginald Marsh at the Art Students League and earned his Master of Fine Arts at Ohio State University before emerging at the forefront of the American Pop Art movement in the early 1960s.",
+      "Appropriating visual idioms from mass printing, advertising, and comic strips—heavy black contours, saturated primary pigments, and mechanical Ben-Day dot matrices—Lichtenstein turned critical attention toward how images are constructed and reproduced.",
+      "Later in his career, Lichtenstein turned his sharp graphic vocabulary toward celebrated masterpieces of European modernism, including Vincent van Gogh's 1888 'Bedroom in Arles,' captured in a sought-after 1994 offset lithograph edition published by the Guggenheim Museum.",
+    ],
+    milestones: [
+      { year: "1923", detail: "Born in Manhattan, New York." },
+      { year: "1961–1965", detail: "Pioneered Pop Art iconography using comic frames and Ben-Day dot screens." },
+      { year: "1994", detail: "'Bedroom at Arles' offset lithograph published in a portfolio of six prints by the Guggenheim Museum." },
     ],
   },
 ];
