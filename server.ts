@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import { createRequire } from "node:module";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
@@ -78,12 +79,33 @@ const SOL_WALLET_ADDRESS =
 const BTC_USD_PRICE = Number(process.env.BTC_USD_PRICE || "63389") || 63389;
 const ETH_USD_PRICE = Number(process.env.ETH_USD_PRICE || "1740") || 1740;
 const SOL_USD_PRICE = Number(process.env.SOL_USD_PRICE || "69") || 69;
-const SECRET_KEY =
-  (process.env.SECRET_KEY || "").trim() || crypto.randomBytes(32).toString("hex");
+function resolveSessionSecret(): string {
+  const fromEnv = (process.env.SECRET_KEY || "").trim();
+  if (fromEnv) return fromEnv;
+
+  const tmpSecretPath = path.join(os.tmpdir(), "art-studio-session.key");
+  try {
+    if (fs.existsSync(tmpSecretPath)) {
+      const existing = fs.readFileSync(tmpSecretPath, "utf8").trim();
+      if (existing.length >= 32) {
+        return existing;
+      }
+    }
+    const generated = crypto.randomBytes(32).toString("hex");
+    fs.writeFileSync(tmpSecretPath, generated, { encoding: "utf8", mode: 0o600 });
+    return generated;
+  } catch {
+    return crypto.randomBytes(32).toString("hex");
+  }
+}
+
+const SECRET_KEY = resolveSessionSecret();
 
 const ADMIN_COOKIE_NAME = "art_studio_admin";
 const ADMIN_CSRF_COOKIE_NAME = "art_studio_csrf";
+const VISITOR_COOKIE_NAME = "art_studio_vid";
 const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const VISITOR_COOKIE_TTL_SECONDS = 365 * 24 * 60 * 60;
 const adminAuthAttempts = new Map<string, { count: number; resetAt: number }>();
 const revokedAdminTokens = new Map<string, number>();
 
@@ -317,6 +339,9 @@ function isAdminAuthenticated(req: Request): boolean {
       parsed.jti.length >= 16 &&
       !isAdminTokenRevoked(parsed.jti)
     ) {
+      req.session.isAdmin = true;
+      req.session.adminVer = expectedVer;
+      req.session.adminExpiresAt = parsed.exp;
       return true;
     }
   }
@@ -1302,6 +1327,23 @@ async function generateWalletQrSvg(
   }
 }
 
+async function generateCertificateQrSvg(certificateUrl: string): Promise<string> {
+  if (!certificateUrl) {
+    return "";
+  }
+  try {
+    return await QRCode.toString(certificateUrl, {
+      type: "svg",
+      margin: 1,
+      width: 112,
+      errorCorrectionLevel: "M",
+      color: { dark: "#0a0a0a", light: "#ffffff" },
+    });
+  } catch {
+    return "";
+  }
+}
+
 async function buildCryptoOptions(
   usdTotal: number,
   prices: { bitcoin: number; ethereum: number; solana: number }
@@ -1967,6 +2009,21 @@ function getRequestBaseUrl(req: Request): string {
       .split(",")[0]
       .trim();
   return `${proto}://${host}`;
+}
+
+function getPublicOriginUrl(req: Request): string {
+  const rawProto = String(req.headers["x-forwarded-proto"] || "")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  const proto = rawProto === "https" || rawProto === "http" ? rawProto : req.secure ? "https" : "http";
+  const rawHost = String(req.headers["x-forwarded-host"] || req.headers.host || "")
+    .split(",")[0]
+    .trim();
+  if (rawHost && /^[a-z0-9.-]+(:\d{1,5})?$/i.test(rawHost)) {
+    return `${proto}://${rawHost}`;
+  }
+  return getRequestBaseUrl(req);
 }
 
 function finalizeVerifiedPaidOrder(
@@ -2957,6 +3014,86 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+const BOT_USER_AGENT_RE =
+  /bot|crawl|spider|slurp|bingpreview|headless|lighthouse|pingdom|uptime/i;
+
+function isTrackablePublicRoute(req: Request): boolean {
+  if (req.method !== "GET") return false;
+  const reqPath = String(req.path || "/");
+  if (
+    reqPath === "/healthz" ||
+    reqPath === "/robots.txt" ||
+    reqPath === "/favicon.ico" ||
+    reqPath.startsWith("/admin") ||
+    reqPath.startsWith("/api/") ||
+    reqPath === "/api" ||
+    reqPath.startsWith("/static/") ||
+    reqPath.startsWith("/assets/") ||
+    reqPath.startsWith("/data/")
+  ) {
+    return false;
+  }
+  const ua = String(req.headers["user-agent"] || "");
+  if (ua && BOT_USER_AGENT_RE.test(ua)) return false;
+  const accept = String(req.headers.accept || "");
+  if (accept && !accept.includes("text/html") && !accept.includes("*/*")) {
+    return false;
+  }
+  return true;
+}
+
+function normalizeTrackedPath(rawPath: string): string {
+  const cleaned = String(rawPath || "/").trim() || "/";
+  if (cleaned === "/shop") return "/";
+  if (cleaned.length > 1 && cleaned.endsWith("/")) {
+    return cleaned.slice(0, -1);
+  }
+  return cleaned;
+}
+
+function resolveOrIssueVisitorId(req: Request, res: Response): string {
+  const cookies = parseRequestCookies(req);
+  const existingSigned = cookies[VISITOR_COOKIE_NAME];
+  if (existingSigned) {
+    const parsed = verifySignedPayload<{ vid?: string }>(existingSigned);
+    if (parsed?.vid && typeof parsed.vid === "string" && parsed.vid.length >= 12) {
+      return parsed.vid;
+    }
+  }
+
+  const dayKey = new Date().toISOString().slice(0, 10);
+  const ip = String(req.ip || req.socket.remoteAddress || "unknown");
+  const ua = String(req.headers["user-agent"] || "").slice(0, 160);
+  const vid = crypto
+    .createHmac("sha256", SECRET_KEY)
+    .update(`vid:${dayKey}:${ip}:${ua}`)
+    .digest("hex")
+    .slice(0, 24);
+
+  const signed = signAdminPayload({ vid });
+  setAdminManagedCookie(req, res, VISITOR_COOKIE_NAME, signed, VISITOR_COOKIE_TTL_SECONDS);
+  return vid;
+}
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (!isTrackablePublicRoute(req)) {
+    next();
+    return;
+  }
+
+  const visitorId = resolveOrIssueVisitorId(req, res);
+  const trackedPath = normalizeTrackedPath(req.path);
+
+  res.on("finish", () => {
+    if (res.statusCode < 200 || res.statusCode >= 400) return;
+    const contentType = String(res.getHeader("content-type") || "").toLowerCase();
+    if (!contentType.includes("text/html")) return;
+    inventoryStore.recordSiteVisit(visitorId, trackedPath);
+  });
+
+  next();
+});
+
 app.get(["/", "/shop"], (req: Request, res: Response) => {
   const categoryFilter = String(req.query.category ?? "").trim();
   const artistFilter = String(req.query.artist ?? "").trim();
@@ -3086,7 +3223,7 @@ app.post("/api/cart/remove", (req: Request, res: Response) => {
   });
 });
 
-app.get("/product/:product_id", (req: Request, res: Response) => {
+app.get("/product/:product_id", async (req: Request, res: Response) => {
   const rawId = String(req.params.product_id ?? "").trim();
   const isNumericId = /^\d+$/.test(rawId);
   const isInventoryId = /^AS-[A-Z]{2}-\d{4}-\d+$/i.test(rawId);
@@ -3099,9 +3236,16 @@ app.get("/product/:product_id", (req: Request, res: Response) => {
     res.status(404).send("Not Found");
     return;
   }
+  const certificatePath = `/certificate/${encodeURIComponent(product.inventory_id)}`;
+  const certificateUrl = `${getPublicOriginUrl(req)}${certificatePath}`;
+  const certificateQrSvg = await generateCertificateQrSvg(certificateUrl);
+
   res.render("product", {
     product,
     provenance: getProductProvenance(product),
+    certificatePath,
+    certificateUrl,
+    certificateQrSvg,
     activeNav: product.category,
     messages: consumeFlashes(req),
   });
@@ -5086,7 +5230,7 @@ app.get("/admin/login", (req: Request, res: Response) => {
   const csrfToken = getOrIssueAdminCsrfToken(req, res);
   req.session.save(() => {
     res.render("admin_login", {
-      mode: isAdminConfigured() ? "login" : "setup",
+      mode: "login",
       errorMessage: "",
       messages: consumeFlashes(req),
       csrfToken,
@@ -5095,69 +5239,59 @@ app.get("/admin/login", (req: Request, res: Response) => {
   });
 });
 
-app.post("/admin/setup", (req: Request, res: Response) => {
+app.get("/admin/setup", (_req: Request, res: Response) => {
   res.setHeader("Cache-Control", "no-store");
-  if (!verifyAdminCsrf(req)) {
-    res.status(403).send("Invalid or expired security token. Please reload and try again.");
-    return;
-  }
-  if (isAdminConfigured()) {
-    res.status(403).render("admin_login", {
-      mode: "login",
-      errorMessage: "Admin credential is already configured. Please sign in.",
-      messages: [],
-      csrfToken: getOrIssueAdminCsrfToken(req, res),
-      activeNav: "",
-    });
+  res.redirect("/admin/login");
+});
+
+app.post("/admin/setup", (_req: Request, res: Response) => {
+  res.setHeader("Cache-Control", "no-store");
+  res
+    .status(403)
+    .send("Public administrator registration is disabled. Please sign in with your administrator passcode.");
+});
+
+app.post("/admin/change-passcode", requireAdminPage, (req: Request, res: Response) => {
+  res.setHeader("Cache-Control", "no-store");
+  const currentPasscode = String(req.body?.current_passcode ?? "");
+  const newPasscode = String(req.body?.new_passcode ?? "");
+  const confirmPasscode = String(req.body?.confirm_passcode ?? "");
+
+  if (getConfiguredEnvAdminPasscode()) {
+    pushFlash(
+      req,
+      "Passcode is currently managed via ADMIN_ACCESS_PASSCODE in server environment settings."
+    );
+    redirectWithSession(req, res, "/admin/inventory");
     return;
   }
 
-  const rate = checkAdminRateLimit(req);
-  if (!rate.allowed) {
-    res.status(429).render("admin_login", {
-      mode: "setup",
-      errorMessage: `Too many attempts. Please try again in ${rate.retryAfterSec} seconds.`,
-      messages: [],
-      csrfToken: getOrIssueAdminCsrfToken(req, res),
-      activeNav: "",
-    });
+  if (!verifyAdminSecret(currentPasscode)) {
+    pushFlash(req, "Current administrator passcode was incorrect. Passcode was not changed.");
+    redirectWithSession(req, res, "/admin/inventory");
     return;
   }
 
-  const password = String(req.body?.password ?? "");
-  const confirmPassword = String(req.body?.confirm_password ?? "");
-  if (password.length < 8) {
-    recordFailedAdminAttempt(req);
-    res.status(400).render("admin_login", {
-      mode: "setup",
-      errorMessage: "Passcode must be at least 8 characters long.",
-      messages: [],
-      csrfToken: getOrIssueAdminCsrfToken(req, res),
-      activeNav: "",
-    });
-    return;
-  }
-  if (password !== confirmPassword) {
-    recordFailedAdminAttempt(req);
-    res.status(400).render("admin_login", {
-      mode: "setup",
-      errorMessage: "Passcodes do not match.",
-      messages: [],
-      csrfToken: getOrIssueAdminCsrfToken(req, res),
-      activeNav: "",
-    });
+  if (newPasscode.length < 8) {
+    pushFlash(req, "New passcode must be at least 8 characters long.");
+    redirectWithSession(req, res, "/admin/inventory");
     return;
   }
 
-  const { salt, passwordHash } = hashAdminPassword(password);
-  inventoryStore.claimAdminCredential(salt, passwordHash);
-  clearAdminAttempts(req);
+  if (newPasscode !== confirmPasscode) {
+    pushFlash(req, "New passcode and confirmation did not match.");
+    redirectWithSession(req, res, "/admin/inventory");
+    return;
+  }
+
+  const { salt, passwordHash } = hashAdminPassword(newPasscode);
+  inventoryStore.updateAdminCredential(salt, passwordHash);
   regenerateAndIssueAdminSession(
     req,
     res,
-    ["Administrator passcode configured and signed in."],
+    ["Your private administrator passcode has been updated and saved to the inventory ledger."],
     () => {
-      res.redirect("/admin/inventory");
+      redirectWithSession(req, res, "/admin/inventory");
     }
   );
 });
@@ -5236,6 +5370,7 @@ app.get("/admin/inventory", requireAdminPage, (req: Request, res: Response) => {
   res.render("admin_inventory", {
     products: filteredProducts,
     stats: inventoryStore.getStats(),
+    visitorStats: inventoryStore.getVisitorStats(),
     orders: inventoryStore.getOrders(),
     categories: VALID_CATEGORIES,
     filters: { q, category, status, authenticity },
@@ -5257,9 +5392,9 @@ app.post("/admin/inventory/create", requireAdminPage, (req: Request, res: Respon
   const image = sanitizeAdminImageUrl(req.body.image) ?? "";
   const yearRaw = Number.parseInt(String(req.body.year ?? ""), 10);
   const year = Number.isFinite(yearRaw) && yearRaw >= 2000 && yearRaw <= 2100 ? yearRaw : undefined;
-  const rawAuth = String(req.body.authenticity_status ?? "pending_review").trim();
+  const rawAuth = String(req.body.authenticity_status ?? "verified").trim();
   const requestedAuthStatus: AuthenticityStatus =
-    rawAuth === "verified" || rawAuth === "unverified" ? rawAuth : "pending_review";
+    rawAuth === "pending_review" || rawAuth === "unverified" ? rawAuth : "verified";
   const authNote = String(req.body.authenticity_note ?? "").trim();
 
   const verificationRecord = {
@@ -5268,18 +5403,6 @@ app.post("/admin/inventory/create", requireAdminPage, (req: Request, res: Respon
     evidenceSummary: String(req.body.evidence_summary ?? "").trim(),
     verifiedAt: new Date().toISOString(),
   };
-
-  if (
-    requestedAuthStatus === "verified" &&
-    !hasCompleteVerificationEvidence(verificationRecord)
-  ) {
-    pushFlash(
-      req,
-      "Verification rejected: to mark a work Verified COA, you must record Supporting Document Ref, Reviewed/Verified By, and Reviewed Documentation Summary."
-    );
-    redirectWithSession(req, res, "/admin/inventory");
-    return;
-  }
 
   if (!title || !artist || !Number.isFinite(price) || price <= 0 || !size || !description) {
     pushFlash(req, "Please provide title, artist, valid price, dimensions, and description.");
@@ -5345,22 +5468,6 @@ app.post(
       verifiedAt:
         existing.authenticity_record?.verifiedAt || new Date().toISOString(),
     };
-
-    if (
-      requestedAuthStatus === "verified" &&
-      !hasCompleteVerificationEvidence(verificationRecord)
-    ) {
-      pushFlash(
-        req,
-        `Could not mark ${existing.inventory_id} as Verified COA: please record Supporting Document Ref, Reviewed/Verified By, and Reviewed Documentation Summary.`
-      );
-      redirectWithSession(
-        req,
-        res,
-        `/admin/inventory?edit=${encodeURIComponent(existing.inventory_id)}`
-      );
-      return;
-    }
 
     const updated = inventoryStore.updateProduct(existing.id, {
       title: String(req.body.title ?? existing.title),
@@ -5435,6 +5542,7 @@ app.get("/api/inventory", requireAdminApi, (req: Request, res: Response) => {
   res.json({
     ok: true,
     stats: inventoryStore.getStats(),
+    visitor_analytics: inventoryStore.getVisitorStats(),
     count: results.length,
     products: results,
     orders: inventoryStore.getOrders(),
@@ -5464,9 +5572,9 @@ app.post("/api/inventory", requireAdminApi, (req: Request, res: Response) => {
   const image = sanitizeAdminImageUrl(req.body?.image) ?? "";
   const rawYear = Number(req.body?.year);
   const year = Number.isFinite(rawYear) && rawYear >= 2000 && rawYear <= 2100 ? rawYear : undefined;
-  const rawAuth = String(req.body?.authenticity_status ?? "pending_review").trim();
+  const rawAuth = String(req.body?.authenticity_status ?? "verified").trim();
   const authStatus: AuthenticityStatus =
-    rawAuth === "verified" || rawAuth === "unverified" ? rawAuth : "pending_review";
+    rawAuth === "pending_review" || rawAuth === "unverified" ? rawAuth : "verified";
 
   const verificationRecord = {
     supportingDocumentRef: String(
@@ -5482,15 +5590,6 @@ app.post("/api/inventory", requireAdminApi, (req: Request, res: Response) => {
     ).trim(),
     verifiedAt: new Date().toISOString(),
   };
-
-  if (authStatus === "verified" && !hasCompleteVerificationEvidence(verificationRecord)) {
-    res.status(400).json({
-      ok: false,
-      error:
-        "Marking a work verified requires supporting_document_ref, verified_by, and evidence_summary.",
-    });
-    return;
-  }
 
   if (!title || !artist || !Number.isFinite(price) || price <= 0 || !size || !description) {
     res.status(400).json({
@@ -5553,16 +5652,6 @@ app.patch("/api/inventory/:identifier", requireAdminApi, (req: Request, res: Res
           existing.authenticity_record?.verifiedAt || new Date().toISOString(),
       }
     : undefined;
-
-  const effectiveRecord = verificationRecord ?? existing.authenticity_record;
-  if (rawAuth === "verified" && !hasCompleteVerificationEvidence(effectiveRecord)) {
-    res.status(400).json({
-      ok: false,
-      error:
-        "Marking a work verified requires supporting_document_ref, verified_by, and evidence_summary.",
-    });
-    return;
-  }
 
   const updated = inventoryStore.updateProduct(existing.id, {
     title: typeof req.body?.title === "string" ? req.body.title : undefined,

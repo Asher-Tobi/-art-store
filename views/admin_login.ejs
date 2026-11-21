@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%= mode === 'setup' ? 'Claim Admin Registry' : 'Curatorial Admin Sign In' %> | ART STUDIO</title>
+    <title>Curatorial Admin Sign In | ART STUDIO</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -202,57 +202,29 @@
     <main class="auth-stage">
         <section class="auth-card" aria-labelledby="adminAuthTitle">
             <span class="auth-kicker">Curatorial Administration</span>
-            <% if (mode === 'setup') { %>
-                <h1 class="auth-title" id="adminAuthTitle">Set Registry Passcode</h1>
-                <p class="auth-lead">
-                    No administrator credential is configured yet. Claim this registry now by setting your curatorial password, or configure <code>ADMIN_ACCESS_PASSCODE</code> in server environment settings.
-                </p>
+            <h1 class="auth-title" id="adminAuthTitle">Inventory Registry Sign In</h1>
+            <p class="auth-lead">
+                Private curatorial access only. Enter your unique administrator passcode to manage inventory records, authenticity statuses, and collector orders.
+            </p>
 
-                <div class="auth-info">
-                    Once claimed, this one-time setup locks permanently and only signed-in administrators can view, create, edit, or verify inventory records, orders, and certificates.
-                </div>
-
-                <% if (errorMessage) { %>
-                    <div class="auth-alert" role="alert"><%= errorMessage %></div>
-                <% } %>
-
-                <form action="/admin/setup" method="POST">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-                    <div class="auth-field">
-                        <label for="setupPassword">New Admin Passcode (min 8 characters)</label>
-                        <input id="setupPassword" type="password" name="password" minlength="8" autocomplete="new-password" required />
-                    </div>
-                    <div class="auth-field">
-                        <label for="setupConfirm">Confirm Passcode</label>
-                        <input id="setupConfirm" type="password" name="confirm_password" minlength="8" autocomplete="new-password" required />
-                    </div>
-                    <button type="submit" class="auth-submit">Claim Admin Registry &amp; Enter</button>
-                </form>
-            <% } else { %>
-                <h1 class="auth-title" id="adminAuthTitle">Inventory Registry Sign In</h1>
-                <p class="auth-lead">
-                    Administrative access is required to manage inventory records, authenticity documentation reviews, and collector orders.
-                </p>
-
-                <% if (errorMessage) { %>
-                    <div class="auth-alert" role="alert"><%= errorMessage %></div>
-                <% } %>
-
-                <% if (messages && messages.length) { %>
-                    <% messages.forEach((msg) => { %>
-                        <div class="auth-info" role="status"><%= msg %></div>
-                    <% }) %>
-                <% } %>
-
-                <form action="/admin/login" method="POST">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
-                    <div class="auth-field">
-                        <label for="adminPasscode">Administrator Passcode</label>
-                        <input id="adminPasscode" type="password" name="passcode" autocomplete="current-password" required autofocus />
-                    </div>
-                    <button type="submit" class="auth-submit">Authenticate &amp; Open Registry</button>
-                </form>
+            <% if (errorMessage) { %>
+                <div class="auth-alert" role="alert"><%= errorMessage %></div>
             <% } %>
+
+            <% if (messages && messages.length) { %>
+                <% messages.forEach((msg) => { %>
+                    <div class="auth-info" role="status"><%= msg %></div>
+                <% }) %>
+            <% } %>
+
+            <form action="/admin/login" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <div class="auth-field">
+                    <label for="adminPasscode">Administrator Passcode</label>
+                    <input id="adminPasscode" type="password" name="passcode" autocomplete="current-password" required autofocus />
+                </div>
+                <button type="submit" class="auth-submit">Authenticate &amp; Open Registry</button>
+            </form>
 
             <div class="auth-foot">
                 <a href="/">← Return to Storefront</a>

@@ -668,6 +668,71 @@
             color: #737373;
         }
 
+        .certificate-qr-strip {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .certificate-qr-box {
+            flex-shrink: 0;
+            width: 88px;
+            height: 88px;
+            padding: 5px;
+            background: #ffffff;
+            border: 1px solid #d4d4d4;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .certificate-qr-box svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .certificate-qr-info {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .certificate-qr-kicker {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--ink);
+        }
+
+        .certificate-qr-copy {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #525252;
+        }
+
+        .certificate-qr-link {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--ink);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            align-self: flex-start;
+        }
+
+        .certificate-qr-link:hover {
+            color: var(--gold);
+        }
+
         .add-cart-form {
             display: flex;
             gap: 12px;
@@ -937,6 +1002,27 @@
                             <span><%= provenance.provenanceRecord %></span>
                         </div>
                     </div>
+                    <% if (typeof certificateQrSvg !== 'undefined' && certificateQrSvg) { %>
+                    <div class="certificate-qr-strip" aria-label="Certificate QR code verification">
+                        <a
+                            href="/certificate/<%= encodeURIComponent(product.inventory_id) %>"
+                            class="certificate-qr-box"
+                            aria-label="Scan or click to open certificate for <%= product.inventory_id %>"
+                            title="Open Certificate &amp; Artwork Documentation (<%= product.inventory_id %>)"
+                        >
+                            <%- certificateQrSvg %>
+                        </a>
+                        <div class="certificate-qr-info">
+                            <span class="certificate-qr-kicker">Scan for Certificate Record</span>
+                            <p class="certificate-qr-copy">
+                                Scan with your smartphone camera to view the artwork documentation &amp; certificate for <strong style="font-family: var(--font-mono);"><%= product.inventory_id %></strong>.
+                            </p>
+                            <a href="/certificate/<%= encodeURIComponent(product.inventory_id) %>" class="certificate-qr-link">
+                                Open Certificate →
+                            </a>
+                        </div>
+                    </div>
+                    <% } %>
                 </div>
                 <% } %>
 

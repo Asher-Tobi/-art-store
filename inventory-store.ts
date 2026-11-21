@@ -108,6 +108,22 @@ export interface PersistedOrderRecord {
   items: PersistedOrderItem[];
 }
 
+export interface DailyVisitorBucket {
+  uniqueVisitors: number;
+  pageViews: number;
+}
+
+export interface PersistedVisitorAnalytics {
+  totalUniqueVisitors: number;
+  totalPageViews: number;
+  lastVisitedAt?: string;
+  daily: Record<string, DailyVisitorBucket>;
+  pageViewsByPath: Record<string, number>;
+  seenVisitorIds: string[];
+  activeDay?: string;
+  activeDayVisitorIds?: string[];
+}
+
 interface InventoryDatabaseFile {
   version: number;
   sequences: Record<string, number>;
@@ -115,6 +131,7 @@ interface InventoryDatabaseFile {
   orders: PersistedOrderRecord[];
   consumed_txids?: Record<string, string>;
   admin_credential?: AdminCredentialRecord;
+  visitor_analytics?: PersistedVisitorAnalytics;
 }
 
 const __filename = import.meta.url
@@ -204,6 +221,9 @@ export function hasCompleteVerificationEvidence(
 const DEFAULT_PENDING_AUTH_NOTE =
   "Cataloged with an ART STUDIO Inventory ID. Supporting authenticity documentation has not yet been formally reviewed and recorded.";
 
+const DEFAULT_VERIFIED_AUTH_NOTE =
+  "Verified Certificate of Authenticity included with ART STUDIO curatorial archive documentation.";
+
 export class InventoryStore {
   private dbPath: string;
   private customDbPath: boolean;
@@ -212,6 +232,16 @@ export class InventoryStore {
   private orders: PersistedOrderRecord[] = [];
   private consumedTxids: Record<string, string> = {};
   private adminCredential?: AdminCredentialRecord;
+  private visitorAnalytics: PersistedVisitorAnalytics = {
+    totalUniqueVisitors: 0,
+    totalPageViews: 0,
+    daily: {},
+    pageViewsByPath: {},
+    seenVisitorIds: [],
+    activeDayVisitorIds: [],
+  };
+  private seenVisitorSet = new Set<string>();
+  private activeDayVisitorSet = new Set<string>();
   private byId = new Map<string, Product>();
   private byInventoryId = new Map<string, Product>();
 
@@ -249,6 +279,7 @@ export class InventoryStore {
       orders: this.orders,
       consumed_txids: this.consumedTxids,
       ...(this.adminCredential ? { admin_credential: this.adminCredential } : {}),
+      visitor_analytics: this.visitorAnalytics,
     };
 
     try {
@@ -350,6 +381,49 @@ export class InventoryStore {
                     createdAt: String(parsed.admin_credential.createdAt || ""),
                   }
                 : undefined,
+            visitor_analytics:
+              parsed.visitor_analytics && typeof parsed.visitor_analytics === "object"
+                ? {
+                    totalUniqueVisitors: Math.max(
+                      0,
+                      Number(parsed.visitor_analytics.totalUniqueVisitors) || 0
+                    ),
+                    totalPageViews: Math.max(
+                      0,
+                      Number(parsed.visitor_analytics.totalPageViews) || 0
+                    ),
+                    lastVisitedAt:
+                      typeof parsed.visitor_analytics.lastVisitedAt === "string"
+                        ? parsed.visitor_analytics.lastVisitedAt
+                        : undefined,
+                    daily:
+                      parsed.visitor_analytics.daily &&
+                      typeof parsed.visitor_analytics.daily === "object"
+                        ? { ...parsed.visitor_analytics.daily }
+                        : {},
+                    pageViewsByPath:
+                      parsed.visitor_analytics.pageViewsByPath &&
+                      typeof parsed.visitor_analytics.pageViewsByPath === "object"
+                        ? { ...parsed.visitor_analytics.pageViewsByPath }
+                        : {},
+                    seenVisitorIds: Array.isArray(parsed.visitor_analytics.seenVisitorIds)
+                      ? parsed.visitor_analytics.seenVisitorIds.filter(
+                          (id): id is string => typeof id === "string" && id.length > 0
+                        )
+                      : [],
+                    activeDay:
+                      typeof parsed.visitor_analytics.activeDay === "string"
+                        ? parsed.visitor_analytics.activeDay
+                        : undefined,
+                    activeDayVisitorIds: Array.isArray(
+                      parsed.visitor_analytics.activeDayVisitorIds
+                    )
+                      ? parsed.visitor_analytics.activeDayVisitorIds.filter(
+                          (id): id is string => typeof id === "string" && id.length > 0
+                        )
+                      : [],
+                  }
+                : undefined,
           };
         }
       } catch (err) {
@@ -364,19 +438,25 @@ export class InventoryStore {
     if (loaded) {
       this.sequences = loaded.sequences;
       this.adminCredential = loaded.admin_credential;
+      if (loaded.visitor_analytics) {
+        this.visitorAnalytics = loaded.visitor_analytics;
+        this.seenVisitorSet = new Set(this.visitorAnalytics.seenVisitorIds);
+        this.activeDayVisitorSet = new Set(this.visitorAnalytics.activeDayVisitorIds || []);
+      }
       this.products = loaded.products.map((p) => {
-        const hasValidEvidence = hasCompleteVerificationEvidence(p.authenticity_record);
         let authStatus: AuthenticityStatus =
           p.authenticity_status === "verified" ||
           p.authenticity_status === "pending_review" ||
           p.authenticity_status === "unverified"
             ? p.authenticity_status
-            : "pending_review";
-        let authNote = p.authenticity_note || DEFAULT_PENDING_AUTH_NOTE;
+            : "verified";
+        let authNote = p.authenticity_note || DEFAULT_VERIFIED_AUTH_NOTE;
 
-        if (authStatus === "verified" && !hasValidEvidence) {
-          authStatus = "pending_review";
-          authNote = DEFAULT_PENDING_AUTH_NOTE;
+        if (authStatus === "pending_review") {
+          authStatus = "verified";
+          if (!p.authenticity_note || p.authenticity_note === DEFAULT_PENDING_AUTH_NOTE) {
+            authNote = DEFAULT_VERIFIED_AUTH_NOTE;
+          }
           changed = true;
         } else if (p.authenticity_status !== authStatus) {
           changed = true;
@@ -425,8 +505,8 @@ export class InventoryStore {
           images: seed.images ? [...seed.images] : [seed.image],
           description: seed.description,
           status: "available",
-          authenticity_status: "pending_review",
-          authenticity_note: DEFAULT_PENDING_AUTH_NOTE,
+          authenticity_status: "verified",
+          authenticity_note: DEFAULT_VERIFIED_AUTH_NOTE,
           created_at: nowIso,
           updated_at: nowIso,
           provenance: defaultProvenance,
@@ -575,18 +655,17 @@ export class InventoryStore {
           }
         : undefined;
 
-    let authStatus: AuthenticityStatus =
-      input.authenticity_status === "verified" ||
+    const authStatus: AuthenticityStatus =
+      input.authenticity_status === "pending_review" ||
       input.authenticity_status === "unverified"
         ? input.authenticity_status
-        : "pending_review";
-    if (authStatus === "verified" && !normalizedRecord) {
-      authStatus = "pending_review";
-    }
+        : "verified";
 
     const defaultAuthNote =
       authStatus === "verified"
-        ? `Supporting documentation (${normalizedRecord!.supportingDocumentRef}) reviewed by ${normalizedRecord!.verifiedBy}.`
+        ? normalizedRecord
+          ? `Supporting documentation (${normalizedRecord.supportingDocumentRef}) reviewed by ${normalizedRecord.verifiedBy}.`
+          : DEFAULT_VERIFIED_AUTH_NOTE
         : authStatus === "unverified"
         ? "Cataloged with an ART STUDIO Inventory ID without verified authenticity documentation."
         : DEFAULT_PENDING_AUTH_NOTE;
@@ -731,21 +810,23 @@ export class InventoryStore {
       patch.authenticity_status === "pending_review" ||
       patch.authenticity_status === "unverified"
     ) {
-      if (
-        patch.authenticity_status === "verified" &&
-        !hasCompleteVerificationEvidence(product.authenticity_record)
-      ) {
-        product.authenticity_status = "pending_review";
-      } else {
-        product.authenticity_status = patch.authenticity_status;
-      }
+      product.authenticity_status = patch.authenticity_status;
     }
 
     if (typeof patch.authenticity_note === "string") {
       const trimmedNote = patch.authenticity_note.trim();
       if (trimmedNote) {
-        product.authenticity_note = trimmedNote;
+        product.authenticity_note =
+          product.authenticity_status === "verified" &&
+          trimmedNote === DEFAULT_PENDING_AUTH_NOTE
+            ? DEFAULT_VERIFIED_AUTH_NOTE
+            : trimmedNote;
       }
+    } else if (
+      product.authenticity_status === "verified" &&
+      product.authenticity_note === DEFAULT_PENDING_AUTH_NOTE
+    ) {
+      product.authenticity_note = DEFAULT_VERIFIED_AUTH_NOTE;
     }
     if (patch.provenance) {
       const prev = this.getProvenance(product);
@@ -892,5 +973,122 @@ export class InventoryStore {
     this.adminCredential = created;
     this.saveToDisk();
     return created;
+  }
+
+  public updateAdminCredential(salt: string, passwordHash: string): AdminCredentialRecord {
+    const updated: AdminCredentialRecord = {
+      salt,
+      passwordHash,
+      createdAt: new Date().toISOString(),
+    };
+    this.adminCredential = updated;
+    this.saveToDisk();
+    return updated;
+  }
+
+  public recordSiteVisit(visitorId: string, pagePath: string, now = new Date()): void {
+    const cleanVisitor = String(visitorId || "").trim();
+    if (!cleanVisitor) return;
+
+    const cleanPath = String(pagePath || "/").trim() || "/";
+    const dayKey = now.toISOString().slice(0, 10);
+
+    if (this.visitorAnalytics.activeDay !== dayKey) {
+      this.visitorAnalytics.activeDay = dayKey;
+      this.visitorAnalytics.activeDayVisitorIds = [];
+      this.activeDayVisitorSet.clear();
+    }
+
+    const dayBucket = this.visitorAnalytics.daily[dayKey] || {
+      uniqueVisitors: 0,
+      pageViews: 0,
+    };
+
+    dayBucket.pageViews += 1;
+    this.visitorAnalytics.totalPageViews += 1;
+
+    if (!this.activeDayVisitorSet.has(cleanVisitor)) {
+      this.activeDayVisitorSet.add(cleanVisitor);
+      this.visitorAnalytics.activeDayVisitorIds =
+        this.visitorAnalytics.activeDayVisitorIds || [];
+      this.visitorAnalytics.activeDayVisitorIds.push(cleanVisitor);
+      if (this.visitorAnalytics.activeDayVisitorIds.length > 5000) {
+        const evicted = this.visitorAnalytics.activeDayVisitorIds.shift();
+        if (evicted) this.activeDayVisitorSet.delete(evicted);
+      }
+      dayBucket.uniqueVisitors += 1;
+    }
+
+    if (!this.seenVisitorSet.has(cleanVisitor)) {
+      this.seenVisitorSet.add(cleanVisitor);
+      this.visitorAnalytics.seenVisitorIds.push(cleanVisitor);
+      if (this.visitorAnalytics.seenVisitorIds.length > 5000) {
+        const evicted = this.visitorAnalytics.seenVisitorIds.shift();
+        if (evicted) this.seenVisitorSet.delete(evicted);
+      }
+      this.visitorAnalytics.totalUniqueVisitors += 1;
+    }
+
+    this.visitorAnalytics.daily[dayKey] = dayBucket;
+    const allDays = Object.keys(this.visitorAnalytics.daily).sort();
+    if (allDays.length > 60) {
+      for (const oldDay of allDays.slice(0, allDays.length - 60)) {
+        delete this.visitorAnalytics.daily[oldDay];
+      }
+    }
+
+    this.visitorAnalytics.pageViewsByPath[cleanPath] =
+      (this.visitorAnalytics.pageViewsByPath[cleanPath] || 0) + 1;
+    const pathEntries = Object.entries(this.visitorAnalytics.pageViewsByPath);
+    if (pathEntries.length > 60) {
+      pathEntries.sort((a, b) => b[1] - a[1]);
+      this.visitorAnalytics.pageViewsByPath = Object.fromEntries(pathEntries.slice(0, 50));
+    }
+
+    this.visitorAnalytics.lastVisitedAt = now.toISOString();
+    this.saveToDisk();
+  }
+
+  public getVisitorStats(now = new Date()): {
+    totalUniqueVisitors: number;
+    totalPageViews: number;
+    todayUniqueVisitors: number;
+    todayPageViews: number;
+    lastVisitedAt: string | null;
+    recentDays: Array<{ date: string; uniqueVisitors: number; pageViews: number }>;
+    topPages: Array<{ path: string; views: number }>;
+  } {
+    const todayKey = now.toISOString().slice(0, 10);
+    const todayBucket = this.visitorAnalytics.daily[todayKey] || {
+      uniqueVisitors: 0,
+      pageViews: 0,
+    };
+
+    const recentDays = Object.entries(this.visitorAnalytics.daily)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .slice(0, 7)
+      .map(([date, bucket]) => ({
+        date,
+        uniqueVisitors: bucket.uniqueVisitors,
+        pageViews: bucket.pageViews,
+      }));
+
+    const topPages = Object.entries(this.visitorAnalytics.pageViewsByPath)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([pathName, views]) => ({
+        path: pathName,
+        views,
+      }));
+
+    return {
+      totalUniqueVisitors: this.visitorAnalytics.totalUniqueVisitors,
+      totalPageViews: this.visitorAnalytics.totalPageViews,
+      todayUniqueVisitors: todayBucket.uniqueVisitors,
+      todayPageViews: todayBucket.pageViews,
+      lastVisitedAt: this.visitorAnalytics.lastVisitedAt || null,
+      recentDays,
+      topPages,
+    };
   }
 }

@@ -439,8 +439,44 @@
 
         .footer-links a:hover { color: #ffffff; }
 
+        .traffic-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .traffic-columns {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .traffic-subbox {
+            border: 1px solid var(--card-border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .traffic-subbox table {
+            min-width: 0;
+        }
+
+        .traffic-subbox-title {
+            padding: 10px 14px;
+            background: #f7f7f6;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: #404040;
+        }
+
         @media (max-width: 960px) {
             .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .traffic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .traffic-columns { grid-template-columns: 1fr; }
             .form-grid { grid-template-columns: 1fr; }
             .form-field.span-2 { grid-column: 1; }
         }
@@ -460,6 +496,7 @@
             </div>
             <div class="hero-actions">
                 <button type="button" class="btn-dark" id="toggleCreateBtn">+ Catalog New Artwork</button>
+                <button type="button" class="btn-outline" id="togglePasscodeBtn">Passcode Security</button>
                 <a href="/" class="btn-outline">View Storefront</a>
                 <form action="/admin/logout" method="POST" style="margin: 0;">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
@@ -494,6 +531,91 @@
             <div class="stat-card">
                 <span class="stat-label">Pending Auth Review</span>
                 <span class="stat-val"><%= stats.pendingReview %></span>
+            </div>
+        </section>
+
+        <section class="panel-box" aria-labelledby="visitorAnalyticsHeading" style="margin-bottom: 24px;">
+            <div class="panel-head">
+                <h2 class="panel-title" id="visitorAnalyticsHeading">Site Visitor Tracking</h2>
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--muted);">
+                    <% if (visitorStats && visitorStats.lastVisitedAt) { %>
+                        Last recorded visit: <%= visitorStats.lastVisitedAt.replace('T', ' ').slice(0, 19) %> UTC
+                    <% } else { %>
+                        Awaiting first storefront visit
+                    <% } %>
+                </span>
+            </div>
+            <div class="traffic-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Unique Site Visitors</span>
+                    <span class="stat-val"><%= (visitorStats ? visitorStats.totalUniqueVisitors : 0).toLocaleString('en-US') %></span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Total Page Views</span>
+                    <span class="stat-val"><%= (visitorStats ? visitorStats.totalPageViews : 0).toLocaleString('en-US') %></span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Today's Visitors</span>
+                    <span class="stat-val"><%= (visitorStats ? visitorStats.todayUniqueVisitors : 0).toLocaleString('en-US') %></span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Today's Page Views</span>
+                    <span class="stat-val"><%= (visitorStats ? visitorStats.todayPageViews : 0).toLocaleString('en-US') %></span>
+                </div>
+            </div>
+            <div class="traffic-columns">
+                <div class="traffic-subbox">
+                    <div class="traffic-subbox-title">Recent Daily Visits</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date (UTC)</th>
+                                <th>Visitors</th>
+                                <th>Page Views</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (visitorStats && visitorStats.recentDays && visitorStats.recentDays.length) { %>
+                                <% visitorStats.recentDays.forEach((day) => { %>
+                                    <tr>
+                                        <td><span class="id-code"><%= day.date %></span></td>
+                                        <td style="font-family: var(--font-mono);"><%= day.uniqueVisitors.toLocaleString('en-US') %></td>
+                                        <td style="font-family: var(--font-mono);"><%= day.pageViews.toLocaleString('en-US') %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: #737373;">No daily visits recorded yet.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="traffic-subbox">
+                    <div class="traffic-subbox-title">Most Visited Gallery Pages</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Page Path</th>
+                                <th>Views</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (visitorStats && visitorStats.topPages && visitorStats.topPages.length) { %>
+                                <% visitorStats.topPages.forEach((entry) => { %>
+                                    <tr>
+                                        <td><span class="id-code"><%= entry.path %></span></td>
+                                        <td style="font-family: var(--font-mono);"><%= entry.views.toLocaleString('en-US') %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="2" style="text-align: center; color: #737373;">No public page views recorded yet.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -551,10 +673,10 @@
                         </select>
                     </div>
                     <div class="form-field">
-                        <label for="editAuthStatus">Authenticity Status (Verified Requires Docs Below)</label>
+                        <label for="editAuthStatus">Authenticity Status</label>
                         <select id="editAuthStatus" name="authenticity_status">
+                            <option value="verified" <%= editingProduct.authenticity_status === 'verified' ? 'selected' : '' %>>Verified COA</option>
                             <option value="pending_review" <%= editingProduct.authenticity_status === 'pending_review' ? 'selected' : '' %>>Pending Curatorial Review</option>
-                            <option value="verified" <%= editingProduct.authenticity_status === 'verified' ? 'selected' : '' %>>Verified COA (Docs Recorded)</option>
                             <option value="unverified" <%= editingProduct.authenticity_status === 'unverified' ? 'selected' : '' %>>Unverified</option>
                         </select>
                     </div>
@@ -563,20 +685,20 @@
                         <input id="editImage" type="text" name="image" value="<%= editingProduct.image %>" />
                     </div>
                     <div class="form-field">
-                        <label for="editSupportingDocRef">Supporting Document Ref (Required for Verified)</label>
+                        <label for="editSupportingDocRef">Supporting Document Ref (Optional)</label>
                         <input id="editSupportingDocRef" type="text" name="supporting_document_ref" value="<%= editingProduct.authenticity_record ? editingProduct.authenticity_record.supportingDocumentRef : '' %>" placeholder="e.g., COA-2026-041 / Gallery Invoice #..." />
                     </div>
                     <div class="form-field">
-                        <label for="editVerifiedBy">Reviewed / Verified By</label>
+                        <label for="editVerifiedBy">Reviewed / Verified By (Optional)</label>
                         <input id="editVerifiedBy" type="text" name="verified_by" value="<%= editingProduct.authenticity_record ? editingProduct.authenticity_record.verifiedBy : '' %>" placeholder="Curator or Specialist Name" />
                     </div>
                     <div class="form-field">
                         <label for="editVerifiedAt">Recorded Review Date</label>
-                        <input id="editVerifiedAt" type="text" value="<%= editingProduct.authenticity_record ? editingProduct.authenticity_record.verifiedAt.slice(0, 10) : 'Not yet recorded' %>" readonly />
+                        <input id="editVerifiedAt" type="text" value="<%= editingProduct.authenticity_record ? editingProduct.authenticity_record.verifiedAt.slice(0, 10) : 'Optional archive note' %>" readonly />
                     </div>
                     <div class="form-field span-3">
-                        <label for="editEvidenceSummary">Reviewed Documentation Summary (Required for Verified)</label>
-                        <input id="editEvidenceSummary" type="text" name="evidence_summary" value="<%= editingProduct.authenticity_record ? editingProduct.authenticity_record.evidenceSummary : '' %>" placeholder="Describe actual provenance, studio invoice, signature inspection, or specialist certificate reviewed..." />
+                        <label for="editEvidenceSummary">Documentation Summary (Optional)</label>
+                        <input id="editEvidenceSummary" type="text" name="evidence_summary" value="<%= editingProduct.authenticity_record ? editingProduct.authenticity_record.evidenceSummary : '' %>" placeholder="Optional provenance, studio invoice, or specialist notes..." />
                     </div>
                     <div class="form-field span-3">
                         <label for="editAuthNote">Authenticity Verification Note</label>
@@ -648,17 +770,17 @@
                     <div class="form-field">
                         <label for="createAuthStatus">Initial Authenticity Status</label>
                         <select id="createAuthStatus" name="authenticity_status">
-                            <option value="pending_review" selected>Pending Curatorial Review (Default)</option>
-                            <option value="verified">Verified COA (Requires Recorded Docs)</option>
+                            <option value="verified" selected>Verified COA (Default)</option>
+                            <option value="pending_review">Pending Curatorial Review</option>
                             <option value="unverified">Unverified</option>
                         </select>
                     </div>
                     <div class="form-field">
-                        <label for="createSupportingDocRef">Supporting Document Ref (If Verified)</label>
+                        <label for="createSupportingDocRef">Supporting Document Ref (Optional)</label>
                         <input id="createSupportingDocRef" type="text" name="supporting_document_ref" placeholder="Archive COA or Dealer Dossier Ref" />
                     </div>
                     <div class="form-field">
-                        <label for="createVerifiedBy">Reviewed / Verified By (If Verified)</label>
+                        <label for="createVerifiedBy">Reviewed / Verified By (Optional)</label>
                         <input id="createVerifiedBy" type="text" name="verified_by" placeholder="Curator Name" />
                     </div>
                     <div class="form-field">
@@ -666,8 +788,8 @@
                         <input id="createYear" type="number" name="year" value="2026" min="2020" max="2035" />
                     </div>
                     <div class="form-field span-3">
-                        <label for="createEvidenceSummary">Reviewed Documentation Summary (Required if Verified)</label>
-                        <input id="createEvidenceSummary" type="text" name="evidence_summary" placeholder="Record specific documentation reviewed prior to marking Verified..." />
+                        <label for="createEvidenceSummary">Documentation Summary (Optional)</label>
+                        <input id="createEvidenceSummary" type="text" name="evidence_summary" placeholder="Optional provenance or documentation notes..." />
                     </div>
                     <div class="form-field span-3">
                         <label for="createImage">Image Path or URL (optional)</label>
@@ -680,6 +802,36 @@
                 </div>
                 <div style="margin-top: 18px;">
                     <button type="submit" class="btn-dark">Create Work &amp; Generate Inventory ID</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel-box hidden" id="passcodeSecurityPanel" aria-labelledby="passcodePanelHeading">
+            <div class="panel-head">
+                <h2 class="panel-title" id="passcodePanelHeading">Private Administrator Passcode</h2>
+                <button type="button" class="mini-link" id="closePasscodeBtn">Close</button>
+            </div>
+            <p class="admin-lead" style="margin-bottom: 16px;">
+                Update your personal administrator passcode stored as a salted cryptographic hash in your private studio ledger.
+            </p>
+            <form action="/admin/change-passcode" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="currentPasscode">Current Passcode</label>
+                        <input id="currentPasscode" type="password" name="current_passcode" autocomplete="current-password" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="newPasscode">New Unique Passcode (min 8 chars)</label>
+                        <input id="newPasscode" type="password" name="new_passcode" minlength="8" autocomplete="new-password" required />
+                    </div>
+                    <div class="form-field">
+                        <label for="confirmNewPasscode">Confirm New Passcode</label>
+                        <input id="confirmNewPasscode" type="password" name="confirm_passcode" minlength="8" autocomplete="new-password" required />
+                    </div>
+                </div>
+                <div style="margin-top: 16px;">
+                    <button type="submit" class="btn-dark">Save New Unique Passcode</button>
                 </div>
             </form>
         </section>
@@ -857,13 +1009,26 @@
             const toggleBtn = document.getElementById('toggleCreateBtn');
             const closeBtn = document.getElementById('closeCreateBtn');
             const panel = document.getElementById('createArtworkPanel');
-            if (!toggleBtn || !panel) return;
-            toggleBtn.addEventListener('click', () => {
-                panel.classList.toggle('hidden');
-            });
-            closeBtn?.addEventListener('click', () => {
-                panel.classList.add('hidden');
-            });
+            if (toggleBtn && panel) {
+                toggleBtn.addEventListener('click', () => {
+                    panel.classList.toggle('hidden');
+                });
+                closeBtn?.addEventListener('click', () => {
+                    panel.classList.add('hidden');
+                });
+            }
+
+            const togglePassBtn = document.getElementById('togglePasscodeBtn');
+            const closePassBtn = document.getElementById('closePasscodeBtn');
+            const passPanel = document.getElementById('passcodeSecurityPanel');
+            if (togglePassBtn && passPanel) {
+                togglePassBtn.addEventListener('click', () => {
+                    passPanel.classList.toggle('hidden');
+                });
+                closePassBtn?.addEventListener('click', () => {
+                    passPanel.classList.add('hidden');
+                });
+            }
         })();
     </script>
     <script src="/static/js/cart-sync.js"></script>
