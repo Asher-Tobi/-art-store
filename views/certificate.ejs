@@ -428,7 +428,9 @@
         <div class="cert-toolbar">
             <div class="cert-toolbar-links">
                 <a href="/product/<%= product.id %>">← Back to Artwork Page</a>
-                <a href="/admin/inventory?q=<%= encodeURIComponent(product.inventory_id) %>">View in Inventory Ledger</a>
+                <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                    <a href="/admin/inventory?q=<%= encodeURIComponent(product.inventory_id) %>">View in Inventory Ledger</a>
+                <% } %>
             </div>
             <button type="button" class="print-btn" id="printCertificateBtn">Print Documentation</button>
         </div>
@@ -574,6 +576,20 @@
                             <h3>Provenance &amp; Curatorial Record</h3>
                             <p><%= provenance.provenanceRecord %></p>
                         </div>
+                        <% if (product.authenticity_status === 'verified' && product.authenticity_record) { %>
+                        <div class="provenance-block">
+                            <h3>Supporting Documentation Ref</h3>
+                            <p class="mono"><%= product.authenticity_record.supportingDocumentRef %></p>
+                        </div>
+                        <div class="provenance-block">
+                            <h3>Curatorial Reviewer &amp; Date</h3>
+                            <p><%= product.authenticity_record.verifiedBy %> · <%= product.authenticity_record.verifiedAt.slice(0, 10) %></p>
+                        </div>
+                        <div class="provenance-block" style="grid-column: 1 / -1;">
+                            <h3>Reviewed Evidence Summary</h3>
+                            <p><%= product.authenticity_record.evidenceSummary %></p>
+                        </div>
+                        <% } %>
                     </div>
                 </section>
 
@@ -604,7 +620,9 @@
                 <a href="/shipping">Shipping &amp; Delivery</a>
                 <a href="/authenticity">Authenticity</a>
                 <a href="/crypto-checkout">Crypto Checkout</a>
-                <a href="/admin/inventory">Inventory Ledger</a>
+                <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                    <a href="/admin/inventory">Inventory Ledger</a>
+                <% } %>
                 <a href="/contact">Contact &amp; Support</a>
             </nav>
         </div>

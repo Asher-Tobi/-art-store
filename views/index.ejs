@@ -1573,7 +1573,9 @@
                         <li><a href="/authenticity">Artwork Authenticity</a></li>
                         <li><a href="/terms">Terms &amp; Conditions</a></li>
                         <li><a href="/privacy-policy">Privacy Policy</a></li>
-                        <li><a href="/admin/inventory">Inventory Registry (Admin)</a></li>
+                        <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                            <li><a href="/admin/inventory">Inventory Registry (Admin)</a></li>
+                        <% } %>
                         <li><a href="/">Curated Vault Archive</a></li>
                     </ul>
                 </div>

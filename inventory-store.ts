@@ -14,6 +14,19 @@ export interface ProductProvenance {
   provenanceRecord: string;
 }
 
+export interface AuthenticityVerificationRecord {
+  supportingDocumentRef: string;
+  verifiedBy: string;
+  verifiedAt: string;
+  evidenceSummary: string;
+}
+
+export interface AdminCredentialRecord {
+  salt: string;
+  passwordHash: string;
+  createdAt: string;
+}
+
 export interface Product {
   id: number;
   inventory_id: string;
@@ -29,6 +42,7 @@ export interface Product {
   status: InventoryStatus;
   authenticity_status: AuthenticityStatus;
   authenticity_note: string;
+  authenticity_record?: AuthenticityVerificationRecord;
   created_at: string;
   updated_at: string;
   sold_at?: string;
@@ -100,6 +114,7 @@ interface InventoryDatabaseFile {
   products: Product[];
   orders: PersistedOrderRecord[];
   consumed_txids?: Record<string, string>;
+  admin_credential?: AdminCredentialRecord;
 }
 
 const __filename = import.meta.url
@@ -173,6 +188,20 @@ export function formatPriceDisplay(price: number): string {
   })}`;
 }
 
+export function hasCompleteVerificationEvidence(
+  record?: Partial<AuthenticityVerificationRecord> | null
+): boolean {
+  if (!record) return false;
+  return Boolean(
+    String(record.supportingDocumentRef ?? "").trim() &&
+      String(record.verifiedBy ?? "").trim() &&
+      String(record.evidenceSummary ?? "").trim()
+  );
+}
+
+const DEFAULT_PENDING_AUTH_NOTE =
+  "Cataloged with an ART STUDIO Inventory ID. Supporting authenticity documentation has not yet been formally reviewed and recorded.";
+
 export class InventoryStore {
   private dbPath: string;
   private customDbPath: boolean;
@@ -180,6 +209,7 @@ export class InventoryStore {
   private products: Product[] = [];
   private orders: PersistedOrderRecord[] = [];
   private consumedTxids: Record<string, string> = {};
+  private adminCredential?: AdminCredentialRecord;
   private byId = new Map<string, Product>();
   private byInventoryId = new Map<string, Product>();
 
@@ -216,6 +246,7 @@ export class InventoryStore {
       products: this.products,
       orders: this.orders,
       consumed_txids: this.consumedTxids,
+      ...(this.adminCredential ? { admin_credential: this.adminCredential } : {}),
     };
 
     try {
@@ -306,6 +337,17 @@ export class InventoryStore {
               parsed.consumed_txids && typeof parsed.consumed_txids === "object"
                 ? { ...parsed.consumed_txids }
                 : {},
+            admin_credential:
+              parsed.admin_credential &&
+              typeof parsed.admin_credential === "object" &&
+              typeof parsed.admin_credential.salt === "string" &&
+              typeof parsed.admin_credential.passwordHash === "string"
+                ? {
+                    salt: parsed.admin_credential.salt,
+                    passwordHash: parsed.admin_credential.passwordHash,
+                    createdAt: String(parsed.admin_credential.createdAt || ""),
+                  }
+                : undefined,
           };
         }
       } catch (err) {
@@ -315,32 +357,44 @@ export class InventoryStore {
 
     const nowIso = new Date().toISOString();
     const defaultYear = 2026;
+    let changed = !loaded;
 
     if (loaded) {
       this.sequences = loaded.sequences;
-      this.products = loaded.products.map((p) => ({
-        ...p,
-        category: normalizeCategoryName(p.category),
-        status: p.status === "sold" ? "sold" : "available",
-        authenticity_status:
+      this.adminCredential = loaded.admin_credential;
+      this.products = loaded.products.map((p) => {
+        const hasValidEvidence = hasCompleteVerificationEvidence(p.authenticity_record);
+        let authStatus: AuthenticityStatus =
           p.authenticity_status === "verified" ||
           p.authenticity_status === "pending_review" ||
           p.authenticity_status === "unverified"
             ? p.authenticity_status
-            : "verified",
-        authenticity_note:
-          p.authenticity_note ||
-          "Curatorial studio/dealer verification documented in ART STUDIO archive.",
-        created_at: p.created_at || nowIso,
-        updated_at: p.updated_at || nowIso,
-      }));
+            : "pending_review";
+        let authNote = p.authenticity_note || DEFAULT_PENDING_AUTH_NOTE;
+
+        if (authStatus === "verified" && !hasValidEvidence) {
+          authStatus = "pending_review";
+          authNote = DEFAULT_PENDING_AUTH_NOTE;
+          changed = true;
+        } else if (p.authenticity_status !== authStatus) {
+          changed = true;
+        }
+
+        return {
+          ...p,
+          category: normalizeCategoryName(p.category),
+          status: p.status === "sold" ? "sold" : "available",
+          authenticity_status: authStatus,
+          authenticity_note: authNote,
+          created_at: p.created_at || nowIso,
+          updated_at: p.updated_at || nowIso,
+        };
+      });
       this.orders = loaded.orders;
       this.consumedTxids = loaded.consumed_txids || {};
       this.rebuildIndexes();
       this.syncSequenceFromExistingIds();
     }
-
-    let changed = !loaded;
 
     // Ensure every seed product exists without overwriting existing customized data or resetting IDs
     for (const seed of seedProducts) {
@@ -369,9 +423,8 @@ export class InventoryStore {
           images: seed.images ? [...seed.images] : [seed.image],
           description: seed.description,
           status: "available",
-          authenticity_status: "verified",
-          authenticity_note:
-            "Curatorial provenance and studio/dealer origin verified prior to archive cataloging.",
+          authenticity_status: "pending_review",
+          authenticity_note: DEFAULT_PENDING_AUTH_NOTE,
           created_at: nowIso,
           updated_at: nowIso,
           provenance: defaultProvenance,
@@ -489,6 +542,7 @@ export class InventoryStore {
     year?: number;
     authenticity_status?: AuthenticityStatus;
     authenticity_note?: string;
+    authenticity_record?: Partial<AuthenticityVerificationRecord>;
     provenance?: Partial<ProductProvenance>;
   }): Product {
     const normalizedCategory = normalizeCategoryName(input.category);
@@ -503,15 +557,37 @@ export class InventoryStore {
       String(input.image ?? "").trim() || "/static/images/london-gallery-1.jpg";
     const galleryImages =
       input.images && input.images.length ? input.images : [primaryImage];
-    const authStatus: AuthenticityStatus =
+
+    const normalizedRecord: AuthenticityVerificationRecord | undefined =
+      hasCompleteVerificationEvidence(input.authenticity_record)
+        ? {
+            supportingDocumentRef: String(
+              input.authenticity_record!.supportingDocumentRef
+            ).trim(),
+            verifiedBy: String(input.authenticity_record!.verifiedBy).trim(),
+            verifiedAt:
+              String(input.authenticity_record!.verifiedAt ?? "").trim() || nowIso,
+            evidenceSummary: String(
+              input.authenticity_record!.evidenceSummary
+            ).trim(),
+          }
+        : undefined;
+
+    let authStatus: AuthenticityStatus =
       input.authenticity_status === "verified" ||
       input.authenticity_status === "unverified"
         ? input.authenticity_status
         : "pending_review";
+    if (authStatus === "verified" && !normalizedRecord) {
+      authStatus = "pending_review";
+    }
+
     const defaultAuthNote =
       authStatus === "verified"
-        ? "Curatorial provenance and attribution verified prior to listing."
-        : "Cataloged with an ART STUDIO Inventory ID. Independent authenticity documentation is pending curatorial review.";
+        ? `Supporting documentation (${normalizedRecord!.supportingDocumentRef}) reviewed by ${normalizedRecord!.verifiedBy}.`
+        : authStatus === "unverified"
+        ? "Cataloged with an ART STUDIO Inventory ID without verified authenticity documentation."
+        : DEFAULT_PENDING_AUTH_NOTE;
 
     const created: Product = {
       id: nextId,
@@ -528,6 +604,7 @@ export class InventoryStore {
       status: "available",
       authenticity_status: authStatus,
       authenticity_note: String(input.authenticity_note ?? "").trim() || defaultAuthNote,
+      ...(normalizedRecord ? { authenticity_record: normalizedRecord } : {}),
       created_at: nowIso,
       updated_at: nowIso,
       provenance: {
@@ -570,6 +647,7 @@ export class InventoryStore {
       status?: InventoryStatus;
       authenticity_status?: AuthenticityStatus;
       authenticity_note?: string;
+      authenticity_record?: Partial<AuthenticityVerificationRecord>;
       provenance?: Partial<ProductProvenance>;
     }
   ): Product | undefined {
@@ -614,15 +692,58 @@ export class InventoryStore {
         product.sold_order_reference = undefined;
       }
     }
+
+    if (patch.authenticity_record) {
+      const mergedRecord: Partial<AuthenticityVerificationRecord> = {
+        supportingDocumentRef:
+          patch.authenticity_record.supportingDocumentRef?.trim() ??
+          product.authenticity_record?.supportingDocumentRef ??
+          "",
+        verifiedBy:
+          patch.authenticity_record.verifiedBy?.trim() ??
+          product.authenticity_record?.verifiedBy ??
+          "",
+        verifiedAt:
+          patch.authenticity_record.verifiedAt?.trim() ||
+          product.authenticity_record?.verifiedAt ||
+          new Date().toISOString(),
+        evidenceSummary:
+          patch.authenticity_record.evidenceSummary?.trim() ??
+          product.authenticity_record?.evidenceSummary ??
+          "",
+      };
+      if (hasCompleteVerificationEvidence(mergedRecord)) {
+        product.authenticity_record = {
+          supportingDocumentRef: mergedRecord.supportingDocumentRef!,
+          verifiedBy: mergedRecord.verifiedBy!,
+          verifiedAt: mergedRecord.verifiedAt!,
+          evidenceSummary: mergedRecord.evidenceSummary!,
+        };
+      } else {
+        product.authenticity_record = undefined;
+      }
+    }
+
     if (
       patch.authenticity_status === "verified" ||
       patch.authenticity_status === "pending_review" ||
       patch.authenticity_status === "unverified"
     ) {
-      product.authenticity_status = patch.authenticity_status;
+      if (
+        patch.authenticity_status === "verified" &&
+        !hasCompleteVerificationEvidence(product.authenticity_record)
+      ) {
+        product.authenticity_status = "pending_review";
+      } else {
+        product.authenticity_status = patch.authenticity_status;
+      }
     }
+
     if (typeof patch.authenticity_note === "string") {
-      product.authenticity_note = patch.authenticity_note.trim();
+      const trimmedNote = patch.authenticity_note.trim();
+      if (trimmedNote) {
+        product.authenticity_note = trimmedNote;
+      }
     }
     if (patch.provenance) {
       const prev = this.getProvenance(product);
@@ -726,5 +847,23 @@ export class InventoryStore {
       sequences: { ...this.sequences },
       byCategory,
     };
+  }
+
+  public getAdminCredential(): AdminCredentialRecord | undefined {
+    return this.adminCredential;
+  }
+
+  public claimAdminCredential(salt: string, passwordHash: string): AdminCredentialRecord {
+    if (this.adminCredential) {
+      throw new Error("Admin credential is already configured.");
+    }
+    const created: AdminCredentialRecord = {
+      salt,
+      passwordHash,
+      createdAt: new Date().toISOString(),
+    };
+    this.adminCredential = created;
+    this.saveToDisk();
+    return created;
   }
 }

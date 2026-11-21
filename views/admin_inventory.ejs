@@ -461,6 +461,10 @@
             <div class="hero-actions">
                 <button type="button" class="btn-dark" id="toggleCreateBtn">+ Catalog New Artwork</button>
                 <a href="/" class="btn-outline">View Storefront</a>
+                <form action="/admin/logout" method="POST" style="margin: 0;">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                    <button type="submit" class="btn-outline">Sign Out</button>
+                </form>
             </div>
         </div>
 
@@ -509,6 +513,7 @@
                 <a href="/admin/inventory" class="mini-link">Close Editor</a>
             </div>
             <form action="/admin/inventory/<%= encodeURIComponent(editingProduct.inventory_id) %>/edit" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                 <div class="form-grid">
                     <div class="form-field">
                         <label for="editInventoryId">Permanent Inventory ID (Immutable)</label>
@@ -546,16 +551,32 @@
                         </select>
                     </div>
                     <div class="form-field">
-                        <label for="editAuthStatus">Authenticity Verification Status</label>
+                        <label for="editAuthStatus">Authenticity Status (Verified Requires Docs Below)</label>
                         <select id="editAuthStatus" name="authenticity_status">
-                            <option value="verified" <%= editingProduct.authenticity_status === 'verified' ? 'selected' : '' %>>Verified COA</option>
                             <option value="pending_review" <%= editingProduct.authenticity_status === 'pending_review' ? 'selected' : '' %>>Pending Curatorial Review</option>
+                            <option value="verified" <%= editingProduct.authenticity_status === 'verified' ? 'selected' : '' %>>Verified COA (Docs Recorded)</option>
                             <option value="unverified" <%= editingProduct.authenticity_status === 'unverified' ? 'selected' : '' %>>Unverified</option>
                         </select>
                     </div>
                     <div class="form-field">
                         <label for="editImage">Primary Image URL</label>
                         <input id="editImage" type="text" name="image" value="<%= editingProduct.image %>" />
+                    </div>
+                    <div class="form-field">
+                        <label for="editSupportingDocRef">Supporting Document Ref (Required for Verified)</label>
+                        <input id="editSupportingDocRef" type="text" name="supporting_document_ref" value="<%= editingProduct.authenticity_record ? editingProduct.authenticity_record.supportingDocumentRef : '' %>" placeholder="e.g., COA-2026-041 / Gallery Invoice #..." />
+                    </div>
+                    <div class="form-field">
+                        <label for="editVerifiedBy">Reviewed / Verified By</label>
+                        <input id="editVerifiedBy" type="text" name="verified_by" value="<%= editingProduct.authenticity_record ? editingProduct.authenticity_record.verifiedBy : '' %>" placeholder="Curator or Specialist Name" />
+                    </div>
+                    <div class="form-field">
+                        <label for="editVerifiedAt">Recorded Review Date</label>
+                        <input id="editVerifiedAt" type="text" value="<%= editingProduct.authenticity_record ? editingProduct.authenticity_record.verifiedAt.slice(0, 10) : 'Not yet recorded' %>" readonly />
+                    </div>
+                    <div class="form-field span-3">
+                        <label for="editEvidenceSummary">Reviewed Documentation Summary (Required for Verified)</label>
+                        <input id="editEvidenceSummary" type="text" name="evidence_summary" value="<%= editingProduct.authenticity_record ? editingProduct.authenticity_record.evidenceSummary : '' %>" placeholder="Describe actual provenance, studio invoice, signature inspection, or specialist certificate reviewed..." />
                     </div>
                     <div class="form-field span-3">
                         <label for="editAuthNote">Authenticity Verification Note</label>
@@ -598,6 +619,7 @@
                 <button type="button" class="mini-link" id="closeCreateBtn">Cancel</button>
             </div>
             <form action="/admin/inventory/create" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                 <div class="form-grid">
                     <div class="form-field">
                         <label for="createTitle">Title</label>
@@ -627,17 +649,29 @@
                         <label for="createAuthStatus">Initial Authenticity Status</label>
                         <select id="createAuthStatus" name="authenticity_status">
                             <option value="pending_review" selected>Pending Curatorial Review (Default)</option>
-                            <option value="verified">Verified COA Documentation</option>
+                            <option value="verified">Verified COA (Requires Recorded Docs)</option>
                             <option value="unverified">Unverified</option>
                         </select>
                     </div>
-                    <div class="form-field span-2">
-                        <label for="createImage">Image Path or URL (optional)</label>
-                        <input id="createImage" type="text" name="image" placeholder="/static/images/london-gallery-1.jpg" />
+                    <div class="form-field">
+                        <label for="createSupportingDocRef">Supporting Document Ref (If Verified)</label>
+                        <input id="createSupportingDocRef" type="text" name="supporting_document_ref" placeholder="Archive COA or Dealer Dossier Ref" />
+                    </div>
+                    <div class="form-field">
+                        <label for="createVerifiedBy">Reviewed / Verified By (If Verified)</label>
+                        <input id="createVerifiedBy" type="text" name="verified_by" placeholder="Curator Name" />
                     </div>
                     <div class="form-field">
                         <label for="createYear">Catalog Year</label>
                         <input id="createYear" type="number" name="year" value="2026" min="2020" max="2035" />
+                    </div>
+                    <div class="form-field span-3">
+                        <label for="createEvidenceSummary">Reviewed Documentation Summary (Required if Verified)</label>
+                        <input id="createEvidenceSummary" type="text" name="evidence_summary" placeholder="Record specific documentation reviewed prior to marking Verified..." />
+                    </div>
+                    <div class="form-field span-3">
+                        <label for="createImage">Image Path or URL (optional)</label>
+                        <input id="createImage" type="text" name="image" placeholder="/static/images/london-gallery-1.jpg" />
                     </div>
                     <div class="form-field span-3">
                         <label for="createDescription">Curatorial Description</label>

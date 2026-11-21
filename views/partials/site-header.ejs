@@ -355,7 +355,9 @@
             <div class="site-mobile-divider" aria-hidden="true"></div>
             <a href="/shipping">Shipping &amp; Delivery</a>
             <a href="/authenticity">Artwork Authenticity</a>
-            <a href="/admin/inventory">Inventory Registry</a>
+            <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                <a href="/admin/inventory">Inventory Registry</a>
+            <% } %>
             <a href="/contact">Contact &amp; Support</a>
             <a href="/cart">Shopping Bag (<span class="cart-count"><%= cart_count %></span>)</a>
         </nav>

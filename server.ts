@@ -12,6 +12,7 @@ import {
   VALID_CATEGORIES,
   normalizeCategoryName,
   getCategoryCode,
+  hasCompleteVerificationEvidence,
   type Product,
   type ProductProvenance,
   type SeedProductInput,
@@ -48,6 +49,10 @@ declare module "express-session" {
     btcCheckoutStartedAt?: number;
     checkoutTokens?: string[];
     flashes?: string[];
+    isAdmin?: boolean;
+    adminVer?: string;
+    adminSignedInAt?: string;
+    adminCsrf?: string;
   }
 }
 
@@ -73,7 +78,376 @@ const BTC_USD_PRICE = Number(process.env.BTC_USD_PRICE || "63389") || 63389;
 const ETH_USD_PRICE = Number(process.env.ETH_USD_PRICE || "1740") || 1740;
 const SOL_USD_PRICE = Number(process.env.SOL_USD_PRICE || "69") || 69;
 const SECRET_KEY =
-  process.env.SECRET_KEY || "local-development-key-change-before-deploy";
+  (process.env.SECRET_KEY || "").trim() || crypto.randomBytes(32).toString("hex");
+
+const ADMIN_COOKIE_NAME = "art_studio_admin";
+const ADMIN_CSRF_COOKIE_NAME = "art_studio_csrf";
+const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const adminAuthAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function getConfiguredEnvAdminPasscode(): string {
+  return (process.env.ADMIN_ACCESS_PASSCODE || "").trim();
+}
+
+function getAdminCredentialVersion(): string {
+  const envPass = getConfiguredEnvAdminPasscode();
+  if (envPass) {
+    return crypto
+      .createHash("sha256")
+      .update(`env:${envPass}`)
+      .digest("hex")
+      .slice(0, 16);
+  }
+  const claimed = inventoryStore.getAdminCredential();
+  if (claimed) {
+    return crypto
+      .createHash("sha256")
+      .update(`db:${claimed.salt}:${claimed.passwordHash}`)
+      .digest("hex")
+      .slice(0, 16);
+  }
+  return "unconfigured";
+}
+
+function isAdminConfigured(): boolean {
+  return Boolean(getConfiguredEnvAdminPasscode() || inventoryStore.getAdminCredential());
+}
+
+function safeEqualStrings(a: string, b: string): boolean {
+  const bufA = crypto.createHash("sha256").update(a).digest();
+  const bufB = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function verifyAdminSecret(candidate: string): boolean {
+  const clean = String(candidate ?? "");
+  if (!clean) return false;
+  const envPass = getConfiguredEnvAdminPasscode();
+  if (envPass) {
+    return safeEqualStrings(clean, envPass);
+  }
+  const claimed = inventoryStore.getAdminCredential();
+  if (!claimed) return false;
+  try {
+    const derived = crypto.scryptSync(clean, claimed.salt, 64);
+    const stored = Buffer.from(claimed.passwordHash, "hex");
+    if (derived.length !== stored.length) return false;
+    return crypto.timingSafeEqual(derived, stored);
+  } catch {
+    return false;
+  }
+}
+
+function hashAdminPassword(password: string): { salt: string; passwordHash: string } {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const passwordHash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return { salt, passwordHash };
+}
+
+function parseRequestCookies(req: Request): Record<string, string> {
+  const header = String(req.headers.cookie || "");
+  const out: Record<string, string> = {};
+  if (!header) return out;
+  for (const part of header.split(";")) {
+    const eqIdx = part.indexOf("=");
+    if (eqIdx <= 0) continue;
+    const key = part.slice(0, eqIdx).trim();
+    const rawVal = part.slice(eqIdx + 1).trim();
+    try {
+      out[key] = decodeURIComponent(rawVal);
+    } catch {
+      out[key] = rawVal;
+    }
+  }
+  return out;
+}
+
+function signAdminPayload(payloadObj: Record<string, unknown>): string {
+  const body = Buffer.from(JSON.stringify(payloadObj), "utf8").toString("base64url");
+  const sig = crypto.createHmac("sha256", SECRET_KEY).update(body).digest("base64url");
+  return `${body}.${sig}`;
+}
+
+function verifySignedPayload<T extends Record<string, unknown>>(token: string): T | null {
+  const dotIdx = token.indexOf(".");
+  if (dotIdx <= 0) return null;
+  const body = token.slice(0, dotIdx);
+  const sig = token.slice(dotIdx + 1);
+  if (!body || !sig) return null;
+  const expectedSig = crypto
+    .createHmac("sha256", SECRET_KEY)
+    .update(body)
+    .digest("base64url");
+  if (!safeEqualStrings(sig, expectedSig)) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as T;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function isRequestHttps(req: Request): boolean {
+  const forwardedProto = String(req.headers["x-forwarded-proto"] || "")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  return req.secure || forwardedProto === "https";
+}
+
+function appendSetCookieHeader(res: Response, cookieLine: string): void {
+  const existing = res.getHeader("Set-Cookie");
+  if (!existing) {
+    res.setHeader("Set-Cookie", cookieLine);
+  } else if (Array.isArray(existing)) {
+    res.setHeader("Set-Cookie", [...existing.map(String), cookieLine]);
+  } else {
+    res.setHeader("Set-Cookie", [String(existing), cookieLine]);
+  }
+}
+
+function setAdminManagedCookie(
+  req: Request,
+  res: Response,
+  name: string,
+  value: string,
+  maxAgeSeconds: number
+): void {
+  const encoded = encodeURIComponent(value);
+  const parts = [`${name}=${encoded}`, "Path=/", `Max-Age=${maxAgeSeconds}`, "HttpOnly"];
+  if (isRequestHttps(req)) {
+    parts.push("SameSite=None", "Secure", "Partitioned");
+  } else {
+    parts.push("SameSite=Lax");
+  }
+  appendSetCookieHeader(res, parts.join("; "));
+}
+
+function clearAdminManagedCookie(req: Request, res: Response, name: string): void {
+  setAdminManagedCookie(req, res, name, "", 0);
+}
+
+function getOrIssueAdminCsrfToken(req: Request, res: Response): string {
+  if (req.session.adminCsrf) {
+    return req.session.adminCsrf;
+  }
+  const cookies = parseRequestCookies(req);
+  const cookieSigned = cookies[ADMIN_CSRF_COOKIE_NAME];
+  if (cookieSigned) {
+    const parsed = verifySignedPayload<{ token?: string; exp?: number }>(cookieSigned);
+    if (parsed?.token && typeof parsed.exp === "number" && parsed.exp > Date.now()) {
+      req.session.adminCsrf = parsed.token;
+      return parsed.token;
+    }
+  }
+  const token = crypto.randomBytes(24).toString("hex");
+  req.session.adminCsrf = token;
+  const signed = signAdminPayload({ token, exp: Date.now() + ADMIN_SESSION_TTL_MS });
+  setAdminManagedCookie(req, res, ADMIN_CSRF_COOKIE_NAME, signed, ADMIN_SESSION_TTL_MS / 1000);
+  return token;
+}
+
+function isAdminAuthenticated(req: Request): boolean {
+  if (!isAdminConfigured()) return false;
+  const expectedVer = getAdminCredentialVersion();
+
+  if (req.session.isAdmin === true && req.session.adminVer === expectedVer) {
+    return true;
+  }
+
+  const cookies = parseRequestCookies(req);
+  const rawToken = cookies[ADMIN_COOKIE_NAME];
+  if (rawToken) {
+    const parsed = verifySignedPayload<{
+      role?: string;
+      ver?: string;
+      exp?: number;
+    }>(rawToken);
+    if (
+      parsed &&
+      parsed.role === "admin" &&
+      parsed.ver === expectedVer &&
+      typeof parsed.exp === "number" &&
+      parsed.exp > Date.now()
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function issueAdminAuthSession(req: Request, res: Response): void {
+  const ver = getAdminCredentialVersion();
+  const exp = Date.now() + ADMIN_SESSION_TTL_MS;
+  req.session.isAdmin = true;
+  req.session.adminVer = ver;
+  req.session.adminSignedInAt = new Date().toISOString();
+
+  const token = signAdminPayload({
+    role: "admin",
+    ver,
+    exp,
+    nonce: crypto.randomBytes(8).toString("hex"),
+  });
+  setAdminManagedCookie(
+    req,
+    res,
+    ADMIN_COOKIE_NAME,
+    token,
+    Math.floor(ADMIN_SESSION_TTL_MS / 1000)
+  );
+}
+
+function clearAdminAuthSession(req: Request, res: Response): void {
+  req.session.isAdmin = false;
+  req.session.adminVer = undefined;
+  req.session.adminSignedInAt = undefined;
+  clearAdminManagedCookie(req, res, ADMIN_COOKIE_NAME);
+}
+
+function isSameOriginRequest(req: Request): boolean {
+  const expectedHost = String(req.headers["x-forwarded-host"] || req.headers.host || "")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  if (!expectedHost) return false;
+
+  const originHeader = String(req.headers.origin || "").trim();
+  const refererHeader = String(req.headers.referer || "").trim();
+  const candidate = originHeader || refererHeader;
+  if (!candidate) return true; // Non-browser clients without Origin/Referer
+  try {
+    const parsed = new URL(candidate);
+    return parsed.host.toLowerCase() === expectedHost;
+  } catch {
+    return false;
+  }
+}
+
+function verifyAdminCsrf(req: Request): boolean {
+  if (!isSameOriginRequest(req)) return false;
+
+  const submitted = String(
+    req.body?._csrf ?? req.headers["x-csrf-token"] ?? ""
+  ).trim();
+  if (submitted) {
+    if (req.session.adminCsrf && safeEqualStrings(submitted, req.session.adminCsrf)) {
+      return true;
+    }
+    const cookies = parseRequestCookies(req);
+    const cookieSigned = cookies[ADMIN_CSRF_COOKIE_NAME];
+    if (cookieSigned) {
+      const parsed = verifySignedPayload<{ token?: string; exp?: number }>(cookieSigned);
+      if (
+        parsed?.token &&
+        typeof parsed.exp === "number" &&
+        parsed.exp > Date.now() &&
+        safeEqualStrings(submitted, parsed.token)
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Allow explicit custom header for same-origin fetch JSON requests
+  const xRequestedWith = String(req.headers["x-requested-with"] || "").trim();
+  return xRequestedWith.toLowerCase() === "xmlhttprequest";
+}
+
+function checkAdminRateLimit(req: Request): { allowed: boolean; retryAfterSec: number } {
+  const ip = String(req.ip || req.socket.remoteAddress || "unknown");
+  const now = Date.now();
+  const entry = adminAuthAttempts.get(ip);
+  if (!entry || entry.resetAt <= now) {
+    return { allowed: true, retryAfterSec: 0 };
+  }
+  if (entry.count >= 10) {
+    return {
+      allowed: false,
+      retryAfterSec: Math.max(1, Math.ceil((entry.resetAt - now) / 1000)),
+    };
+  }
+  return { allowed: true, retryAfterSec: 0 };
+}
+
+function recordFailedAdminAttempt(req: Request): void {
+  const ip = String(req.ip || req.socket.remoteAddress || "unknown");
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  const entry = adminAuthAttempts.get(ip);
+  if (!entry || entry.resetAt <= now) {
+    adminAuthAttempts.set(ip, { count: 1, resetAt: now + windowMs });
+  } else {
+    entry.count += 1;
+  }
+}
+
+function clearAdminAttempts(req: Request): void {
+  const ip = String(req.ip || req.socket.remoteAddress || "unknown");
+  adminAuthAttempts.delete(ip);
+}
+
+function requireAdminPage(req: Request, res: Response, next: NextFunction): void {
+  if (!isAdminAuthenticated(req)) {
+    const csrfToken = getOrIssueAdminCsrfToken(req, res);
+    res.setHeader("Cache-Control", "no-store");
+    res.status(401).render("admin_login", {
+      mode: isAdminConfigured() ? "login" : "setup",
+      errorMessage:
+        req.method === "GET"
+          ? ""
+          : "Administrator authentication is required before modifying inventory records.",
+      messages: consumeFlashes(req),
+      csrfToken,
+      activeNav: "",
+    });
+    return;
+  }
+  if (req.method !== "GET" && req.method !== "HEAD" && !verifyAdminCsrf(req)) {
+    res.status(403).send("Invalid or expired security token. Please reload and try again.");
+    return;
+  }
+  next();
+}
+
+function requireAdminApi(req: Request, res: Response, next: NextFunction): void {
+  res.setHeader("Cache-Control", "no-store");
+  if (!isAdminAuthenticated(req)) {
+    res.status(401).json({
+      ok: false,
+      error: "Administrator authentication required.",
+    });
+    return;
+  }
+  if (req.method !== "GET" && req.method !== "HEAD" && !verifyAdminCsrf(req)) {
+    res.status(403).json({
+      ok: false,
+      error: "Invalid CSRF or origin header for administrative mutation.",
+    });
+    return;
+  }
+  next();
+}
+
+function sanitizeAdminImageUrl(raw: unknown): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) {
+    return trimmed;
+  }
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+      return parsed.toString();
+    }
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
 
 function getPaymentGatewayConfig() {
   return {
@@ -2479,6 +2853,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     { key: "Artists", label: "Artists", href: "/artists" },
   ];
   res.locals.activeNav = "";
+  res.locals.isAdmin = isAdminAuthenticated(req);
   next();
 });
 
@@ -3492,13 +3867,24 @@ app.get("/api/payments/paypal/return", async (req: Request, res: Response) => {
 app.get("/checkout-success", async (req: Request, res: Response) => {
   const cid = getRequestCartId(req);
   const requestedRef = String(req.query.reference ?? "").trim().toUpperCase();
-  const order =
-    (requestedRef
-      ? orderByReference.get(requestedRef) ||
-        (inventoryStore.getOrderByReference(requestedRef) as Order | undefined)
-      : undefined) ||
-    req.session.order ||
-    (cid ? orderStore.get(cid) : undefined);
+  const callerOwnedOrder =
+    req.session.order || (cid ? orderStore.get(cid) : undefined);
+
+  let order: Order | undefined = callerOwnedOrder;
+  if (requestedRef) {
+    if (
+      callerOwnedOrder &&
+      callerOwnedOrder.reference.toUpperCase() === requestedRef
+    ) {
+      order = callerOwnedOrder;
+    } else if (isAdminAuthenticated(req)) {
+      order =
+        orderByReference.get(requestedRef) ||
+        (inventoryStore.getOrderByReference(requestedRef) as Order | undefined);
+    } else {
+      order = undefined;
+    }
+  }
 
   if (!order) {
     redirectWithSession(req, res, "/");
@@ -3643,10 +4029,10 @@ const trustPages: Record<string, TrustPageConfig> = {
     title: "Artwork Authenticity",
     description:
       "Provenance verification, signed Certificates of Authenticity, and condition guarantees for every work offered at ART STUDIO.",
-    lead: "Every piece presented in our archive undergoes multi-point curatorial vetting to verify authorship, materials, edition status, and documented gallery or studio provenance.",
+    lead: "Every piece presented in our archive receives a unique ART STUDIO Inventory ID for catalog tracking. Authenticity certification is granted separately only after supporting provenance and attribution documentation has been reviewed and recorded by our curatorial team.",
     highlights: [
-      { label: "Documentation", value: "Signed COA Included" },
-      { label: "Guarantee", value: "Lifetime Authenticity" },
+      { label: "Documentation", value: "Documented Review" },
+      { label: "Cataloging", value: "Permanent Inventory ID" },
       { label: "Origin", value: "Vetted Studios & Dealers" },
     ],
     sections: [
@@ -3658,19 +4044,19 @@ const trustPages: Record<string, TrustPageConfig> = {
         bullets: [
           "Verification of artist signatures, dates, workshop marks, foundry stamps, or edition numbers.",
           "Condition assessment covering canvas tension, pigment stability, patina, and period framing.",
-          "Direct studio or estate confirmation recorded prior to listing.",
+          "Supporting documentation reference and reviewer recorded in the archive before marking COA status as Verified.",
         ],
       },
       {
-        heading: "Certificate of Authenticity",
+        heading: "Inventory ID vs. Verified Certificate of Authenticity",
         paragraphs: [
-          "Each acquisition includes a physical or registered Certificate of Authenticity detailing the artist, title, medium, dimensions, year, and provenance record, signed by the artist or gallery director.",
+          "An ART STUDIO Inventory ID permanently identifies a work in our archive, orders, and records, but does not by itself verify authenticity. Works awaiting formal document review are marked Pending Curatorial Review until supporting provenance documentation is recorded.",
         ],
       },
       {
-        heading: "Lifetime Authenticity Guarantee",
+        heading: "Curatorial Attribution Policy",
         paragraphs: [
-          "ART STUDIO stands behind the attribution of every cataloged work. Should any independent accredited authority prove an attribution to be materially inaccurate, we guarantee a full refund of the purchase price upon return of the artwork in its delivered condition.",
+          "When supporting documentation is recorded and verified for a work, its documentation dossier lists the reference, reviewer, and evidence summary. Should any independent accredited authority prove a verified attribution to be materially inaccurate, we guarantee a full refund of the purchase price upon return of the artwork in its delivered condition.",
         ],
       },
     ],
@@ -4564,8 +4950,145 @@ app.get("/artists/:slug", (req: Request, res: Response) => {
   });
 });
 
-// Admin & Inventory Management System
-app.get("/admin/inventory", (req: Request, res: Response) => {
+// Admin Authentication & Inventory Management System
+app.get("/admin/login", (req: Request, res: Response) => {
+  res.setHeader("Cache-Control", "no-store");
+  if (isAdminAuthenticated(req)) {
+    res.redirect("/admin/inventory");
+    return;
+  }
+  const csrfToken = getOrIssueAdminCsrfToken(req, res);
+  res.render("admin_login", {
+    mode: isAdminConfigured() ? "login" : "setup",
+    errorMessage: "",
+    messages: consumeFlashes(req),
+    csrfToken,
+    activeNav: "",
+  });
+});
+
+app.post("/admin/setup", (req: Request, res: Response) => {
+  res.setHeader("Cache-Control", "no-store");
+  if (!verifyAdminCsrf(req)) {
+    res.status(403).send("Invalid or expired security token. Please reload and try again.");
+    return;
+  }
+  if (isAdminConfigured()) {
+    res.status(403).render("admin_login", {
+      mode: "login",
+      errorMessage: "Admin credential is already configured. Please sign in.",
+      messages: [],
+      csrfToken: getOrIssueAdminCsrfToken(req, res),
+      activeNav: "",
+    });
+    return;
+  }
+
+  const rate = checkAdminRateLimit(req);
+  if (!rate.allowed) {
+    res.status(429).render("admin_login", {
+      mode: "setup",
+      errorMessage: `Too many attempts. Please try again in ${rate.retryAfterSec} seconds.`,
+      messages: [],
+      csrfToken: getOrIssueAdminCsrfToken(req, res),
+      activeNav: "",
+    });
+    return;
+  }
+
+  const password = String(req.body?.password ?? "");
+  const confirmPassword = String(req.body?.confirm_password ?? "");
+  if (password.length < 8) {
+    recordFailedAdminAttempt(req);
+    res.status(400).render("admin_login", {
+      mode: "setup",
+      errorMessage: "Passcode must be at least 8 characters long.",
+      messages: [],
+      csrfToken: getOrIssueAdminCsrfToken(req, res),
+      activeNav: "",
+    });
+    return;
+  }
+  if (password !== confirmPassword) {
+    recordFailedAdminAttempt(req);
+    res.status(400).render("admin_login", {
+      mode: "setup",
+      errorMessage: "Passcodes do not match.",
+      messages: [],
+      csrfToken: getOrIssueAdminCsrfToken(req, res),
+      activeNav: "",
+    });
+    return;
+  }
+
+  const { salt, passwordHash } = hashAdminPassword(password);
+  inventoryStore.claimAdminCredential(salt, passwordHash);
+  clearAdminAttempts(req);
+  issueAdminAuthSession(req, res);
+  pushFlash(req, "Administrator passcode configured and signed in.");
+  req.session.save(() => {
+    res.redirect("/admin/inventory");
+  });
+});
+
+app.post("/admin/login", (req: Request, res: Response) => {
+  res.setHeader("Cache-Control", "no-store");
+  if (!verifyAdminCsrf(req)) {
+    res.status(403).send("Invalid or expired security token. Please reload and try again.");
+    return;
+  }
+  if (!isAdminConfigured()) {
+    res.redirect("/admin/login");
+    return;
+  }
+
+  const rate = checkAdminRateLimit(req);
+  if (!rate.allowed) {
+    res.status(429).render("admin_login", {
+      mode: "login",
+      errorMessage: `Too many failed sign-in attempts. Please wait ${rate.retryAfterSec} seconds.`,
+      messages: [],
+      csrfToken: getOrIssueAdminCsrfToken(req, res),
+      activeNav: "",
+    });
+    return;
+  }
+
+  const passcode = String(req.body?.passcode ?? "");
+  if (!verifyAdminSecret(passcode)) {
+    recordFailedAdminAttempt(req);
+    res.status(401).render("admin_login", {
+      mode: "login",
+      errorMessage: "Invalid administrator passcode.",
+      messages: [],
+      csrfToken: getOrIssueAdminCsrfToken(req, res),
+      activeNav: "",
+    });
+    return;
+  }
+
+  clearAdminAttempts(req);
+  issueAdminAuthSession(req, res);
+  req.session.save(() => {
+    res.redirect("/admin/inventory");
+  });
+});
+
+app.post("/admin/logout", (req: Request, res: Response) => {
+  res.setHeader("Cache-Control", "no-store");
+  if (isAdminAuthenticated(req) && !verifyAdminCsrf(req)) {
+    res.status(403).send("Invalid security token.");
+    return;
+  }
+  clearAdminAuthSession(req, res);
+  pushFlash(req, "Signed out of curatorial administration.");
+  req.session.save(() => {
+    res.redirect("/admin/login");
+  });
+});
+
+app.get("/admin/inventory", requireAdminPage, (req: Request, res: Response) => {
+  res.setHeader("Cache-Control", "no-store");
   const q = String(req.query.q ?? "").trim();
   const category = String(req.query.category ?? "all").trim();
   const status = String(req.query.status ?? "all").trim();
@@ -4578,6 +5101,7 @@ app.get("/admin/inventory", (req: Request, res: Response) => {
     authenticity,
   });
   const editingProduct = editParam ? getProductById(editParam) : undefined;
+  const csrfToken = getOrIssueAdminCsrfToken(req, res);
 
   res.render("admin_inventory", {
     products: filteredProducts,
@@ -4588,24 +5112,44 @@ app.get("/admin/inventory", (req: Request, res: Response) => {
     editingProduct: editingProduct ?? null,
     editingProvenance: editingProduct ? getProductProvenance(editingProduct) : null,
     messages: consumeFlashes(req),
+    csrfToken,
     activeNav: "",
   });
 });
 
-app.post("/admin/inventory/create", (req: Request, res: Response) => {
+app.post("/admin/inventory/create", requireAdminPage, (req: Request, res: Response) => {
   const title = String(req.body.title ?? "").trim();
   const artist = String(req.body.artist ?? "").trim();
   const category = normalizeCategoryName(String(req.body.category ?? "Painting"));
   const price = Number.parseFloat(String(req.body.price ?? "0"));
   const size = String(req.body.size ?? "").trim();
   const description = String(req.body.description ?? "").trim();
-  const image = String(req.body.image ?? "").trim();
+  const image = sanitizeAdminImageUrl(req.body.image) ?? "";
   const yearRaw = Number.parseInt(String(req.body.year ?? ""), 10);
   const year = Number.isFinite(yearRaw) && yearRaw >= 2000 && yearRaw <= 2100 ? yearRaw : undefined;
   const rawAuth = String(req.body.authenticity_status ?? "pending_review").trim();
-  const authStatus: AuthenticityStatus =
+  const requestedAuthStatus: AuthenticityStatus =
     rawAuth === "verified" || rawAuth === "unverified" ? rawAuth : "pending_review";
   const authNote = String(req.body.authenticity_note ?? "").trim();
+
+  const verificationRecord = {
+    supportingDocumentRef: String(req.body.supporting_document_ref ?? "").trim(),
+    verifiedBy: String(req.body.verified_by ?? "").trim(),
+    evidenceSummary: String(req.body.evidence_summary ?? "").trim(),
+    verifiedAt: new Date().toISOString(),
+  };
+
+  if (
+    requestedAuthStatus === "verified" &&
+    !hasCompleteVerificationEvidence(verificationRecord)
+  ) {
+    pushFlash(
+      req,
+      "Verification rejected: to mark a work Verified COA, you must record Supporting Document Ref, Reviewed/Verified By, and Reviewed Documentation Summary."
+    );
+    redirectWithSession(req, res, "/admin/inventory");
+    return;
+  }
 
   if (!title || !artist || !Number.isFinite(price) || price <= 0 || !size || !description) {
     pushFlash(req, "Please provide title, artist, valid price, dimensions, and description.");
@@ -4622,8 +5166,11 @@ app.post("/admin/inventory/create", (req: Request, res: Response) => {
     image,
     description,
     year,
-    authenticity_status: authStatus,
+    authenticity_status: requestedAuthStatus,
     authenticity_note: authNote,
+    authenticity_record: hasCompleteVerificationEvidence(verificationRecord)
+      ? verificationRecord
+      : undefined,
     provenance: {
       datePeriod: String(req.body.date_period ?? "").trim() || undefined,
       materialsMedium: String(req.body.materials_medium ?? "").trim() || undefined,
@@ -4643,64 +5190,92 @@ app.post("/admin/inventory/create", (req: Request, res: Response) => {
   );
 });
 
-app.post("/admin/inventory/:identifier/edit", (req: Request, res: Response) => {
-  const identifier = String(req.params.identifier ?? "").trim();
-  const existing = getProductById(identifier);
-  if (!existing) {
-    res.status(404).send("Artwork not found in inventory.");
-    return;
+app.post(
+  "/admin/inventory/:identifier/edit",
+  requireAdminPage,
+  (req: Request, res: Response) => {
+    const identifier = String(req.params.identifier ?? "").trim();
+    const existing = getProductById(identifier);
+    if (!existing) {
+      res.status(404).send("Artwork not found in inventory.");
+      return;
+    }
+
+    const priceVal = Number.parseFloat(String(req.body.price ?? ""));
+    const rawStatus = String(req.body.status ?? existing.status).trim();
+    const statusVal: InventoryStatus = rawStatus === "sold" ? "sold" : "available";
+    const rawAuth = String(req.body.authenticity_status ?? existing.authenticity_status).trim();
+    const requestedAuthStatus: AuthenticityStatus =
+      rawAuth === "verified" || rawAuth === "unverified" ? rawAuth : "pending_review";
+
+    const verificationRecord = {
+      supportingDocumentRef: String(req.body.supporting_document_ref ?? "").trim(),
+      verifiedBy: String(req.body.verified_by ?? "").trim(),
+      evidenceSummary: String(req.body.evidence_summary ?? "").trim(),
+      verifiedAt:
+        existing.authenticity_record?.verifiedAt || new Date().toISOString(),
+    };
+
+    if (
+      requestedAuthStatus === "verified" &&
+      !hasCompleteVerificationEvidence(verificationRecord)
+    ) {
+      pushFlash(
+        req,
+        `Could not mark ${existing.inventory_id} as Verified COA: please record Supporting Document Ref, Reviewed/Verified By, and Reviewed Documentation Summary.`
+      );
+      redirectWithSession(
+        req,
+        res,
+        `/admin/inventory?edit=${encodeURIComponent(existing.inventory_id)}`
+      );
+      return;
+    }
+
+    const updated = inventoryStore.updateProduct(existing.id, {
+      title: String(req.body.title ?? existing.title),
+      artist: String(req.body.artist ?? existing.artist),
+      category: String(req.body.category ?? existing.category),
+      price: Number.isFinite(priceVal) && priceVal > 0 ? priceVal : existing.price,
+      size: String(req.body.size ?? existing.size),
+      image: sanitizeAdminImageUrl(req.body.image) ?? existing.image,
+      description: String(req.body.description ?? existing.description),
+      status: statusVal,
+      authenticity_status: requestedAuthStatus,
+      authenticity_note: String(req.body.authenticity_note ?? existing.authenticity_note),
+      authenticity_record: verificationRecord,
+      provenance: {
+        datePeriod: String(req.body.date_period ?? "").trim() || undefined,
+        originAttribution: String(req.body.origin_attribution ?? "").trim() || undefined,
+        materialsMedium: String(req.body.materials_medium ?? "").trim() || undefined,
+        markingsEdition: String(req.body.markings_edition ?? "").trim() || undefined,
+        conditionNote: String(req.body.condition_note ?? "").trim() || undefined,
+        provenanceRecord: String(req.body.provenance_record ?? "").trim() || undefined,
+      },
+    });
+
+    if (updated) {
+      pushFlash(
+        req,
+        `Saved updates to "${updated.title}". Permanent Inventory ID ${updated.inventory_id} preserved.`
+      );
+      redirectWithSession(
+        req,
+        res,
+        `/admin/inventory?edit=${encodeURIComponent(updated.inventory_id)}`
+      );
+      return;
+    }
+    redirectWithSession(req, res, "/admin/inventory");
   }
+);
 
-  const priceVal = Number.parseFloat(String(req.body.price ?? ""));
-  const rawStatus = String(req.body.status ?? existing.status).trim();
-  const statusVal: InventoryStatus = rawStatus === "sold" ? "sold" : "available";
-  const rawAuth = String(req.body.authenticity_status ?? existing.authenticity_status).trim();
-  const authStatus: AuthenticityStatus =
-    rawAuth === "verified" || rawAuth === "unverified" ? rawAuth : "pending_review";
-
-  const updated = inventoryStore.updateProduct(existing.id, {
-    title: String(req.body.title ?? existing.title),
-    artist: String(req.body.artist ?? existing.artist),
-    category: String(req.body.category ?? existing.category),
-    price: Number.isFinite(priceVal) && priceVal > 0 ? priceVal : existing.price,
-    size: String(req.body.size ?? existing.size),
-    image: String(req.body.image ?? existing.image),
-    description: String(req.body.description ?? existing.description),
-    status: statusVal,
-    authenticity_status: authStatus,
-    authenticity_note: String(req.body.authenticity_note ?? existing.authenticity_note),
-    provenance: {
-      datePeriod: String(req.body.date_period ?? "").trim() || undefined,
-      originAttribution: String(req.body.origin_attribution ?? "").trim() || undefined,
-      materialsMedium: String(req.body.materials_medium ?? "").trim() || undefined,
-      markingsEdition: String(req.body.markings_edition ?? "").trim() || undefined,
-      conditionNote: String(req.body.condition_note ?? "").trim() || undefined,
-      provenanceRecord: String(req.body.provenance_record ?? "").trim() || undefined,
-    },
-  });
-
-  if (updated) {
-    pushFlash(
-      req,
-      `Saved updates to "${updated.title}". Permanent Inventory ID ${updated.inventory_id} preserved.`
-    );
-    redirectWithSession(
-      req,
-      res,
-      `/admin/inventory?edit=${encodeURIComponent(updated.inventory_id)}`
-    );
-    return;
-  }
-  redirectWithSession(req, res, "/admin/inventory");
-});
-
-app.get("/api/inventory", (req: Request, res: Response) => {
+app.get("/api/inventory", requireAdminApi, (req: Request, res: Response) => {
   const q = String(req.query.q ?? "").trim();
   const category = String(req.query.category ?? "all").trim();
   const status = String(req.query.status ?? "all").trim();
   const authenticity = String(req.query.authenticity ?? "all").trim();
   const results = inventoryStore.searchProducts(q, { category, status, authenticity });
-  res.setHeader("Cache-Control", "no-store");
   res.json({
     ok: true,
     stats: inventoryStore.getStats(),
@@ -4710,13 +5285,12 @@ app.get("/api/inventory", (req: Request, res: Response) => {
   });
 });
 
-app.get("/api/inventory/:identifier", (req: Request, res: Response) => {
+app.get("/api/inventory/:identifier", requireAdminApi, (req: Request, res: Response) => {
   const product = getProductById(String(req.params.identifier ?? ""));
   if (!product) {
     res.status(404).json({ ok: false, error: "Not Found" });
     return;
   }
-  res.setHeader("Cache-Control", "no-store");
   res.json({
     ok: true,
     product,
@@ -4724,19 +5298,43 @@ app.get("/api/inventory/:identifier", (req: Request, res: Response) => {
   });
 });
 
-app.post("/api/inventory", (req: Request, res: Response) => {
+app.post("/api/inventory", requireAdminApi, (req: Request, res: Response) => {
   const title = String(req.body?.title ?? "").trim();
   const artist = String(req.body?.artist ?? "").trim();
   const category = normalizeCategoryName(String(req.body?.category ?? "Painting"));
   const price = Number(req.body?.price);
   const size = String(req.body?.size ?? "").trim();
   const description = String(req.body?.description ?? "").trim();
-  const image = String(req.body?.image ?? "").trim();
+  const image = sanitizeAdminImageUrl(req.body?.image) ?? "";
   const rawYear = Number(req.body?.year);
   const year = Number.isFinite(rawYear) && rawYear >= 2000 && rawYear <= 2100 ? rawYear : undefined;
   const rawAuth = String(req.body?.authenticity_status ?? "pending_review").trim();
   const authStatus: AuthenticityStatus =
     rawAuth === "verified" || rawAuth === "unverified" ? rawAuth : "pending_review";
+
+  const verificationRecord = {
+    supportingDocumentRef: String(
+      req.body?.supporting_document_ref ??
+        req.body?.authenticity_record?.supportingDocumentRef ??
+        ""
+    ).trim(),
+    verifiedBy: String(
+      req.body?.verified_by ?? req.body?.authenticity_record?.verifiedBy ?? ""
+    ).trim(),
+    evidenceSummary: String(
+      req.body?.evidence_summary ?? req.body?.authenticity_record?.evidenceSummary ?? ""
+    ).trim(),
+    verifiedAt: new Date().toISOString(),
+  };
+
+  if (authStatus === "verified" && !hasCompleteVerificationEvidence(verificationRecord)) {
+    res.status(400).json({
+      ok: false,
+      error:
+        "Marking a work verified requires supporting_document_ref, verified_by, and evidence_summary.",
+    });
+    return;
+  }
 
   if (!title || !artist || !Number.isFinite(price) || price <= 0 || !size || !description) {
     res.status(400).json({
@@ -4757,12 +5355,15 @@ app.post("/api/inventory", (req: Request, res: Response) => {
     year,
     authenticity_status: authStatus,
     authenticity_note: String(req.body?.authenticity_note ?? "").trim(),
+    authenticity_record: hasCompleteVerificationEvidence(verificationRecord)
+      ? verificationRecord
+      : undefined,
   });
 
   res.status(201).json({ ok: true, product: created });
 });
 
-app.patch("/api/inventory/:identifier", (req: Request, res: Response) => {
+app.patch("/api/inventory/:identifier", requireAdminApi, (req: Request, res: Response) => {
   const existing = getProductById(String(req.params.identifier ?? ""));
   if (!existing) {
     res.status(404).json({ ok: false, error: "Not Found" });
@@ -4773,13 +5374,47 @@ app.patch("/api/inventory/:identifier", (req: Request, res: Response) => {
   const rawStatus = req.body?.status;
   const rawAuth = req.body?.authenticity_status;
 
+  const hasRecordFields =
+    req.body?.supporting_document_ref !== undefined ||
+    req.body?.verified_by !== undefined ||
+    req.body?.evidence_summary !== undefined ||
+    req.body?.authenticity_record !== undefined;
+
+  const verificationRecord = hasRecordFields
+    ? {
+        supportingDocumentRef: String(
+          req.body?.supporting_document_ref ??
+            req.body?.authenticity_record?.supportingDocumentRef ??
+            ""
+        ).trim(),
+        verifiedBy: String(
+          req.body?.verified_by ?? req.body?.authenticity_record?.verifiedBy ?? ""
+        ).trim(),
+        evidenceSummary: String(
+          req.body?.evidence_summary ?? req.body?.authenticity_record?.evidenceSummary ?? ""
+        ).trim(),
+        verifiedAt:
+          existing.authenticity_record?.verifiedAt || new Date().toISOString(),
+      }
+    : undefined;
+
+  const effectiveRecord = verificationRecord ?? existing.authenticity_record;
+  if (rawAuth === "verified" && !hasCompleteVerificationEvidence(effectiveRecord)) {
+    res.status(400).json({
+      ok: false,
+      error:
+        "Marking a work verified requires supporting_document_ref, verified_by, and evidence_summary.",
+    });
+    return;
+  }
+
   const updated = inventoryStore.updateProduct(existing.id, {
     title: typeof req.body?.title === "string" ? req.body.title : undefined,
     artist: typeof req.body?.artist === "string" ? req.body.artist : undefined,
     category: typeof req.body?.category === "string" ? req.body.category : undefined,
     price: rawPrice !== undefined && Number.isFinite(rawPrice) && rawPrice > 0 ? rawPrice : undefined,
     size: typeof req.body?.size === "string" ? req.body.size : undefined,
-    image: typeof req.body?.image === "string" ? req.body.image : undefined,
+    image: sanitizeAdminImageUrl(req.body?.image),
     description: typeof req.body?.description === "string" ? req.body.description : undefined,
     status: rawStatus === "sold" || rawStatus === "available" ? rawStatus : undefined,
     authenticity_status:
@@ -4788,6 +5423,7 @@ app.patch("/api/inventory/:identifier", (req: Request, res: Response) => {
         : undefined,
     authenticity_note:
       typeof req.body?.authenticity_note === "string" ? req.body.authenticity_note : undefined,
+    authenticity_record: verificationRecord,
   });
 
   res.json({ ok: true, product: updated });
